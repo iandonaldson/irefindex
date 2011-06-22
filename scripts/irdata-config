@@ -16,6 +16,15 @@ SCRIPTS=`dirname "$0"`
 
 alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
 
+if [ -e "$SCRIPTS/../tools" ]; then
+    TOOLS=`normpath "$SCRIPTS/../tools"`      # relative location of the tools
+elif [ -e "$SYSPREFIX/usr/share/irdata/tools" ]; then
+    TOOLS="$SYSPREFIX/usr/share/irdata/tools" # system-wide location of the tools
+else
+    echo "Cannot locate the irdata tools directory." 1>&2
+    exit 1
+fi
+
 if [ -e "$SCRIPTS/../data" ]; then
     DATA=`normpath "$SCRIPTS/../data"`        # relative location of the data
 elif [ -e "$SYSPREFIX/var/lib/irdata/data" ]; then
