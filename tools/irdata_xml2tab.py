@@ -168,7 +168,7 @@ class PSIParser(EmptyElementParser):
                     self.writer.append((data_type, scope, self.path_to_attrs[scope]["id"], context, element) + tuple(values))
 
     def parse(self, filename):
-        self.writer.start()
+        self.writer.start(filename)
         EmptyElementParser.parse(self, filename)
 
 class Writer:
@@ -193,23 +193,34 @@ class Writer:
     def __init__(self, directory):
         self.directory = directory
         self.files = {}
+        self.filename = None
+
+    def get_filename(self, key):
+        return os.path.join(self.directory, "%s%stxt" % (key, os.path.extsep))
+
+    def reset(self):
+        for key in self.filenames:
+            os.remove(self.get_filename(key))
+
+    def start(self, filename):
+        self.filename = filename
+
+        if not os.path.exists(self.directory):
+            os.mkdir(self.directory)
+
+        for key in self.filenames:
+            self.files[key] = codecs.open(self.get_filename(key), "a", encoding="utf-8")
+
+    def append(self, data):
+        element = data[0]
+        file = self.element_files[element]
+        data = (filename,) + data[1:]
+        print >>self.files[file], "\t".join(map(bulkstr, data))
 
     def close(self):
         for f in self.files.values():
             f.close()
         self.files = {}
-
-    def start(self):
-        if not os.path.exists(self.directory):
-            os.mkdir(self.directory)
-
-        for key in self.filenames:
-            self.files[key] = codecs.open(os.path.join(self.directory, "%s%stxt" % (key, os.path.extsep)), "w", encoding="utf-8")
-
-    def append(self, data):
-        element = data[0]
-        file = self.element_files[element]
-        print >>self.files[file], "\t".join(map(bulkstr, data[1:]))
 
 if __name__ == "__main__":
     import sys
@@ -217,15 +228,22 @@ if __name__ == "__main__":
     progname = os.path.split(sys.argv[0])[-1]
 
     try:
-        filename = sys.argv[1]
+        reset = sys.argv[1] == "--reset"
+        i = reset and 2 or 1
+        data_directory = sys.argv[i]
+        filenames = sys.argv[i+1:]
     except IndexError:
-        print >>sys.stderr, "Usage: %s <data file>" % progname
+        print >>sys.stderr, "Usage: %s [ --reset ] <data directory> <data file>..." % progname
         sys.exit(1)
 
-    writer = Writer(len(sys.argv) > 2 and sys.argv[2] or "data")
+    writer = Writer(data_directory)
+    if reset:
+        writer.reset()
+
     parser = PSIParser(writer)
     try:
-        parser.parse(filename)
+        for filename in filenames:
+            parser.parse(filename)
     finally:
         writer.close()
 
