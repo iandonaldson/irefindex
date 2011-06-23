@@ -39,19 +39,9 @@ file, such relationships are implicit when an experiment or interactor is
 included within an interaction.
 """
 
+from irdata.data import *
 import xml.sax
-import re
-
-try:
-    set
-except NameError:
-    from sets import Set as set
-
-def to_str(x):
-    if x is None:
-        return "\\N"
-    else:
-        return x
+import os
 
 class Parser(xml.sax.handler.ContentHandler):
 
@@ -127,6 +117,7 @@ class PSIParser(EmptyElementParser):
         "shortLabel"    : ("content",),
         "fullName"      : ("content",),
         "alias"         : ("type", "typeAc", "content"),
+        "hostOrganism"  : ("ncbiTaxId",),
         }
 
     def __init__(self, writer):
@@ -146,13 +137,27 @@ class PSIParser(EmptyElementParser):
 
     def handleElement(self, content):
         element = self.current_path[-1]
+        attrs = dict(self.current_attrs[-1])
+
+        # Get mappings from experiments and interactors to interactions.
+        # Explicit mappings.
+
         if element in ("experimentRef", "interactorRef"):
-            self.writer.append(("interaction", self.path_to_attrs["interaction"]["id"], element, content))
+            self.writer.append((element, content, self.path_to_attrs["interaction"]["id"]))
+
+        # Implicit mappings only within interaction elements.
+
+        elif element in ("experimentDescription", "interactor"):
+            if self.path_to_attrs.has_key("interaction"):
+                self.writer.append((element, self.current_attrs[-1]["id"], self.path_to_attrs["interaction"]["id"]))
+
+        # Get other data.
+
         else:
             scope = self.get_scope()
             if scope:
+                context = self.current_path[-3]
                 data_type = self.current_path[-2]
-                attrs = dict(self.current_attrs[-1])
                 names = self.attribute_names.get(element)
                 if content:
                     attrs["content"] = content
@@ -160,21 +165,54 @@ class PSIParser(EmptyElementParser):
                     values = []
                     for key in names:
                         values.append(attrs.get(key))
-                    values = tuple(map(to_str, values))
-                    self.writer.append((scope, self.path_to_attrs[scope]["id"], data_type, element) + values)
+                    self.writer.append((data_type, scope, self.path_to_attrs[scope]["id"], context, element) + tuple(values))
+
+    def parse(self, filename):
+        self.writer.start()
+        EmptyElementParser.parse(self, filename)
 
 class Writer:
 
     "A simple writer of tabular data."
 
-    def __init__(self, f):
-        self.f = f
+    filenames = (
+        "experiment", "interactor",     # mappings
+        "names", "xref", "organisms",   # properties
+        )
+
+    element_files = {
+        "experimentRef"         : "experiment",
+        "experimentDescription" : "experiment",
+        "interactorRef"         : "interactor",
+        "interactor"            : "interactor",
+        "hostOrganismList"      : "organisms",
+        "names"                 : "names",
+        "xref"                  : "xref",
+        }
+
+    def __init__(self, directory):
+        self.directory = directory
+        self.files = {}
+
+    def close(self):
+        for f in self.files.values():
+            f.close()
+        self.files = {}
+
+    def start(self):
+        if not os.path.exists(self.directory):
+            os.mkdir(self.directory)
+
+        for key in self.filenames:
+            self.files[key] = codecs.open(os.path.join(self.directory, "%s%stxt" % (key, os.path.extsep)), "w", encoding="utf-8")
 
     def append(self, data):
-        print >>self.f, "\t".join(data)
+        element = data[0]
+        file = self.element_files[element]
+        print >>self.files[file], "\t".join(map(bulkstr, data[1:]))
 
 if __name__ == "__main__":
-    import sys, os
+    import sys
 
     progname = os.path.split(sys.argv[0])[-1]
 
@@ -184,8 +222,11 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <data file>" % progname
         sys.exit(1)
 
-    writer = Writer(sys.stdout)
+    writer = Writer(len(sys.argv) > 2 and sys.argv[2] or "data")
     parser = PSIParser(writer)
-    parser.parse(filename)
+    try:
+        parser.parse(filename)
+    finally:
+        writer.close()
 
 # vim: tabstop=4 expandtab shiftwidth=4
