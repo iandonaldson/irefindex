@@ -112,11 +112,14 @@ class PSIParser(EmptyElementParser):
     """
 
     attribute_names = {
-        "primaryRef"    : ("id", "db", "dbAc", "refType", "refTypeAc"), # also secondary and version
-        "secondaryRef"  : ("id", "db", "dbAc", "refType", "refTypeAc"),
-        "shortLabel"    : ("content",),
-        "fullName"      : ("content",),
-        "alias"         : ("type", "typeAc", "content"),
+        # references    : property, reftype, id, dblabel, dbcode, reftypelabel, reftypecode
+        "primaryRef"    : ("context", "element", "id", "db", "dbAc", "refType", "refTypeAc"), # also secondary and version
+        "secondaryRef"  : ("context", "element", "id", "db", "dbAc", "refType", "refTypeAc"),
+        # names         : property, nametype, label, code, value
+        "shortLabel"    : ("context", "element", None, None, "content"),
+        "fullName"      : ("context", "element", None, None, "content"),
+        "alias"         : ("context", "element", "type", "typeAc", "content"),
+        # organisms     : taxid
         "hostOrganism"  : ("ncbiTaxId",),
         }
 
@@ -125,10 +128,16 @@ class PSIParser(EmptyElementParser):
         self.writer = writer
 
     def get_scope(self):
+
+        """
+        Get the scope of the current path as the entity to which the current
+        attributes and content belong.
+        """
+
         n = len(self.current_path)
         for i in xrange(-1, -n-1, -1):
             part = self.current_path[i]
-            if part in ("experimentDescription", "interaction", "interactor"):
+            if part in ("experimentDescription", "interaction", "interactor", "participant"):
                 return part
         return None
 
@@ -156,16 +165,17 @@ class PSIParser(EmptyElementParser):
         else:
             scope = self.get_scope()
             if scope:
-                context = self.current_path[-3]
                 data_type = self.current_path[-2]
                 names = self.attribute_names.get(element)
                 if content:
                     attrs["content"] = content
+                attrs["context"] = self.current_path[-3]
+                attrs["element"] = element
                 if names and attrs:
                     values = []
                     for key in names:
                         values.append(attrs.get(key))
-                    self.writer.append((data_type, scope, self.path_to_attrs[scope]["id"], context, element) + tuple(values))
+                    self.writer.append((data_type, scope, self.path_to_attrs[scope]["id"]) + tuple(values))
 
     def parse(self, filename):
         self.writer.start(filename)
@@ -180,7 +190,7 @@ class Writer:
         "names", "xref", "organisms",   # properties
         )
 
-    element_files = {
+    data_type_files = {
         "experimentRef"         : "experiment",
         "experimentDescription" : "experiment",
         "interactorRef"         : "interactor",
@@ -190,8 +200,9 @@ class Writer:
         "xref"                  : "xref",
         }
 
-    def __init__(self, directory):
+    def __init__(self, directory, source):
         self.directory = directory
+        self.source = source
         self.files = {}
         self.filename = None
 
@@ -213,9 +224,14 @@ class Writer:
 
     def append(self, data):
         element = data[0]
-        file = self.element_files[element]
-        data = (filename,) + data[1:]
-        print >>self.files[file], "\t".join(map(bulkstr, data))
+        file = self.data_type_files[element]
+
+        # Each record is prefixed with the source and filename.
+
+        data = (self.source, self.filename) + data[1:]
+        data = map(tab_to_space, data)
+        data = map(bulkstr, data)
+        print >>self.files[file], "\t".join(data)
 
     def close(self):
         for f in self.files.values():
@@ -231,12 +247,13 @@ if __name__ == "__main__":
         reset = sys.argv[1] == "--reset"
         i = reset and 2 or 1
         data_directory = sys.argv[i]
-        filenames = sys.argv[i+1:]
+        source = sys.argv[i+1]
+        filenames = sys.argv[i+2:]
     except IndexError:
-        print >>sys.stderr, "Usage: %s [ --reset ] <data directory> <data file>..." % progname
+        print >>sys.stderr, "Usage: %s [ --reset ] <data directory> <data source name> <data file>..." % progname
         sys.exit(1)
 
-    writer = Writer(data_directory)
+    writer = Writer(data_directory, source)
     if reset:
         writer.reset()
 

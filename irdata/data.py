@@ -29,4 +29,10 @@ def bulkstr(x):
         else:
             return x
 
+def tab_to_space(x):
+    if x is None:
+        return None
+    else:
+        return x.replace("\t", " ")
+
 # vim: tabstop=4 expandtab shiftwidth=4
