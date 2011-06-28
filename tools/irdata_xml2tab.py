@@ -211,7 +211,10 @@ class Writer:
 
     def reset(self):
         for key in self.filenames:
-            os.remove(self.get_filename(key))
+            try:
+                os.remove(self.get_filename(key))
+            except OSError:
+                pass
 
     def start(self, filename):
         self.filename = filename
