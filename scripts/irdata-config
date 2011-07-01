@@ -54,7 +54,7 @@ fi
 # NOTE: To add: DIP HPRD INTACT
 XMLSOURCES="BIND_TRANSLATION CORUM INNATEDB MATRIXDB MPACT MPPI"
 TABSOURCES="MPIDB"
-OTHERSOURCES="UNIPROT"
+OTHERSOURCES="TAXONOMY UNIPROT"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
@@ -144,6 +144,15 @@ MPPI_MIRROR='http://mips.gsf.de'
 MPPI_RELEASE_URL="$MPPI_MIRROR/proj/ppi/data/"
 MPPI_DIR_NAME="MPPI"
 MPPI_XML_FILE_PATTERN='mppi'
+
+############################################################
+# Entrez Taxonomy (not an interaction source)
+
+TAXONOMY_DOWNLOAD_FILES="taxdump.tar.gz"
+TAXONOMY_MIRROR='ftp://ftp.ncbi.nih.gov'
+
+TAXONOMY_RELEASE_URL="$TAXONOMY_MIRROR/pub/taxonomy/"
+TAXONOMY_DIR_NAME="Taxonomy"
 
 ############################################################
 # UniProt

@@ -10,14 +10,20 @@ fi
 
 if [ "$1" == '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME ( --all | <source>... )
+Usage: $PROGNAME [ --check ] ( --all | <source>... )
 
-Download data from the different sources. These are configured to be the
-following when --all is specified:
+Download data from the different sources, or if the --check option is specified
+check whether a download needs to be performed. The sources are configured to be
+the following when --all is specified:
 
 $ALLSOURCES
 EOF
     exit 1
+fi
+
+if [ "$1" == '--check' ]; then
+    CHECK_ONLY=$1
+    shift 1
 fi
 
 SOURCES=$1
@@ -32,26 +38,32 @@ fi
 # Download data.
 
 for SOURCE in $SOURCES; do
-    echo "$PROGNAME: Downloading $SOURCE..." 1>&2
-
     eval RELEASE_URL='$'"$SOURCE"_RELEASE_URL
     eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES
     eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
 
     DATADIR="$DATA/$SOURCEDIR"
 
-    if [ ! -e "$DATADIR" ]; then
-        mkdir "$DATADIR"
+    if [ "$CHECK_ONLY" ]; then
+        echo "$PROGNAME: Checking $SOURCE..." 1>&2
+    else
+        echo "$PROGNAME: Downloading $SOURCE..." 1>&2
+        if [ ! -e "$DATADIR" ]; then
+            mkdir "$DATADIR"
+        fi
     fi
 
     for DOWNLOAD in $DOWNLOAD_FILES; do
         DOWNLOADED="$DATADIR/$DOWNLOAD"
 
         if [ ! -e "$DOWNLOADED" ]; then
-            echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
-            wget -O "$DOWNLOADED" "${RELEASE_URL}$DOWNLOAD"
+            if [ "$CHECK_ONLY" ]; then
+                echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
+            else
+                echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
+                wget -O "$DOWNLOADED" "${RELEASE_URL}$DOWNLOAD"
+                echo "$DOWNLOADED"
+            fi
         fi
-
-        echo "$DOWNLOADED"
     done
 done
