@@ -138,9 +138,7 @@ class PSIParser(EmptyElementParser):
         attributes and content belong.
         """
 
-        n = len(self.current_path)
-        for i in xrange(-1, -n-1, -1):
-            part = self.current_path[i]
+        for part in self.current_path[-1::-1]:
             if part in ("experimentDescription", "interaction", "interactor", "participant"):
                 return part
         return None
@@ -149,8 +147,7 @@ class PSIParser(EmptyElementParser):
         EmptyElementParser.characters(self, content.strip())
 
     def handleElement(self, content):
-        element = self.current_path[-1]
-        parent = (self.current_path[-2:-1] or [None])[0]
+        element, parent, context, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
         attrs = dict(self.current_attrs[-1])
 
         # Get mappings from experiments to interactions.
@@ -184,21 +181,44 @@ class PSIParser(EmptyElementParser):
         # Get other data.
 
         else:
+            # Only consider supported elements.
+
+            names = self.attribute_names.get(element)
+            if not names:
+                return
+
+            # Exclude certain occurrences (as also done above).
+
+            if context == "interactor" and section != "participant" or \
+                context == "participant" and section != "participantList":
+                return
+
+            # Insist on a scope.
+
             scope = self.get_scope()
-            if scope:
-                if content:
-                    attrs["content"] = content
-                attrs["context"] = self.current_path[-3]
-                attrs["element"] = element
+            if not scope:
+                return
 
-                # Only write data for supported elements providing data.
+            # Gather together attributes.
 
-                names = self.attribute_names.get(element)
-                if names and attrs:
-                    values = []
-                    for key in names:
-                        values.append(attrs.get(key))
-                    self.writer.append((parent, scope, self.path_to_attrs[scope]["id"]) + tuple(values))
+            if content:
+                attrs["content"] = content
+
+            attrs["context"] = context
+            attrs["element"] = element
+
+            values = []
+            for key in names:
+                values.append(attrs.get(key))
+
+            # Only write data for supported elements providing data.
+
+            if not values:
+                return
+
+            # The parent indicates the data type as is only used to select the output file.
+
+            self.writer.append((parent, scope, self.path_to_attrs[scope]["id"]) + tuple(values))
 
     def parse(self, filename):
         self.writer.start(filename)
