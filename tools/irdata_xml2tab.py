@@ -16,6 +16,7 @@ lists:
         participant
           interactorRef -> interactor/@id
   interactorList
+    interactor
 
 Or such files can provide interaction lists containing experiment and interactor
 details:
@@ -37,6 +38,9 @@ For the first kind of file, interaction relationships to experiments and
 interactors are explicitly given in "*Ref" elements. For the second kind of
 file, such relationships are implicit when an experiment or interactor is
 included within an interaction.
+
+Participant properties are defined in terms of an interactor as part of an
+interaction.
 """
 
 from irdata.data import *
@@ -146,36 +150,55 @@ class PSIParser(EmptyElementParser):
 
     def handleElement(self, content):
         element = self.current_path[-1]
+        parent = (self.current_path[-2:-1] or [None])[0]
         attrs = dict(self.current_attrs[-1])
 
-        # Get mappings from experiments and interactors to interactions.
-        # Explicit mappings.
+        # Get mappings from experiments to interactions.
 
-        if element in ("experimentRef", "interactorRef"):
+        if element == "experimentRef":
             self.writer.append((element, content, self.path_to_attrs["interaction"]["id"]))
 
-        # Implicit mappings only within interaction elements.
+        # And mappings from interactors to participants.
 
-        elif element in ("experimentDescription", "interactor"):
+        elif element == "interactorRef":
+            self.writer.append((element, content, self.path_to_attrs["participant"]["id"]))
+
+        # Implicit participant-to-interaction mappings.
+
+        elif element == "participant":
+            if parent == "participantList":
+                self.writer.append((element, attrs["id"], self.path_to_attrs["interaction"]["id"]))
+
+        # Implicit interactor-to-participant mappings (applying only within participant elements).
+
+        elif element == "interactor":
+            if parent == "participant":
+                self.writer.append((element, attrs["id"], self.path_to_attrs["participant"]["id"]))
+
+        # Implicit mappings applying only within an interaction scope.
+
+        elif element == "experimentDescription":
             if self.path_to_attrs.has_key("interaction"):
-                self.writer.append((element, self.current_attrs[-1]["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, attrs["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Get other data.
 
         else:
             scope = self.get_scope()
             if scope:
-                data_type = self.current_path[-2]
-                names = self.attribute_names.get(element)
                 if content:
                     attrs["content"] = content
                 attrs["context"] = self.current_path[-3]
                 attrs["element"] = element
+
+                # Only write data for supported elements providing data.
+
+                names = self.attribute_names.get(element)
                 if names and attrs:
                     values = []
                     for key in names:
                         values.append(attrs.get(key))
-                    self.writer.append((data_type, scope, self.path_to_attrs[scope]["id"]) + tuple(values))
+                    self.writer.append((parent, scope, self.path_to_attrs[scope]["id"]) + tuple(values))
 
     def parse(self, filename):
         self.writer.start(filename)
@@ -186,8 +209,8 @@ class Writer:
     "A simple writer of tabular data."
 
     filenames = (
-        "experiment", "interactor",     # mappings
-        "names", "xref", "organisms",   # properties
+        "experiment", "interactor", "participant",  # mappings
+        "names", "xref", "organisms",               # properties
         )
 
     data_type_files = {
@@ -195,6 +218,7 @@ class Writer:
         "experimentDescription" : "experiment",
         "interactorRef"         : "interactor",
         "interactor"            : "interactor",
+        "participant"           : "participant",
         "hostOrganismList"      : "organisms",
         "names"                 : "names",
         "xref"                  : "xref",

@@ -1,28 +1,42 @@
 begin;
 
-create table tmp_experiments (
+create table xml_experiments (
     source varchar not null,
     filename varchar not null,
     experimentid integer not null,
     interactionid integer not null
 );
 
-\copy tmp_experiments from '<directory>/experiment.txt'
+\copy xml_experiments from '<directory>/experiment.txt'
 
-analyze tmp_experiments;
+alter table xml_experiments add primary key (source, filename, experimentid, interactionid);
+analyze xml_experiments;
 
-create table tmp_interactors (
+create table xml_interactors (
     source varchar not null,
     filename varchar not null,
     interactorid integer not null,
+    participantid integer not null
+);
+
+\copy xml_interactors from '<directory>/interactor.txt'
+
+alter table xml_interactors add primary key (source, filename, interactorid, participantid);
+analyze xml_interactors;
+
+create table xml_participants (
+    source varchar not null,
+    filename varchar not null,
+    participantid integer not null,
     interactionid integer not null
 );
 
-\copy tmp_interactors from '<directory>/interactor.txt'
+\copy xml_participants from '<directory>/participant.txt'
 
-analyze tmp_interactors;
+alter table xml_participants add primary key (source, filename, participantid, interactionid);
+analyze xml_participants;
 
-create table tmp_names (
+create table xml_names (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
@@ -34,11 +48,14 @@ create table tmp_names (
     name varchar -- some names can actually be unspecified
 );
 
-\copy tmp_names from '<directory>/names.txt'
+\copy xml_names from '<directory>/names.txt'
 
-analyze tmp_names;
+delete from xml_names where name is null;
+alter table xml_names alter column name set not null;
 
-create table tmp_xref (
+analyze xml_names;
+
+create table xml_xref (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
@@ -52,11 +69,11 @@ create table tmp_xref (
     reftypecode varchar
 );
 
-\copy tmp_xref from '<directory>/xref.txt'
+\copy xml_xref from '<directory>/xref.txt'
 
-analyze tmp_xref;
+analyze xml_xref;
 
-create table tmp_organisms (
+create table xml_organisms (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
@@ -64,8 +81,8 @@ create table tmp_organisms (
     taxid integer not null
 );
 
-\copy tmp_organisms from '<directory>/organisms.txt'
+\copy xml_organisms from '<directory>/organisms.txt'
 
-analyze tmp_organisms;
+analyze xml_organisms;
 
 commit;
