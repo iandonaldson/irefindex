@@ -16,7 +16,12 @@ create table irefindex_entities (
 insert into irefindex_entities
     select distinct source, filename, scope, parentid, dblabel, refvalue
     from xml_xref
-    where property = scope -- the reference must describe the entity itself
+    where -- for interactions and interactors, the reference must describe the entity itself
+        property = scope
+        and reftype = 'primaryRef'
+        or -- for experiments, the a bibliographic reference is used
+        property = 'bibref'
+        and scope = 'experimentDescription'
         and reftype = 'primaryRef';
 
 alter table irefindex_entities add primary key (source, filename, scope, parentid, db, acc);
@@ -113,8 +118,8 @@ create table irefindex_experiments (
     source varchar not null,
     db varchar not null,
     acc varchar not null,
-    experimentdb varchar not null,
-    experimentacc varchar not null
+    interactiondb varchar not null,
+    interactionacc varchar not null
 );
 
 insert into irefindex_experiments
