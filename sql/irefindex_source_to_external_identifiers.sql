@@ -7,13 +7,16 @@ begin;
 insert into irefindex_entities
     select distinct source, filename, scope, parentid, dblabel, refvalue
     from xml_xref
-    where -- for interactions and interactors, the reference must describe the entity itself
+    where (
+        -- for interactions and interactors, the reference must describe the entity itself
         property = scope
         and reftype = 'primaryRef'
         or -- for experiments, the a bibliographic reference is used
         property = 'bibref'
         and scope = 'experimentDescription'
-        and reftype = 'primaryRef';
+        and reftype = 'primaryRef'
+        )
+        and source = '<source>';
 
 analyze irefindex_entities;
 
@@ -28,7 +31,8 @@ insert into irefindex_names
         and A.filename = B.filename
         and A.parentid = B.parentid
         and A.scope = B.scope
-        and B.property = B.scope;
+        and B.property = B.scope
+    where A.source = '<source>';
 
 analyze irefindex_names;
 
@@ -41,7 +45,8 @@ insert into irefindex_xref
         and A.filename = B.filename
         and A.parentid = B.parentid
         and A.scope = B.scope
-        and B.property = B.scope;
+        and B.property = B.scope
+    where A.source = '<source>';
 
 analyze irefindex_xref;
 
@@ -65,7 +70,8 @@ insert into irefindex_interactors
         on B.source = P.source
         and B.filename = P.filename
         and B.parentid = P.interactionid
-        and B.scope = 'interaction';
+        and B.scope = 'interaction'
+    where A.source = '<source>';
 
 analyze irefindex_interactors;
 
@@ -84,7 +90,8 @@ insert into irefindex_experiments
         on B.source = I.source
         and B.filename = I.filename
         and B.parentid = I.interactionid
-        and B.scope = 'interaction';
+        and B.scope = 'interaction'
+    where A.source = '<source>';
 
 analyze irefindex_experiments;
 

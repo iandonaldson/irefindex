@@ -153,12 +153,14 @@ class PSIParser(EmptyElementParser):
         # Get mappings from experiments to interactions.
 
         if element == "experimentRef":
-            self.writer.append((element, content, self.path_to_attrs["interaction"]["id"]))
+            if parent == "experimentList":
+                self.writer.append((element, content, self.path_to_attrs["interaction"]["id"]))
 
         # And mappings from interactors to participants.
 
         elif element == "interactorRef":
-            self.writer.append((element, content, self.path_to_attrs["participant"]["id"]))
+            if parent == "participant":
+                self.writer.append((element, content, self.path_to_attrs["participant"]["id"]))
 
         # Implicit participant-to-interaction mappings.
 
@@ -189,7 +191,7 @@ class PSIParser(EmptyElementParser):
 
             # Exclude certain occurrences (as also done above).
 
-            if context == "interactor" and section != "participant" or \
+            if context == "interactor" and section not in ("participant", "interactorList") or \
                 context == "participant" and section != "participantList":
                 return
 
