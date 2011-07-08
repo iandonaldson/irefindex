@@ -6,7 +6,7 @@ create table irefindex_entities (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
-    parentid integer not null,
+    parentid varchar not null, -- integer for PSI MI XML 2.5
     db varchar not null,
     acc varchar not null,
     primary key (source, filename, scope, parentid, db, acc)
@@ -38,7 +38,7 @@ create table irefindex_xref (
     reftypecode varchar
 );
 
--- Map the interactors to interactions using primary references.
+-- Map the interactors to participants to interactions using primary references.
 
 create table irefindex_interactors (
     source varchar not null,
@@ -46,7 +46,7 @@ create table irefindex_interactors (
     acc varchar not null,
     interactiondb varchar not null,
     interactionacc varchar not null,
-    participantid integer not null -- distinguishes between participants
+    participantid varchar not null -- integer for PSI MI XML 2.5
 );
 
 -- Map the experiments to interactions using primary references.

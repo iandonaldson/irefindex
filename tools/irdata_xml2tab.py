@@ -124,12 +124,33 @@ class PSIParser(EmptyElementParser):
         "fullName"      : ("context", "element", None, None, "content"),
         "alias"         : ("context", "element", "type", "typeAc", "content"),
         # organisms     : taxid
-        "hostOrganism"  : ("ncbiTaxId",),
+        "hostOrganism"  : ("ncbiTaxId",)
+        }
+
+    scopes = {
+        "interaction"           : "interaction",
+        "interactor"            : "interactor",
+        "participant"           : "participant",
+        "experimentDescription" : "experimentDescription",
+
+        # PSI MI XML version 1.0 element mappings.
+
+        "proteinInteractor"     : "interactor",
+        "proteinParticipant"    : "participant",
         }
 
     def __init__(self, writer):
         EmptyElementParser.__init__(self)
         self.writer = writer
+
+        # For PSI MI XML version 1.0 files without identifiers.
+
+        self.identifiers = {
+            "interaction"           : 0,
+            "interactor"            : 0,
+            "participant"           : 0,
+            "experimentDescription" : 0
+            }
 
     def get_scope(self):
 
@@ -139,46 +160,74 @@ class PSIParser(EmptyElementParser):
         """
 
         for part in self.current_path[-1::-1]:
-            if part in ("experimentDescription", "interaction", "interactor", "participant"):
+            if part in self.scopes.values():
                 return part
         return None
 
     def characters(self, content):
         EmptyElementParser.characters(self, content.strip())
 
+    def startElement(self, name, attrs):
+
+        """
+        Start an element, converting the element 'name' to a recognised scope if
+        necessary, and adding an identifier to the 'attrs' if one is missing.
+        """
+
+        if self.scopes.has_key(name):
+            name = self.scopes[name]
+            if self.identifiers.has_key(name):
+
+                # Handle PSI MI XML 1.0 identifiers which are absent.
+
+                if not attrs.has_key("id"):
+                    attrs = dict(attrs)
+                    attrs["id"] = str(self.identifiers[name])
+                    self.identifiers[name] += 1
+
+        EmptyElementParser.startElement(self, name, attrs)
+
+    def endElement(self, name):
+        EmptyElementParser.endElement(self, self.scopes.get(name, name))
+
     def handleElement(self, content):
+
+        "Handle a completed element with the given 'content'."
+
         element, parent, context, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
         attrs = dict(self.current_attrs[-1])
 
         # Get mappings from experiments to interactions.
+        # The "ref" attribute is from PSI MI XML 1.0.
 
         if element == "experimentRef":
             if parent == "experimentList":
-                self.writer.append((element, content, self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, content or attrs["ref"], self.path_to_attrs["interaction"]["id"]))
 
-        # And mappings from interactors to participants.
+        # And mappings from interactors to participants to interactions.
+        # The "ref" attribute is from PSI MI XML 1.0.
 
         elif element == "interactorRef":
             if parent == "participant":
-                self.writer.append((element, content, self.path_to_attrs["participant"]["id"]))
-
-        # Implicit participant-to-interaction mappings.
-
-        elif element == "participant":
-            if parent == "participantList":
-                self.writer.append((element, attrs["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, content or attrs["ref"], self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Implicit interactor-to-participant mappings (applying only within participant elements).
 
         elif element == "interactor":
             if parent == "participant":
-                self.writer.append((element, attrs["id"], self.path_to_attrs["participant"]["id"]))
+                self.writer.append((element, attrs["id"], self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Implicit mappings applying only within an interaction scope.
 
         elif element == "experimentDescription":
             if self.path_to_attrs.has_key("interaction"):
                 self.writer.append((element, attrs["id"], self.path_to_attrs["interaction"]["id"]))
+
+        # Interactor organisms.
+
+        elif element == "organism":
+            if parent == "interactor":
+                self.writer.append((element, parent, self.path_to_attrs["interactor"]["id"], attrs["ncbiTaxId"]))
 
         # Get other data.
 
@@ -206,6 +255,8 @@ class PSIParser(EmptyElementParser):
             if content:
                 attrs["content"] = content
 
+            # Get the context, using a proper scope if appropriate.
+
             attrs["context"] = context
             attrs["element"] = element
 
@@ -231,8 +282,8 @@ class Writer:
     "A simple writer of tabular data."
 
     filenames = (
-        "experiment", "interactor", "participant",  # mappings
-        "names", "xref", "organisms",               # properties
+        "experiment", "interactor",     # mappings
+        "names", "xref", "organisms",   # properties
         )
 
     data_type_files = {
@@ -240,8 +291,8 @@ class Writer:
         "experimentDescription" : "experiment",
         "interactorRef"         : "interactor",
         "interactor"            : "interactor",
-        "participant"           : "participant",
         "hostOrganismList"      : "organisms",
+        "organism"              : "organisms",
         "names"                 : "names",
         "xref"                  : "xref",
         }

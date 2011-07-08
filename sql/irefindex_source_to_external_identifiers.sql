@@ -55,21 +55,17 @@ analyze irefindex_xref;
 insert into irefindex_interactors
     select A.source, A.db, A.acc,
         B.db as interactiondb, B.acc as interactionacc,
-        P.participantid
+        I.participantid
     from irefindex_entities as A
     inner join xml_interactors as I
         on A.source = I.source
         and A.filename = I.filename
         and A.parentid = I.interactorid
         and A.scope = 'interactor'
-    inner join xml_participants as P
-        on I.source = P.source
-        and I.filename = P.filename
-        and I.participantid = P.participantid
     inner join irefindex_entities as B
-        on B.source = P.source
-        and B.filename = P.filename
-        and B.parentid = P.interactionid
+        on B.source = I.source
+        and B.filename = I.filename
+        and B.parentid = I.interactionid
         and B.scope = 'interaction'
     where A.source = '<source>';
 

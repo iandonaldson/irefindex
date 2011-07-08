@@ -3,29 +3,23 @@ begin;
 create table xml_experiments (
     source varchar not null,
     filename varchar not null,
-    experimentid integer not null,
-    interactionid integer not null
+    experimentid varchar not null, -- integer for PSI MI XML 2.5
+    interactionid varchar not null -- integer for PSI MI XML 2.5
 );
 
 create table xml_interactors (
     source varchar not null,
     filename varchar not null,
-    interactorid integer not null,
-    participantid integer not null
-);
-
-create table xml_participants (
-    source varchar not null,
-    filename varchar not null,
-    participantid integer not null,
-    interactionid integer not null
+    interactorid varchar not null, -- integer for PSI MI XML 2.5
+    participantid varchar not null, -- integer for PSI MI XML 2.5
+    interactionid varchar not null -- integer for PSI MI XML 2.5
 );
 
 create table xml_names (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
-    parentid integer not null,
+    parentid varchar not null, -- integer for PSI MI XML 2.5
     property varchar not null,
     nametype varchar not null,
     typelabel varchar,
@@ -37,10 +31,10 @@ create table xml_xref (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
-    parentid integer not null,
+    parentid varchar not null, -- integer for PSI MI XML 2.5
     property varchar not null,
     reftype varchar not null,
-    refvalue varchar not null,
+    refvalue varchar, -- MIPS omits some refvalues
     dblabel varchar,
     dbcode varchar,
     reftypelabel varchar,
@@ -51,7 +45,7 @@ create table xml_organisms (
     source varchar not null,
     filename varchar not null,
     scope varchar not null,
-    parentid integer not null,
+    parentid varchar not null, -- integer for PSI MI XML 2.5
     taxid integer not null
 );
 
