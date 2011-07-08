@@ -45,6 +45,13 @@ fi
 
 
 ############################################################
+# Parallel processing (irparallel).
+
+PROCESSES=4                                   # number of process groups to use
+
+
+
+############################################################
 # Source locations and details.
 #
 # Each section contains potentially editable definitions
@@ -66,6 +73,12 @@ BIND_TRANSLATION_MIRROR='http://download.baderlab.org'
 BIND_TRANSLATION_RELEASE_URL="$BIND_TRANSLATION_MIRROR/BINDTranslation/release1_0/"
 BIND_TRANSLATION_DIR_NAME="BIND_Translation"
 BIND_TRANSLATION_XML_FILE_PATTERN='*.xml'
+
+############################################################
+# BioGRID
+
+BIOGRID_DIR_NAME="BioGRID"
+BIOGRID_XML_FILE_PATTERN='*.xml'
 
 ############################################################
 # CORUM
@@ -116,6 +129,12 @@ MATRIXDB_DIR_NAME="MatrixDB"
 MATRIXDB_XML_FILE_PATTERN='*.xml'
 
 ############################################################
+# MINT
+
+MINT_DIR_NAME="MINT"
+MINT_XML_FILE_PATTERN='*.xml'
+
+############################################################
 # MPACT
 
 MPACT_DOWNLOAD_FILES="mpact-complete.psi25.xml.gz"
@@ -144,6 +163,12 @@ MPPI_MIRROR='http://mips.gsf.de'
 MPPI_RELEASE_URL="$MPPI_MIRROR/proj/ppi/data/"
 MPPI_DIR_NAME="MPPI"
 MPPI_XML_FILE_PATTERN='mppi'
+
+############################################################
+# OPHID
+
+OPHID_DIR_NAME="OPHID"
+OPHID_XML_FILE_PATTERN='*.xml'
 
 ############################################################
 # Entrez Taxonomy (not an interaction source)

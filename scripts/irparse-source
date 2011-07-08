@@ -1,0 +1,97 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . 'irdata-config'
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" == '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME [ --check ] [ --no-parse ] <source>
+
+Parse data from the specified source. The following sources are supported:
+
+$XMLSOURCES
+
+If the source is specified as - it is read from standard input.
+EOF
+    exit 1
+fi
+
+if [ "$1" == '--check' ]; then
+    CHECK=$1
+    shift 1
+fi
+
+if [ "$1" == '--no-parse' ]; then
+    NO_PARSE=$1
+    shift 1
+fi
+
+SOURCE=$1
+
+if [ "$SOURCE" == '-' ]; then
+    echo "$PROGNAME: Reading source name from standard input..." 1>&2
+    read -r SOURCE
+    echo "$PROGNAME: Using $SOURCE..." 1>&2
+fi
+
+eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+eval FILEPATTERN='$'"$SOURCE"_XML_FILE_PATTERN
+
+# Check for improper source names which don't map to directories.
+
+if [ ! "$SOURCEDIR" ]; then
+    echo "$PROGNAME: $SOURCE is not a valid source name." 1>&2
+    exit 1
+fi
+
+# Check for absent file-matching patterns.
+
+if [ ! "$FILEPATTERN" ]; then
+    echo "$PROGNAME: $SOURCE does not provide XML files." 1>&2
+    exit 1
+fi
+
+DATADIR="$DATA/$SOURCEDIR"
+
+# Check for the source's data directory.
+
+if [ ! -e "$DATADIR" ]; then
+    echo "$PROGNAME: Source $SOURCE provides no data directory." 1>&2
+    exit 1
+fi
+
+OUTPUTDIR="$DATA/import/$SOURCEDIR"
+
+if [ ! -e "$OUTPUTDIR" ]; then
+    mkdir -p "$OUTPUTDIR"
+fi
+
+XMLFILES="$DATADIR/$FILEPATTERN"
+
+for XMLFILE in $XMLFILES; do
+
+    # Where the pattern did not expand, expect the pattern as a file.
+
+    if [ "$XMLFILE" == "$XMLFILES" ] && [ ! -e "$XMLFILE" ]; then
+        echo "$PROGNAME: Source $SOURCE does not appear to provide files." 1>&2
+        exit 1
+    fi
+
+    # Test for the file and run xmllint.
+
+    if [ ! -e "$XMLFILE" ] || [ "$CHECK" ] && ! xmllint "$XMLFILE" > /dev/null 2>&1 ; then
+        echo "$PROGNAME: File $XMLFILE in source $SOURCE failed." 1>&2
+        STATUS=1
+    fi
+done
+
+if [ ! "$NO_PARSE" ]; then
+    "$TOOLS/irdata_xml2tab.py" --reset "$OUTPUTDIR" "$SOURCE" $XMLFILES
+fi
+
+echo $SOURCE

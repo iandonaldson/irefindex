@@ -1,0 +1,43 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . 'irdata-config'
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" == '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME [ --check ] [ --no-parse ] ( --all | <source>... )
+
+Parse or just check data from the different sources. These are configured to be
+the following when --all is specified:
+
+$XMLSOURCES
+EOF
+    exit 1
+fi
+
+if [ "$1" == '--check' ]; then
+    CHECK=$1
+    shift 1
+fi
+
+if [ "$1" == '--no-parse' ]; then
+    NO_PARSE=$1
+    shift 1
+fi
+
+SOURCES=$*
+
+if [ "$SOURCES" == '--all' ]; then
+    SOURCES=$XMLSOURCES
+elif [ ! "$SOURCES" ]; then
+    echo "$PROGNAME: No sources specified." 1>&2
+    exit 1
+fi
+
+  "$SCRIPTS/argument-per-line" $SOURCES \
+| "$SCRIPTS/irparallel" "\"$SCRIPTS/irparse-source\" $CHECK $NO_PARSE {}"

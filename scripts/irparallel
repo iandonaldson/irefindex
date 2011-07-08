@@ -1,0 +1,40 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . 'irdata-config'
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" == '--help' ]; then
+    cat 1>&2 <<EOF
+Take a list of items read from standard input and process them in parallel.
+
+To reliably list files use "echo" rather than "ls", since the latter may have
+been defined as an alias and add things like colouring codes, causing "noise"
+in the listing.
+
+For a command, use a quoted shell argument containing {} to indicate the input
+filename.
+
+An example of a parsing pipeline (taking source names as input):
+
+$PROGNAME 'irparse-source {}'
+EOF
+    exit 1
+fi
+
+COMMAND=$1
+
+# Make sure that certain arguments are defined.
+
+if [ ! "$COMMAND" ]; then
+    echo "$PROGNAME: Please specify a command to run on each file (to be given as {})." 1>&2
+    exit 1
+fi
+
+# The pipeline.
+
+xargs -P $PROCESSES -I '{}' sh -c "$COMMAND"
