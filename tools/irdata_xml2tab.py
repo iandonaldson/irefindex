@@ -179,8 +179,10 @@ class PSIParser(EmptyElementParser):
             if self.identifiers.has_key(name):
 
                 # Handle PSI MI XML 1.0 identifiers which are absent.
+                # Use a transient participant identifier since these might be
+                # reused within interactions (seen in InnateDB).
 
-                if not attrs.has_key("id"):
+                if not attrs.has_key("id") or name == "participant":
                     attrs = dict(attrs)
                     attrs["id"] = str(self.identifiers[name])
                     self.identifiers[name] += 1
