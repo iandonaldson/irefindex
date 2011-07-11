@@ -36,7 +36,6 @@ def execute_command(cmd, database_name):
             fc.write(cmd)
         finally:
             fc.close()
-        print cmd
         if os.system("""psql -f %s %s""" % (cmd_filename, database_name)):
             sys.exit(1)
     finally:
@@ -45,8 +44,12 @@ def execute_command(cmd, database_name):
 if __name__ == "__main__":
     import sys, os
 
+    progname = os.path.split(sys.argv[0])[-1]
+
     if len(sys.argv) < 3:
-        print sys.argv[0], "( <database> | --output-command ) <template> [ <data_directory> ] [ --defs ( <name> <value> ) ... ]"
+        print >>sys.stderr, "Usage: %s ( <database> | --output-command )" \
+            " <template> [ <data_directory> ]" \
+            " [ --defs ( <name> <value> ) ... ]" % progname
         sys.exit(1)
 
     database_name = sys.argv[1]
