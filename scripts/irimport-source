@@ -1,0 +1,58 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME <source>
+
+Import data from the specified source into the configured database. The
+following sources are supported:
+
+$XMLSOURCES
+
+If the source is specified as - it is read from standard input.
+EOF
+    exit 1
+fi
+
+SOURCE=$1
+
+if [ "$SOURCE" = '-' ]; then
+    echo "$PROGNAME: Reading source name from standard input..." 1>&2
+    read -r SOURCE
+    echo "$PROGNAME: Using $SOURCE..." 1>&2
+fi
+
+if [ ! "$DATABASE" ]; then
+    echo "$PROGNAME: A database must be configured first." 1>&2
+    exit 1
+fi
+
+eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+
+# Check for improper source names which don't map to directories.
+
+if [ ! "$SOURCEDIR" ]; then
+    echo "$PROGNAME: $SOURCE is not a valid source name." 1>&2
+    exit 1
+fi
+
+IMPORTDATADIR="$DATA/import/$SOURCEDIR"
+
+# Check for the source's import data directory.
+
+if [ ! -e "$IMPORTDATADIR" ]; then
+    echo "$PROGNAME: Source $SOURCE provides no import data directory." 1>&2
+    exit 1
+fi
+
+"$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_xml.sql" "$IMPORTDATADIR"
+
+echo $SOURCE

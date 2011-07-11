@@ -1,14 +1,14 @@
 #!/bin/sh
 
 if [ -e "irdata-config" ]; then
-    . 'irdata-config'
+    . "$PWD/irdata-config"
 elif [ -e "scripts/irdata-config" ]; then
     . 'scripts/irdata-config'
 else
     . 'irdata-config'
 fi
 
-if [ "$1" == '--help' ]; then
+if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME [ --check ] ( --all | <source>... )
 
@@ -21,14 +21,14 @@ EOF
     exit 1
 fi
 
-if [ "$1" == '--check' ]; then
+if [ "$1" = '--check' ]; then
     CHECK_ONLY=$1
     shift 1
 fi
 
 SOURCES=$1
 
-if [ "$SOURCES" == '--all' ]; then
+if [ "$SOURCES" = '--all' ]; then
     SOURCES=$ALLSOURCES
 elif [ ! "$SOURCES" ]; then
     echo "$PROGNAME: No sources specified." 1>&2

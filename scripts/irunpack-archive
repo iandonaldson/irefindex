@@ -1,14 +1,14 @@
 #!/bin/sh
 
 if [ -e "irdata-config" ]; then
-    . 'irdata-config'
+    . "$PWD/irdata-config"
 elif [ -e "scripts/irdata-config" ]; then
     . 'scripts/irdata-config'
 else
     . 'irdata-config'
 fi
 
-if [ "$1" == '--help' ]; then
+if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME <archive filename>...
 
@@ -28,7 +28,7 @@ fi
 while [ "$*" ]; do
     ARCHIVE=$1
 
-    if [ "$ARCHIVE" == "-" ]; then
+    if [ "$ARCHIVE" = "-" ]; then
         echo "$PROGNAME: Reading archive filename from standard input..." 1>&2
         read -r ARCHIVE || exit 0
     else
@@ -48,9 +48,9 @@ while [ "$*" ]; do
 
     # Process the most common archive types.
 
-    if [ "$ARCHIVETYPE" == "zip" ]; then
+    if [ "$ARCHIVETYPE" = "zip" ]; then
         unzip "$ARCHIVE" -d "$ARCHIVEPATH"
-    elif [ "$ARCHIVETYPE" == "tar.gz" ]; then
+    elif [ "$ARCHIVETYPE" = "tar.gz" ]; then
         tar zxf "$ARCHIVE" -C "$ARCHIVEPATH"
     else
         echo "$PROGNAME: Archive type $ARCHIVETYPE is not supported for archive: $ARCHIVE" 1>&2

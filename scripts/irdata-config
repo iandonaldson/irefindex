@@ -5,6 +5,7 @@
 
 SYSPREFIX=                                  # system-wide installation prefix
 EMAIL=                                      # e-mail address for anonymous FTP logins
+DATABASE=irdata
 
 
 
@@ -22,6 +23,15 @@ elif [ -e "$SYSPREFIX/usr/share/irdata/tools" ]; then
     TOOLS="$SYSPREFIX/usr/share/irdata/tools" # system-wide location of the tools
 else
     echo "Cannot locate the irdata tools directory." 1>&2
+    exit 1
+fi
+
+if [ -e "$SCRIPTS/../sql" ]; then
+    SQL=`normpath "$SCRIPTS/../sql"`          # relative location of the templates
+elif [ -e "$SYSPREFIX/usr/share/irdata/sql" ]; then
+    SQL="$SYSPREFIX/usr/share/irdata/sql"     # system-wide location of the templates
+else
+    echo "Cannot locate the irdata sql directory." 1>&2
     exit 1
 fi
 
@@ -58,7 +68,7 @@ PROCESSES=4                                   # number of process groups to use
 # followed by calculated definitions that should probably
 # not be changed.
 
-# NOTE: To add: DIP HPRD INTACT
+# NOTE: To add for downloading: BIOGRID DIP HPRD INTACT MINT
 XMLSOURCES="BIND_TRANSLATION CORUM INNATEDB MATRIXDB MPACT MPPI"
 TABSOURCES="MPIDB"
 OTHERSOURCES="TAXONOMY UNIPROT"
@@ -155,7 +165,7 @@ MPIDB_DIR_NAME="MPIDB"
 # MPIDB provides no XML files.
 
 ############################################################
-# MPPI
+# MPPI (also known as MIPS)
 
 MPPI_DOWNLOAD_FILES="mppi.gz"
 MPPI_MIRROR='http://mips.gsf.de'

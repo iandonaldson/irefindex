@@ -1,14 +1,14 @@
 #!/bin/sh
 
 if [ -e "irdata-config" ]; then
-    . 'irdata-config'
+    . "$PWD/irdata-config"
 elif [ -e "scripts/irdata-config" ]; then
     . 'scripts/irdata-config'
 else
     . 'irdata-config'
 fi
 
-if [ "$1" == '--help' ]; then
+if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME [ --all | <source>... | - ]
 
@@ -24,7 +24,7 @@ SOURCES=$*
 
 # Expand the sources if appropriate.
 
-if [ "$SOURCES" == '--all' ]; then
+if [ "$SOURCES" = '--all' ]; then
     SOURCES=$ALLSOURCES
 elif [ ! "$SOURCES" ]; then
     echo "$PROGNAME: No sources specified." 1>&2
@@ -33,7 +33,7 @@ fi
 
 # Unpack archives given in standard input.
 
-if [ "$SOURCES" == "-" ]; then
+if [ "$SOURCES" = "-" ]; then
     "$SCRIPTS/irunpack-archive" -
 
 # Unpack source-specified archives.

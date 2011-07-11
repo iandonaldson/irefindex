@@ -1,0 +1,34 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME ( --all | <source>... )
+
+Import data from the different sources into the configured database. The sources
+are configured to be the following when --all is specified:
+
+$XMLSOURCES
+EOF
+    exit 1
+fi
+
+SOURCES=$*
+
+if [ "$SOURCES" = '--all' ]; then
+    SOURCES=$XMLSOURCES
+elif [ ! "$SOURCES" ]; then
+    echo "$PROGNAME: No sources specified." 1>&2
+    exit 1
+fi
+
+for SOURCE in $SOURCES ; do
+    "$SCRIPTS/irimport-source" "$SOURCE"
+done

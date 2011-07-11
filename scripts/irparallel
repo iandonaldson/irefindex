@@ -1,14 +1,14 @@
 #!/bin/sh
 
 if [ -e "irdata-config" ]; then
-    . 'irdata-config'
+    . "$PWD/irdata-config"
 elif [ -e "scripts/irdata-config" ]; then
     . 'scripts/irdata-config'
 else
     . 'irdata-config'
 fi
 
-if [ "$1" == '--help' ]; then
+if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Take a list of items read from standard input and process them in parallel.
 
