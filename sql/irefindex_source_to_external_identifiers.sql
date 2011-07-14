@@ -5,18 +5,48 @@ begin;
 -- Define the interactors, interactions and experiments in terms of their primary references.
 
 insert into irefindex_entities
-    select distinct source, filename, scope, parentid, dblabel, refvalue
+    select distinct source, filename, scope, parentid, dblabel, refvalue, 'external'
     from xml_xref
-    where (
+    where source = '<source>'
         -- for interactions and interactors, the reference must describe the entity itself
-        property = scope
+        and property = scope
         and reftype = 'primaryRef'
         or -- for experiments, the a bibliographic reference is used
         property = 'bibref'
         and scope = 'experimentDescription'
-        and reftype = 'primaryRef'
-        )
-        and source = '<source>';
+        and reftype = 'primaryRef';
+
+analyze irefindex_entities;
+
+-- Provide an arbitrary internal identifier for interactors and interactions with no primary reference.
+
+insert into irefindex_entities
+    select source, filename, 'interactor', interactorid, source, nextval('irefindex_interactorid'), 'internal'
+    from (
+        select distinct I.source, I.filename, I.interactorid
+        from xml_interactors as I
+        left outer join irefindex_entities as X
+            on I.source = X.source
+            and I.filename = X.filename
+            and X.scope = 'interactor'
+            and I.interactorid = X.parentid
+        where X.parentid is null
+            and I.source = '<source>'
+        ) as Y;
+
+insert into irefindex_entities
+    select source, filename, 'interaction', interactionid, source, nextval('irefindex_interactionid'), 'internal'
+    from (
+        select distinct I.source, I.filename, I.interactionid
+        from xml_interactors as I
+        left outer join irefindex_entities as X
+            on I.source = X.source
+            and I.filename = X.filename
+            and X.scope = 'interaction'
+            and I.interactionid = X.parentid
+        where X.parentid is null
+            and I.source = '<source>'
+        ) as Y;
 
 analyze irefindex_entities;
 

@@ -117,12 +117,12 @@ class PSIParser(EmptyElementParser):
 
     attribute_names = {
         # references    : property, reftype, id, dblabel, dbcode, reftypelabel, reftypecode
-        "primaryRef"    : ("context", "element", "id", "db", "dbAc", "refType", "refTypeAc"), # also secondary and version
-        "secondaryRef"  : ("context", "element", "id", "db", "dbAc", "refType", "refTypeAc"),
+        "primaryRef"    : ("property", "element", "id", "db", "dbAc", "refType", "refTypeAc"), # also secondary and version
+        "secondaryRef"  : ("property", "element", "id", "db", "dbAc", "refType", "refTypeAc"),
         # names         : property, nametype, label, code, value
-        "shortLabel"    : ("context", "element", None, None, "content"),
-        "fullName"      : ("context", "element", None, None, "content"),
-        "alias"         : ("context", "element", "type", "typeAc", "content"),
+        "shortLabel"    : ("property", "element", None, None, "content"),
+        "fullName"      : ("property", "element", None, None, "content"),
+        "alias"         : ("property", "element", "type", "typeAc", "content"),
         # organisms     : taxid
         "hostOrganism"  : ("ncbiTaxId",)
         }
@@ -152,17 +152,39 @@ class PSIParser(EmptyElementParser):
             "experimentDescription" : 0
             }
 
-    def get_scope(self):
+    def get_scope_and_context(self):
 
         """
         Get the scope of the current path as the entity to which the current
-        attributes and content belong.
+        attributes and content belong. Return this scope and its parent, or
+        return (None, None) if no scope can be found.
         """
 
+        scope = None
         for part in self.current_path[-1::-1]:
-            if part in self.scopes.values():
-                return part
-        return None
+
+            # Define a scope if a suitable element is found.
+
+            if scope is None and part in self.scopes.values():
+                scope = part
+
+            # Define the context if a scope has been found.
+
+            elif scope is not None:
+                return scope, part
+        else:
+            return scope, None
+
+        return None, None
+
+    def is_implicit(self, name, parent):
+
+        """
+        Return whether the element with the given 'name' defines an implicit
+        (not externally referenced) element, given the 'parent' element name.
+        """
+
+        return name == "participant" or name == "interactor" and parent == "participant"
 
     def characters(self, content):
         EmptyElementParser.characters(self, content.strip())
@@ -176,13 +198,18 @@ class PSIParser(EmptyElementParser):
 
         if self.scopes.has_key(name):
             name = self.scopes[name]
+
             if self.identifiers.has_key(name):
+                parent = self.current_path[-1]
 
                 # Handle PSI MI XML 1.0 identifiers which are absent.
-                # Use a transient participant identifier since these might be
+                # Use transient participant identifiers since these might be
+                # reused within interactions (seen in InnateDB).
+                # Also use transient interactor identifiers where their
+                # relationship to participants is implicit, since these might be
                 # reused within interactions (seen in InnateDB).
 
-                if not attrs.has_key("id") or name == "participant":
+                if not attrs.has_key("id") or self.is_implicit(name, parent):
                     attrs = dict(attrs)
                     attrs["id"] = str(self.identifiers[name])
                     self.identifiers[name] += 1
@@ -196,7 +223,7 @@ class PSIParser(EmptyElementParser):
 
         "Handle a completed element with the given 'content'."
 
-        element, parent, context, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
+        element, parent, property, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
         attrs = dict(self.current_attrs[-1])
 
         # Get mappings from experiments to interactions.
@@ -211,13 +238,13 @@ class PSIParser(EmptyElementParser):
 
         elif element == "interactorRef":
             if parent == "participant":
-                self.writer.append((element, content or attrs["ref"], self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, content or attrs["ref"], "explicit", self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Implicit interactor-to-participant mappings (applying only within participant elements).
 
         elif element == "interactor":
             if parent == "participant":
-                self.writer.append((element, attrs["id"], self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, attrs["id"], "implicit", self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Implicit mappings applying only within an interaction scope.
 
@@ -229,9 +256,13 @@ class PSIParser(EmptyElementParser):
 
         elif element == "organism":
             if parent == "interactor":
-                self.writer.append((element, parent, self.path_to_attrs["interactor"]["id"], attrs["ncbiTaxId"]))
+                implicit = self.is_implicit(parent, property) and "implicit" or "explicit"
+                self.writer.append((element, parent, self.path_to_attrs["interactor"]["id"], implicit, attrs["ncbiTaxId"]))
 
-        # Get other data.
+        # Get other data. This is of the form...
+        # section/property/parent/element
+        # For example:
+        # interactorList/interactor/xref/primaryRef
 
         else:
             # Only consider supported elements.
@@ -242,25 +273,32 @@ class PSIParser(EmptyElementParser):
 
             # Exclude certain occurrences (as also done above).
 
-            if context == "interactor" and section not in ("participant", "interactorList") or \
-                context == "participant" and section != "participantList":
+            if property == "interactor" and section not in ("participant", "interactorList") or \
+                property == "participant" and section != "participantList":
                 return
 
             # Insist on a scope.
 
-            scope = self.get_scope()
+            scope, context = self.get_scope_and_context()
             if not scope:
                 return
+
+            # Determine whether the information is provided as part of separate
+            # (explicit) or embedded (implicit) definitions.
+
+            implicit = self.is_implicit(scope, context) and "implicit" or "explicit"
 
             # Gather together attributes.
 
             if content:
                 attrs["content"] = content
 
-            # Get the context, using a proper scope if appropriate.
+            # Get the property and element.
 
-            attrs["context"] = context
+            attrs["property"] = property
             attrs["element"] = element
+
+            # Copy the required attributes.
 
             values = []
             for key in names:
@@ -273,7 +311,7 @@ class PSIParser(EmptyElementParser):
 
             # The parent indicates the data type as is only used to select the output file.
 
-            self.writer.append((parent, scope, self.path_to_attrs[scope]["id"]) + tuple(values))
+            self.writer.append((parent, scope, self.path_to_attrs[scope]["id"], implicit) + tuple(values))
 
     def parse(self, filename):
         self.writer.start(filename)

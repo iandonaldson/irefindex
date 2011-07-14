@@ -9,8 +9,14 @@ create table irefindex_entities (
     parentid varchar not null, -- integer for PSI MI XML 2.5
     db varchar not null,
     acc varchar not null,
+    reftype varchar not null,
     primary key (source, filename, scope, parentid, db, acc)
 );
+
+-- Sequences for internal references where no external references can be found.
+
+create sequence irefindex_interactorid;
+create sequence irefindex_interactionid;
 
 -- Associate the names and xrefs with the primary references.
 
