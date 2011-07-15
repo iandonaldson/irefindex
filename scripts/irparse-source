@@ -91,7 +91,7 @@ for XMLFILE in $XMLFILES; do
 done
 
 if [ ! "$NO_PARSE" ]; then
-    if "$TOOLS/irdata_xml2tab.py" --reset "$OUTPUTDIR" "$SOURCE" $XMLFILES ; then
+    if "$TOOLS/irdata_xml2tab.py" "$OUTPUTDIR" "$SOURCE" $XMLFILES ; then
         echo $SOURCE
     fi
 else

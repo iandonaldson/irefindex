@@ -40,7 +40,7 @@ file, such relationships are implicit when an experiment or interactor is
 included within an interaction.
 
 Participant properties are defined in terms of an interactor as part of an
-interaction.
+interaction. Participants are always implicitly referenced.
 """
 
 from irdata.data import *
@@ -348,13 +348,6 @@ class Writer:
     def get_filename(self, key):
         return os.path.join(self.directory, "%s%stxt" % (key, os.path.extsep))
 
-    def reset(self):
-        for key in self.filenames:
-            try:
-                os.remove(self.get_filename(key))
-            except OSError:
-                pass
-
     def start(self, filename):
         self.filename = filename
 
@@ -362,7 +355,7 @@ class Writer:
             os.mkdir(self.directory)
 
         for key in self.filenames:
-            self.files[key] = codecs.open(self.get_filename(key), "a", encoding="utf-8")
+            self.files[key] = codecs.open(self.get_filename(key), "w", encoding="utf-8")
 
     def append(self, data):
         element = data[0]
@@ -386,18 +379,15 @@ if __name__ == "__main__":
     progname = os.path.split(sys.argv[0])[-1]
 
     try:
-        reset = sys.argv[1] == "--reset"
-        i = reset and 2 or 1
+        i = 1
         data_directory = sys.argv[i]
         source = sys.argv[i+1]
         filenames = sys.argv[i+2:]
     except IndexError:
-        print >>sys.stderr, "Usage: %s [ --reset ] <data directory> <data source name> <data file>..." % progname
+        print >>sys.stderr, "Usage: %s <data directory> <data source name> <data file>..." % progname
         sys.exit(1)
 
     writer = Writer(data_directory, source)
-    if reset:
-        writer.reset()
 
     parser = PSIParser(writer)
     try:
