@@ -271,7 +271,9 @@ class PSIParser(EmptyElementParser):
             if not names:
                 return
 
-            # Exclude certain occurrences (as also done above).
+            # Exclude certain element occurrences (as also done above).
+            # Such occurrences do not define entities and are therefore not of
+            # interest.
 
             if property == "interactor" and section not in ("participant", "interactorList") or \
                 property == "participant" and section != "participantList":

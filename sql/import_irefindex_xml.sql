@@ -65,7 +65,7 @@ insert into xml_interactors
 -- other name definitions.
 
 insert into xml_names
-    select N.source, N.filename, N.scope, N.parentid, property, nametype, typelabel, typecode, name
+    select distinct N.source, N.filename, N.scope, N.parentid, property, nametype, typelabel, typecode, name
     from tmp_names as N
     inner join tmp_interactors as I
         on N.source = I.source
@@ -82,7 +82,7 @@ insert into xml_names
 -- all other name definitions.
 
 insert into xml_xref
-    select X.source, X.filename, X.scope, X.parentid, property, reftype, refvalue, dblabel, dbcode, reftypelabel, reftypecode
+    select distinct X.source, X.filename, X.scope, X.parentid, property, reftype, refvalue, dblabel, dbcode, reftypelabel, reftypecode
     from tmp_xref as X
     inner join tmp_interactors as I
         on X.source = I.source
@@ -99,7 +99,7 @@ insert into xml_xref
 -- interactors, plus all other name definitions.
 
 insert into xml_organisms
-    select O.source, O.filename, O.scope, O.parentid, taxid
+    select distinct O.source, O.filename, O.scope, O.parentid, taxid
     from tmp_organisms as O
     inner join tmp_interactors as I
         on O.source = I.source
