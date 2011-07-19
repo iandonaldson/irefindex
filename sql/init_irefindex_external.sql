@@ -50,6 +50,10 @@ create table irefindex_xref (
 
 create table irefindex_interactors (
     source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null, -- integer for PSI MI XML 2.5
+    interactionid varchar not null, -- integer for PSI MI XML 2.5
     db varchar not null,
     acc varchar not null,
     interactiondb varchar not null,
@@ -61,6 +65,10 @@ create table irefindex_interactors (
 
 create table irefindex_experiments (
     source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    experimentid varchar not null, -- integer for PSI MI XML 2.5
+    interactionid varchar not null, -- integer for PSI MI XML 2.5
     db varchar not null,
     acc varchar not null,
     interactiondb varchar not null,

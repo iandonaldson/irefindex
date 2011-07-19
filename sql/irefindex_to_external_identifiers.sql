@@ -113,9 +113,7 @@ analyze irefindex_xref;
 -- Map the interactors to interactions using primary references.
 
 insert into irefindex_interactors
-    select A.source, A.db, A.acc,
-        B.db as interactiondb, B.acc as interactionacc,
-        I.participantid
+    select I.source, I.filename, I.entry, interactorid, interactionid, A.db, A.acc, B.db, B.acc, participantid
     from irefindex_entities as A
     inner join xml_interactors as I
         on A.source = I.source
@@ -135,8 +133,7 @@ analyze irefindex_interactors;
 -- Map the experiments to interactions using primary references.
 
 insert into irefindex_experiments
-    select A.source, A.db, A.acc,
-        B.db as interactiondb, B.acc as interactionacc
+    select I.source, I.filename, I.entry, experimentid, interactionid, A.db, A.acc, B.db, B.acc
     from irefindex_entities as A
     inner join xml_experiments as I
         on A.source = I.source
