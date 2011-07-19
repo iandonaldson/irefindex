@@ -3,6 +3,7 @@ begin;
 create table xml_experiments (
     source varchar not null,
     filename varchar not null,
+    entry integer not null,
     experimentid varchar not null, -- integer for PSI MI XML 2.5
     interactionid varchar not null -- integer for PSI MI XML 2.5
 );
@@ -10,6 +11,7 @@ create table xml_experiments (
 create table xml_interactors (
     source varchar not null,
     filename varchar not null,
+    entry integer not null,
     interactorid varchar not null, -- integer for PSI MI XML 2.5
     participantid varchar not null, -- integer for PSI MI XML 2.5
     interactionid varchar not null -- integer for PSI MI XML 2.5
@@ -18,6 +20,7 @@ create table xml_interactors (
 create table xml_names (
     source varchar not null,
     filename varchar not null,
+    entry integer not null,
     scope varchar not null,
     parentid varchar not null, -- integer for PSI MI XML 2.5
     property varchar not null,
@@ -30,6 +33,7 @@ create table xml_names (
 create table xml_xref (
     source varchar not null,
     filename varchar not null,
+    entry integer not null,
     scope varchar not null,
     parentid varchar not null, -- integer for PSI MI XML 2.5
     property varchar not null,
@@ -44,6 +48,7 @@ create table xml_xref (
 create table xml_organisms (
     source varchar not null,
     filename varchar not null,
+    entry integer not null,
     scope varchar not null,
     parentid varchar not null, -- integer for PSI MI XML 2.5
     taxid integer not null

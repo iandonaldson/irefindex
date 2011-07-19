@@ -128,6 +128,7 @@ class PSIParser(EmptyElementParser):
         }
 
     scopes = {
+        "entry"                 : "entry",
         "interaction"           : "interaction",
         "interactor"            : "interactor",
         "participant"           : "participant",
@@ -143,9 +144,10 @@ class PSIParser(EmptyElementParser):
         EmptyElementParser.__init__(self)
         self.writer = writer
 
-        # For PSI MI XML version 1.0 files without identifiers.
+        # For transient identifiers.
 
         self.identifiers = {
+            "entry"                 : 0,
             "interaction"           : 0,
             "interactor"            : 0,
             "participant"           : 0,
@@ -203,8 +205,11 @@ class PSIParser(EmptyElementParser):
                 parent = self.current_path[-1]
 
                 # Handle PSI MI XML 1.0 identifiers which are absent.
+                # Also assign identifiers to entries.
+
                 # Use transient participant identifiers since these might be
                 # reused within interactions (seen in InnateDB).
+
                 # Also use transient interactor identifiers where their
                 # relationship to participants is implicit, since these might be
                 # reused within interactions (seen in InnateDB).
@@ -223,41 +228,45 @@ class PSIParser(EmptyElementParser):
 
         "Handle a completed element with the given 'content'."
 
+        if "entry" not in self.current_path:
+            return
+
         element, parent, property, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
         attrs = dict(self.current_attrs[-1])
+        entry = self.path_to_attrs["entry"]["id"]
 
         # Get mappings from experiments to interactions.
         # The "ref" attribute is from PSI MI XML 1.0.
 
         if element == "experimentRef":
             if parent == "experimentList":
-                self.writer.append((element, content or attrs["ref"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, entry, content or attrs["ref"], self.path_to_attrs["interaction"]["id"]))
 
         # And mappings from interactors to participants to interactions.
         # The "ref" attribute is from PSI MI XML 1.0.
 
         elif element == "interactorRef":
             if parent == "participant":
-                self.writer.append((element, content or attrs["ref"], "explicit", self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, entry, content or attrs["ref"], "explicit", self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Implicit interactor-to-participant mappings (applying only within participant elements).
 
         elif element == "interactor":
             if parent == "participant":
-                self.writer.append((element, attrs["id"], "implicit", self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, entry, attrs["id"], "implicit", self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Implicit mappings applying only within an interaction scope.
 
         elif element == "experimentDescription":
             if self.path_to_attrs.has_key("interaction"):
-                self.writer.append((element, attrs["id"], self.path_to_attrs["interaction"]["id"]))
+                self.writer.append((element, entry, attrs["id"], self.path_to_attrs["interaction"]["id"]))
 
         # Interactor organisms.
 
         elif element == "organism":
             if parent == "interactor":
                 implicit = self.is_implicit(parent, property) and "implicit" or "explicit"
-                self.writer.append((element, parent, self.path_to_attrs["interactor"]["id"], implicit, attrs["ncbiTaxId"]))
+                self.writer.append((element, entry, parent, self.path_to_attrs["interactor"]["id"], implicit, attrs["ncbiTaxId"]))
 
         # Get other data. This is of the form...
         # section/property/parent/element
@@ -282,7 +291,7 @@ class PSIParser(EmptyElementParser):
             # Insist on a scope.
 
             scope, context = self.get_scope_and_context()
-            if not scope:
+            if not scope or scope == "entry":
                 return
 
             # Determine whether the information is provided as part of separate
@@ -313,7 +322,7 @@ class PSIParser(EmptyElementParser):
 
             # The parent indicates the data type as is only used to select the output file.
 
-            self.writer.append((parent, scope, self.path_to_attrs[scope]["id"], implicit) + tuple(values))
+            self.writer.append((parent, entry, scope, self.path_to_attrs[scope]["id"], implicit) + tuple(values))
 
     def parse(self, filename):
         self.writer.start(filename)
@@ -348,6 +357,13 @@ class Writer:
     def get_filename(self, key):
         return os.path.join(self.directory, "%s%stxt" % (key, os.path.extsep))
 
+    def reset(self):
+        for key in self.filenames:
+            try:
+                os.remove(self.get_filename(key))
+            except OSError:
+                pass
+
     def start(self, filename):
         self.filename = filename
 
@@ -355,7 +371,7 @@ class Writer:
             os.mkdir(self.directory)
 
         for key in self.filenames:
-            self.files[key] = codecs.open(self.get_filename(key), "w", encoding="utf-8")
+            self.files[key] = codecs.open(self.get_filename(key), "a", encoding="utf-8")
 
     def append(self, data):
         element = data[0]
@@ -388,6 +404,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     writer = Writer(data_directory, source)
+    writer.reset()
 
     parser = PSIParser(writer)
     try:

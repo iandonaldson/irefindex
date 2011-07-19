@@ -69,6 +69,7 @@ PROCESSES=4                                   # number of process groups to use
 # not be changed.
 
 # NOTE: To add for downloading: BIOGRID DIP HPRD INTACT MINT
+# NOTE: To add for acquisition by other means: OPHID
 XMLSOURCES="BIND_TRANSLATION CORUM INNATEDB MATRIXDB MPACT MPPI"
 TABSOURCES="MPIDB"
 OTHERSOURCES="TAXONOMY UNIPROT"

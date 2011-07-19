@@ -5,6 +5,7 @@ begin;
 create table irefindex_entities (
     source varchar not null,
     filename varchar not null,
+    entry integer not null,
     scope varchar not null,
     parentid varchar not null, -- integer for PSI MI XML 2.5
     db varchar not null,
@@ -17,6 +18,7 @@ create table irefindex_entities (
 
 create sequence irefindex_interactorid;
 create sequence irefindex_interactionid;
+create sequence irefindex_experimentid;
 
 -- Associate the names and xrefs with the primary references.
 
