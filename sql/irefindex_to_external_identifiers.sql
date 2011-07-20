@@ -80,36 +80,6 @@ insert into irefindex_entities
 
 analyze irefindex_entities;
 
--- Associate the names and xrefs with the primary references.
-
-insert into irefindex_names
-    select A.source, A.scope, A.db, A.acc,
-        B.nametype, B.typelabel, B.typecode, name
-    from irefindex_entities as A
-    inner join xml_names as B
-        on A.source = B.source
-        and A.filename = B.filename
-        and A.entry = B.entry
-        and A.parentid = B.parentid
-        and A.scope = B.scope
-        and B.property = B.scope;
-
-analyze irefindex_names;
-
-insert into irefindex_xref
-    select A.source, A.scope, A.db, A.acc,
-        B.reftype, B.refvalue, B.dblabel, B.dbcode, B.reftypelabel, B.reftypecode
-    from irefindex_entities as A
-    inner join xml_xref as B
-        on A.source = B.source
-        and A.filename = B.filename
-        and A.entry = B.entry
-        and A.parentid = B.parentid
-        and A.scope = B.scope
-        and B.property = B.scope;
-
-analyze irefindex_xref;
-
 -- Map the interactors to interactions using primary references.
 
 insert into irefindex_interactors

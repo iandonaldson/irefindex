@@ -2,6 +2,14 @@ begin;
 
 -- NOTE: Tables based on the schema.
 
+create temporary table tmp_experiments (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    experimentid varchar not null, -- integer for PSI MI XML 2.5
+    interactionid varchar not null -- integer for PSI MI XML 2.5
+);
+
 create temporary table tmp_interactors (
     source varchar not null,
     filename varchar not null,
@@ -52,11 +60,17 @@ create temporary table tmp_organisms (
     taxid integer not null
 );
 
-\copy xml_experiments from '<directory>/experiment.txt'
+\copy tmp_experiments from '<directory>/experiment.txt'
 \copy tmp_interactors from '<directory>/interactor.txt'
 \copy tmp_names from '<directory>/names.txt'
 \copy tmp_xref from '<directory>/xref.txt'
 \copy tmp_organisms from '<directory>/organisms.txt'
+
+-- De-duplicate experiment identifier usage (seen in OPHID).
+
+insert into xml_experiments
+    select distinct source, filename, entry, experimentid, interactionid
+    from tmp_experiments;
 
 -- Assume that interactor identifiers will use one refclass scheme or the other,
 -- not both at the same time.
