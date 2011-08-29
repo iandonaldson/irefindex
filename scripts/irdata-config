@@ -3,9 +3,10 @@
 ############################################################
 # General configuration settings for irdata.
 
-SYSPREFIX=                                  # system-wide installation prefix
+SYSPREFIX=                                  # system-wide installation root
 EMAIL=                                      # e-mail address for anonymous FTP logins
-DATABASE=irdata
+DATABASE=irdata                             # database name
+DATA=${DATA:-}                              # user defined data directory location
 
 
 
@@ -15,39 +16,68 @@ DATABASE=irdata
 PROGNAME=`basename "$0"`
 SCRIPTS=`dirname "$0"`
 
-alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
+# Allow directories to be created.
 
-if [ -e "$SCRIPTS/../tools" ]; then
-    TOOLS=`normpath "$SCRIPTS/../tools"`      # relative location of the tools
-elif [ -e "$SYSPREFIX/usr/share/irdata/tools" ]; then
-    TOOLS="$SYSPREFIX/usr/share/irdata/tools" # system-wide location of the tools
-else
-    echo "Cannot locate the irdata tools directory." 1>&2
-    exit 1
+if [ "$1" = '--make-system-dirs' ]; then
+    MAKEDIRS="$1"
+    shift 1
 fi
 
+alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
+
+# Tools.
+
+if [ -e "$SCRIPTS/../tools" ]; then
+    TOOLS=`normpath "$SCRIPTS/../tools"`
+else
+    TOOLS="$SCRIPTS"
+fi
+
+# Search in a relative location (if running the software from the distribution),
+# or search in a system-wide location (if running the installed software).
+
+# Templates.
+
+SYSSQL="$SYSPREFIX/usr/share/irdata/sql"
+
 if [ -e "$SCRIPTS/../sql" ]; then
-    SQL=`normpath "$SCRIPTS/../sql"`          # relative location of the templates
-elif [ -e "$SYSPREFIX/usr/share/irdata/sql" ]; then
-    SQL="$SYSPREFIX/usr/share/irdata/sql"     # system-wide location of the templates
+    SQL=`normpath "$SCRIPTS/../sql"`
+elif [ -e "$SYSSQL" ]; then
+    SQL="$SYSSQL"
 else
     echo "Cannot locate the irdata sql directory." 1>&2
     exit 1
 fi
 
-if [ -e "$SCRIPTS/../data" ]; then
-    DATA=`normpath "$SCRIPTS/../data"`        # relative location of the data
-elif [ -e "$SYSPREFIX/var/lib/irdata/data" ]; then
-    DATA="$SYSPREFIX/var/lib/irdata/data"     # system-wide location of the data
+# Data directory.
+
+SYSDATA="$SYSPREFIX/var/lib/irdata/data"
+
+if [[ "$DATA" && -e "$DATA" ]]; then
+    :
+elif [ -e "$SCRIPTS/../data" ]; then
+    DATA=`normpath "$SCRIPTS/../data"`
+elif [ -e "$SYSDATA" ]; then
+    DATA="$SYSDATA"
+elif [ "$MAKEDIRS" ]; then
+    mkdir -p "$SYSDATA"
+    DATA="$SYSDATA"
 else
     echo "Cannot locate the irdata data directory." 1>&2
     exit 1
 fi
 
+# Log file directory.
+
+SYSLOGS="$SYSPREFIX/var/log/irdata"
+
 if [ -e "$SCRIPTS/../logs" ]; then
-    LOGS=`normpath "$SCRIPTS/../logs"`        # relative location of the logs
-elif [ -e "$SYSPREFIX/var/log/irdata" ]; then
-    LOGS="$SYSPREFIX/var/log/irdata"          # system-wide location of the logs
+    LOGS=`normpath "$SCRIPTS/../logs"`
+elif [ -e "$SYSLOGS" ]; then
+    LOGS="$SYSLOGS"
+elif [ "$MAKEDIRS" ]; then
+    mkdir -p "$SYSLOGS"
+    LOGS="$SYSLOGS"
 else
     LOGS=
 fi
