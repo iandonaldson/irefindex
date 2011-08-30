@@ -14,7 +14,7 @@ Usage: $PROGNAME [ --check ] [ --no-parse ] <source>
 
 Parse data from the specified source. The following sources are supported:
 
-$XMLSOURCES
+$ALLSOURCES
 
 If the source is specified as - it is read from standard input.
 EOF
@@ -40,7 +40,10 @@ if [ "$SOURCE" = '-' ]; then
 fi
 
 eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
-eval FILEPATTERN='$'"$SOURCE"_XML_FILE_PATTERN
+eval XMLFILEPATTERN='$'"$SOURCE"_XML_FILE_PATTERN
+eval OTHERFILEPATTERN='$'"$SOURCE"_OTHER_FILE_PATTERN
+FILEPATTERN=${XMLFILEPATTERN:-$OTHERFILEPATTERN}
+eval PARSER='$'"$SOURCE"_PARSER
 
 # Check for improper source names which don't map to directories.
 
@@ -52,7 +55,7 @@ fi
 # Check for absent file-matching patterns.
 
 if [ ! "$FILEPATTERN" ]; then
-    echo "$PROGNAME: $SOURCE does not provide XML files." 1>&2
+    echo "$PROGNAME: $SOURCE does not provide any files." 1>&2
     exit 1
 fi
 
@@ -71,28 +74,34 @@ if [ ! -e "$OUTPUTDIR" ]; then
     mkdir -p "$OUTPUTDIR"
 fi
 
-XMLFILES="$DATADIR/$FILEPATTERN"
+FILES="$DATADIR/$FILEPATTERN"
 
-for XMLFILE in $XMLFILES; do
+for FILE in $FILES; do
 
     # Where the pattern did not expand, expect the pattern as a file.
 
-    if [ "$XMLFILE" = "$XMLFILES" ] && [ ! -e "$XMLFILE" ]; then
+    if [ "$FILE" = "$FILES" ] && [ ! -e "$FILE" ]; then
         echo "$PROGNAME: Source $SOURCE does not appear to provide files." 1>&2
         exit 1
     fi
 
-    # Test for the file and run xmllint.
+    # Test for any XML file and run xmllint.
 
-    if [ ! -e "$XMLFILE" ] || [ "$CHECK" ] && ! xmllint "$XMLFILE" > /dev/null 2>&1 ; then
+    if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2>&1 ; then
         echo "$PROGNAME: File $XMLFILE in source $SOURCE failed." 1>&2
         STATUS=1
     fi
 done
 
 if [ ! "$NO_PARSE" ]; then
-    if "$TOOLS/irdata_xml2tab.py" "$OUTPUTDIR" "$SOURCE" $XMLFILES ; then
-        echo $SOURCE
+    if [ "$XMLFILEPATTERN" ]; then
+        if "$TOOLS/irdata_xml2tab.py" "$OUTPUTDIR" "$SOURCE" $FILES ; then
+            echo $SOURCE
+        fi
+    else
+        if "$TOOLS/$PARSER" "$OUTPUTDIR" $FILES ; then
+            echo $SOURCE
+        fi
     fi
 else
     echo $SOURCE

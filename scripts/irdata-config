@@ -234,3 +234,5 @@ UNIPROT_RELEASE_INFO="reldate.txt"
 UNIPROT_RELEASE_URL="$UNIPROT_MIRROR/pub/databases/uniprot/$UNIPROT_RELEASE/knowledgebase/complete/"
 UNIPROT_DIR_NAME="UniProt"
 # UniProt provides no XML files.
+UNIPROT_OTHER_FILE_PATTERN='*.dat.gz'
+UNIPROT_PARSER='irdata_parse_uniprot.py'

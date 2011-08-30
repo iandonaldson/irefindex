@@ -15,7 +15,7 @@ Usage: $PROGNAME [ --check ] [ --no-parse ] ( --all | <source>... )
 Parse or just check data from the different sources. These are configured to be
 the following when --all is specified:
 
-$XMLSOURCES
+$ALLSOURCES
 EOF
     exit 1
 fi
@@ -33,7 +33,7 @@ fi
 SOURCES=$*
 
 if [ "$SOURCES" = '--all' ]; then
-    SOURCES=$XMLSOURCES
+    SOURCES=$ALLSOURCES
 elif [ ! "$SOURCES" ]; then
     echo "$PROGNAME: No sources specified." 1>&2
     exit 1
