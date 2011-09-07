@@ -15,7 +15,7 @@ Usage: $PROGNAME ( --all | <source>... )
 Import data from the different sources into the configured database. The sources
 are configured to be the following when --all is specified:
 
-$XMLSOURCES
+$ALLSOURCES
 EOF
     exit 1
 fi

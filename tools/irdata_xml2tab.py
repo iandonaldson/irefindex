@@ -163,6 +163,11 @@ class PSIParser(EmptyElementParser):
         """
 
         scope = None
+
+        # Go through the path from the deepest element name to the root, looking
+        # for a scope name. Then, with a scope name, get the next element as the
+        # more general context.
+
         for part in self.current_path[-1::-1]:
 
             # Define a scope if a suitable element is found.

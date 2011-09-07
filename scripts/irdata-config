@@ -102,7 +102,7 @@ PROCESSES=4                                   # number of process groups to use
 # NOTE: To add for acquisition by other means: OPHID
 XMLSOURCES="BIND_TRANSLATION CORUM INNATEDB MATRIXDB MPACT MPPI"
 TABSOURCES="MPIDB"
-OTHERSOURCES="TAXONOMY UNIPROT"
+OTHERSOURCES="GENE REFSEQ TAXONOMY UNIPROT"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
@@ -136,6 +136,17 @@ CORUM_XML_FILE_PATTERN='*.xml'
 
 DIP_DIR_NAME="DIP"
 DIP_XML_FILE_PATTERN='*.mif25'
+
+############################################################
+# Entrez Gene
+
+GENE_DOWNLOAD_FILES="gene2refseq.gz"
+GENE_MIRROR='ftp://ftp.ncbi.nlm.nih.gov'
+
+GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"
+GENE_DIR_NAME="Entrez_Gene"
+GENE_OTHER_FILE_PATTERN='*.gz'
+GENE_PARSER='irdata_parse_gene2refseq.sh'
 
 ############################################################
 # HPRD
@@ -212,6 +223,17 @@ OPHID_DIR_NAME="OPHID"
 OPHID_XML_FILE_PATTERN='*.xml'
 
 ############################################################
+# RefSeq
+
+REFSEQ_DOWNLOAD_FILES='*.protein.gpff.gz'
+REFSEQ_MIRROR='ftp://ftp.ncbi.nih.gov/refseq/release/'
+
+REFSEQ_RELEASE_URL="$REFSEQ_MIRROR/complete/"
+REFSEQ_DIR_NAME="RefSeq"
+REFSEQ_OTHER_FILE_PATTERN='*.gnp'
+REFSEQ_PARSER='irdata_parse_refseq.py'
+
+############################################################
 # Entrez Taxonomy (not an interaction source)
 
 TAXONOMY_DOWNLOAD_FILES="taxdump.tar.gz"
@@ -233,6 +255,5 @@ UNIPROT_RELEASE='current_release'
 UNIPROT_RELEASE_INFO="reldate.txt"
 UNIPROT_RELEASE_URL="$UNIPROT_MIRROR/pub/databases/uniprot/$UNIPROT_RELEASE/knowledgebase/complete/"
 UNIPROT_DIR_NAME="UniProt"
-# UniProt provides no XML files.
 UNIPROT_OTHER_FILE_PATTERN='*.dat.gz'
 UNIPROT_PARSER='irdata_parse_uniprot.py'

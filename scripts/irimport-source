@@ -15,7 +15,7 @@ Usage: $PROGNAME <source>
 Import data from the specified source into the configured database. The
 following sources are supported:
 
-$XMLSOURCES
+$ALLSOURCES
 
 If the source is specified as - it is read from standard input.
 EOF
@@ -36,6 +36,7 @@ if [ ! "$DATABASE" ]; then
 fi
 
 eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+eval XMLFILEPATTERN='$'"$SOURCE"_XML_FILE_PATTERN
 
 # Check for improper source names which don't map to directories.
 
@@ -53,6 +54,13 @@ if [ ! -e "$IMPORTDATADIR" ]; then
     exit 1
 fi
 
-"$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_xml.sql" "$IMPORTDATADIR"
+# Import XML sources using a common template.
+
+if [ "$XMLFILEPATTERN" ]; then
+    "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_xml.sql" "$IMPORTDATADIR"
+else
+    source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
+    "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_$source.sql" "$IMPORTDATADIR"
+fi
 
 echo $SOURCE

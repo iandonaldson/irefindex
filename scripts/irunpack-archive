@@ -10,7 +10,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME <archive filename>...
+Usage: $PROGNAME --show-types | <archive filename>...
 
 This scripts accepts archive filenames and unpacks each archive into the
 directory in which it currently resides. If the list of archive files is
@@ -22,7 +22,15 @@ fi
 
 if [ ! "$*" ]; then
     echo "$PROGNAME: Archive filenames or - must be specified." 1>&2
+    echo "$PROGNAME: The --show-types option will show supported archive types." 1>&2
     exit 1
+fi
+
+ARCHIVETYPES="zip tar.gz"
+
+if [ "$1" = '--show-types' ]; then
+    echo $ARCHIVETYPES
+    exit 0
 fi
 
 while [ "$*" ]; do
@@ -47,12 +55,11 @@ while [ "$*" ]; do
     ARCHIVETYPE=${ARCHIVENAME#*.}
 
     # Process the most common archive types.
+    # This should correspond to the ARCHIVETYPES list above.
 
     if [ "$ARCHIVETYPE" = "zip" ]; then
         unzip "$ARCHIVE" -d "$ARCHIVEPATH"
     elif [ "$ARCHIVETYPE" = "tar.gz" ]; then
         tar zxf "$ARCHIVE" -C "$ARCHIVEPATH"
-    else
-        echo "$PROGNAME: Archive type $ARCHIVETYPE is not supported for archive: $ARCHIVE" 1>&2
     fi
 done

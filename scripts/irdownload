@@ -56,6 +56,8 @@ for SOURCE in $SOURCES; do
     for DOWNLOAD in $DOWNLOAD_FILES; do
         DOWNLOADED="$DATADIR/$DOWNLOAD"
 
+        # Here, DOWNLOAD may be a pattern, thus making DOWNLOADED also a pattern.
+
         if [ ! -e "$DOWNLOADED" ]; then
             if [ "$CHECK_ONLY" ]; then
                 echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2

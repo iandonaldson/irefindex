@@ -117,7 +117,7 @@ if __name__ == "__main__":
         data_directory = sys.argv[i]
         filename = sys.argv[i+1]
     except IndexError:
-        print >>sys.stderr, "Usage: %s <data directory> <data file>" % progname
+        print >>sys.stderr, "Usage: %s <output data directory> <data file>" % progname
         sys.exit(1)
 
     basename, ext = splitext(split(filename)[-1])

@@ -39,13 +39,22 @@ if [ "$SOURCES" = "-" ]; then
 # Unpack source-specified archives.
 
 else
+    ARCHIVETYPES=$("$SCRIPTS/irunpack-archive" --show-types)
+
     for SOURCE in $SOURCES; do
         eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
 
         DATADIR="$DATA/$SOURCEDIR"
 
-        for ARCHIVE in "$DATADIR/"*".zip" "$DATADIR/"*".tar.gz"; do
-            "$SCRIPTS/irunpack-archive" "$ARCHIVE"
+        for ARCHIVETYPE in $ARCHIVETYPES; do
+            PATTERN="$DATADIR/*.$ARCHIVETYPE"
+            for ARCHIVE in $PATTERN; do
+                if [ "$ARCHIVE" = "$PATTERN" ]; then
+                    :
+                else
+                    "$SCRIPTS/irunpack-archive" "$ARCHIVE"
+                fi
+            done
         done
     done
 fi
