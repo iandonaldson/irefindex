@@ -100,9 +100,10 @@ PROCESSES=4                                   # number of process groups to use
 
 # NOTE: To add for downloading: BIOGRID DIP HPRD INTACT MINT
 # NOTE: To add for acquisition by other means: OPHID
+
 XMLSOURCES="BIND_TRANSLATION CORUM INNATEDB MATRIXDB MPACT MPPI"
 TABSOURCES="MPIDB"
-OTHERSOURCES="GENE REFSEQ TAXONOMY UNIPROT"
+OTHERSOURCES="GENE MMDB PDB REFSEQ TAXONOMY UNIPROT"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
@@ -187,6 +188,17 @@ MINT_DIR_NAME="MINT"
 MINT_XML_FILE_PATTERN='*.xml'
 
 ############################################################
+# MMDB/PDB (for PDB taxonomy information)
+
+MMDB_DOWNLOAD_FILES="table"
+MMDB_MIRROR='ftp://ftp.ncbi.nih.gov'
+
+MMDB_RELEASE_URL="$MMDB_MIRROR/mmdb/pdbeast/"
+MMDB_DIR_NAME="MMDB"
+MMDB_OTHER_FILE_PATTERN='table'
+MMDB_PARSER='irdata_parse_mmdb.sh'
+
+############################################################
 # MPACT
 
 MPACT_DOWNLOAD_FILES="mpact-complete.psi25.xml.gz"
@@ -223,6 +235,17 @@ OPHID_DIR_NAME="OPHID"
 OPHID_XML_FILE_PATTERN='*.xml'
 
 ############################################################
+# PDB
+
+PDB_DOWNLOAD_FILES="pdbaa.gz"
+PDB_MIRROR='ftp://ftp.ncbi.nih.gov'
+
+PDB_RELEASE_URL="$PDB_MIRROR/blast/db/FASTA/"
+PDB_DIR_NAME="PDB"
+PDB_OTHER_FILE_PATTERN='*.gz *.fasta'
+PDB_PARSER='irdata_parse_pdb.sh'
+
+############################################################
 # RefSeq
 
 REFSEQ_DOWNLOAD_FILES='*.protein.gpff.gz'
@@ -255,5 +278,5 @@ UNIPROT_RELEASE='current_release'
 UNIPROT_RELEASE_INFO="reldate.txt"
 UNIPROT_RELEASE_URL="$UNIPROT_MIRROR/pub/databases/uniprot/$UNIPROT_RELEASE/knowledgebase/complete/"
 UNIPROT_DIR_NAME="UniProt"
-UNIPROT_OTHER_FILE_PATTERN='*.dat.gz'
-UNIPROT_PARSER='irdata_parse_uniprot.py'
+UNIPROT_OTHER_FILE_PATTERN='*.dat.gz *.dat *.fasta.gz *.fasta'
+UNIPROT_PARSER='irdata_parse_uniprot.sh'

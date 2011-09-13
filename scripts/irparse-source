@@ -42,7 +42,7 @@ fi
 eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
 eval XMLFILEPATTERN='$'"$SOURCE"_XML_FILE_PATTERN
 eval OTHERFILEPATTERN='$'"$SOURCE"_OTHER_FILE_PATTERN
-FILEPATTERN=${XMLFILEPATTERN:-$OTHERFILEPATTERN}
+FILEPATTERNS=${XMLFILEPATTERN:-$OTHERFILEPATTERN}
 eval PARSER='$'"$SOURCE"_PARSER
 
 # Check for improper source names which don't map to directories.
@@ -54,7 +54,7 @@ fi
 
 # Check for absent file-matching patterns.
 
-if [ ! "$FILEPATTERN" ]; then
+if [ ! "$FILEPATTERNS" ]; then
     echo "$PROGNAME: $SOURCE does not provide any files." 1>&2
     exit 1
 fi
@@ -74,35 +74,60 @@ if [ ! -e "$OUTPUTDIR" ]; then
     mkdir -p "$OUTPUTDIR"
 fi
 
-FILES="$DATADIR/$FILEPATTERN"
+# Expand the patterns.
 
-for FILE in $FILES; do
+HAVEDATA=
 
-    # Where the pattern did not expand, expect the pattern as a file.
+for FILEPATTERN in $FILEPATTERNS; do
+    FILES="$DATADIR/$FILEPATTERN"
+    HAVEFILES=
 
-    if [ "$FILE" = "$FILES" ] && [ ! -e "$FILE" ]; then
-        echo "$PROGNAME: Source $SOURCE does not appear to provide files." 1>&2
-        exit 1
+    for FILE in $FILES; do
+
+        # Check the pattern to see if it expanded.
+
+        if [ "$FILE" = "$FILES" ] && [ ! -e "$FILES" ]; then
+            break
+        fi
+
+        # Test for any XML file and run xmllint.
+        # NOTE: This relies on there either being XML files or other kinds of
+        # NOTE: files.
+
+        if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2>&1 ; then
+            echo "$PROGNAME: File $XMLFILE in source $SOURCE failed." 1>&2
+            exit 1
+        fi
+
+        HAVEFILES='yes'
+    done
+
+    # Make sure there are valid files.
+
+    if [ ! "$HAVEFILES" ]; then
+        continue
     fi
 
-    # Test for any XML file and run xmllint.
-
-    if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2>&1 ; then
-        echo "$PROGNAME: File $XMLFILE in source $SOURCE failed." 1>&2
-        STATUS=1
+    if [ ! "$NO_PARSE" ]; then
+        if [ "$XMLFILEPATTERN" ]; then
+            if ! "$TOOLS/irdata_xml2tab.py" "$OUTPUTDIR" "$SOURCE" $FILES ; then
+                echo "$PROGNAME: XML processing for source $SOURCE failed." 1>&2
+                exit 1
+            fi
+        else
+            if ! "$TOOLS/$PARSER" "$OUTPUTDIR" $FILES ; then
+                echo "$PROGNAME: Data processing for source $SOURCE failed." 1>&2
+                exit 1
+            fi
+        fi
     fi
+
+    HAVEDATA='yes'
 done
 
-if [ ! "$NO_PARSE" ]; then
-    if [ "$XMLFILEPATTERN" ]; then
-        if "$TOOLS/irdata_xml2tab.py" "$OUTPUTDIR" "$SOURCE" $FILES ; then
-            echo $SOURCE
-        fi
-    else
-        if "$TOOLS/$PARSER" "$OUTPUTDIR" $FILES ; then
-            echo $SOURCE
-        fi
-    fi
-else
+if [ "$HAVEDATA" ]; then
     echo $SOURCE
+else
+    echo "$PROGNAME: Source $SOURCE did not provide any data." 1>&2
+    exit 1
 fi

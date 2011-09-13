@@ -12,9 +12,9 @@ if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Take a list of items read from standard input and process them in parallel.
 
-To reliably list files use "echo" rather than "ls", since the latter may have
-been defined as an alias and add things like colouring codes, causing "noise"
-in the listing.
+To reliably list files use "/bin/ls -1" rather than just "ls", since the latter
+may have been defined as an alias and add things like colouring codes, causing
+"noise" in the listing.
 
 For a command, use a quoted shell argument containing {} to indicate the input
 filename.

@@ -39,5 +39,7 @@ elif [ ! "$SOURCES" ]; then
     exit 1
 fi
 
+# The pipeline.
+
   "$SCRIPTS/argument-per-line" $SOURCES \
 | "$SCRIPTS/irparallel" "\"$SCRIPTS/irparse-source\" $CHECK $NO_PARSE {}"

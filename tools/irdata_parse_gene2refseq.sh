@@ -16,8 +16,6 @@ Usage: $PROGNAME <output data directory> <filename>
 
 Process the gene2refseq file (typically gene2refseq.gz), producing data suitable
 for iRefIndex in a file called $OUTFILE in the output data directory.
-
-If the source is specified as - it is read from standard input.
 EOF
     exit 1
 fi

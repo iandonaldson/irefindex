@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-"Parse RefSeq text files."
+"""
+Parse RefSeq text files.
+
+Various NCBI resources use the "feature table" format documented here:
+
+ftp://ftp.ncbi.nlm.nih.gov/genbank/docs/FTv9_0.html
+"""
 
 import re
 
@@ -121,7 +127,7 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <data file>..." % progname
         sys.exit(1)
 
-    f_out = open(join(data_directory, "proteins.txt"), "w")
+    f_out = open(join(data_directory, "refseq_proteins.txt"), "w")
     try:
         for filename in filenames:
             basename, ext = splitext(split(filename)[-1])
