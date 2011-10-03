@@ -98,10 +98,10 @@ PROCESSES=4                                   # number of process groups to use
 # followed by calculated definitions that should probably
 # not be changed.
 
-# NOTE: To add for downloading: BIOGRID DIP HPRD INTACT MINT
+# NOTE: To add for downloading: DIP HPRD
 # NOTE: To add for acquisition by other means: OPHID
 
-XMLSOURCES="BIND_TRANSLATION CORUM INNATEDB MATRIXDB MPACT MPPI"
+XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM INNATEDB INTACT MATRIXDB MINT MPACT MPPI"
 TABSOURCES="MPIDB"
 OTHERSOURCES="GENE MMDB PDB REFSEQ TAXONOMY UNIPROT"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
@@ -119,6 +119,10 @@ BIND_TRANSLATION_XML_FILE_PATTERN='*.xml'
 ############################################################
 # BioGRID
 
+BIOGRID_DOWNLOAD_FILES="BIOGRID-ORGANISM-3.1.81.psi25.zip"
+BIOGRID_MIRROR='http://thebiogrid.org'
+
+BIOGRID_RELEASE_URL="$BIOGRID_MIRROR/downloads/archives/Release%20Archive/BIOGRID-3.1.81/"
 BIOGRID_DIR_NAME="BioGRID"
 BIOGRID_XML_FILE_PATTERN='*.xml'
 
@@ -158,6 +162,10 @@ HPRD_XML_FILE_PATTERN='PSIMI_XML/*.xml'
 ############################################################
 # IntAct
 
+INTACT_DOWNLOAD_FILES="pmidMIF25.zip"
+INTACT_MIRROR='ftp://ftp.ebi.ac.uk'
+
+INTACT_RELEASE_URL="$INTACT_MIRROR/pub/databases/intact/current/psi25/"
 INTACT_DIR_NAME="IntAct"
 INTACT_XML_FILE_PATTERN='*.xml'
 
@@ -184,6 +192,10 @@ MATRIXDB_XML_FILE_PATTERN='*.xml'
 ############################################################
 # MINT
 
+MINT_DOWNLOAD_FILES='*.psi25.zip'
+MINT_MIRROR='ftp://mint.bio.uniroma2.it'
+
+MINT_RELEASE_URL="$MINT_MIRROR/pub/release/psi/current/psi25/pmid/"
 MINT_DIR_NAME="MINT"
 MINT_XML_FILE_PATTERN='*.xml'
 
@@ -248,7 +260,7 @@ PDB_PARSER='irdata_parse_pdb.sh'
 ############################################################
 # RefSeq
 
-REFSEQ_DOWNLOAD_FILES='*.protein.gpff.gz'
+REFSEQ_DOWNLOAD_FILES='complete*.protein.gpff.gz'
 REFSEQ_MIRROR='ftp://ftp.ncbi.nih.gov/refseq/release/'
 
 REFSEQ_RELEASE_URL="$REFSEQ_MIRROR/complete/"

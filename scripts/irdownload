@@ -13,8 +13,12 @@ if [ "$1" = '--help' ]; then
 Usage: $PROGNAME [ --check ] ( --all | <source>... )
 
 Download data from the different sources, or if the --check option is specified
-check whether a download needs to be performed. The sources are configured to be
-the following when --all is specified:
+check whether a download needs to be performed. Note that this check is only
+cursory and merely looks to see if data directories are populated with suitably
+named files; an actual download operation is required to test whether the files
+for a data source are complete.
+
+The sources are configured to be the following when --all is specified:
 
 $ALLSOURCES
 EOF
@@ -55,15 +59,39 @@ for SOURCE in $SOURCES; do
 
     for DOWNLOAD in $DOWNLOAD_FILES; do
         DOWNLOADED="$DATADIR/$DOWNLOAD"
+        URL="${RELEASE_URL}$DOWNLOAD"
+
+        # Treat the URL as a path and see what the downloaded filename would be.
+
+        URLFILE=`basename "$URL"`
 
         # Here, DOWNLOAD may be a pattern, thus making DOWNLOADED also a pattern.
 
-        if [ ! -e "$DOWNLOADED" ]; then
-            if [ "$CHECK_ONLY" ]; then
+        if [ "$CHECK_ONLY" ]; then
+            if [ ! -e "$DOWNLOADED" ]; then
                 echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
             else
-                echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
-                wget -O "$DOWNLOADED" "${RELEASE_URL}$DOWNLOAD"
+                echo "$DOWNLOADED"
+            fi
+        else
+            echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
+            if ! wget -N -P "$DATADIR" "$URL" ; then
+                echo "$PROGNAME: Did not download file: $DOWNLOAD" 1>&2
+                continue
+            fi
+
+            # If the downloaded filename is different from the actual filename,
+            # ensure that a symbolic link is made.
+
+            # Here, if DOWNLOAD is a pattern, URLFILE will probably also be the
+            # same pattern.
+
+            if [ "$DOWNLOAD" != "$URLFILE" ]; then
+                if [ ! -e "$DOWNLOADED" ]; then
+                    ln -s "$URLFILE" "$DOWNLOADED"
+                    echo "$DOWNLOADED"
+                fi
+            else
                 echo "$DOWNLOADED"
             fi
         fi

@@ -52,14 +52,13 @@ while [ "$*" ]; do
 
     ARCHIVEPATH=`dirname "$ARCHIVE"`
     ARCHIVENAME=`basename "$ARCHIVE"`
-    ARCHIVETYPE=${ARCHIVENAME#*.}
 
     # Process the most common archive types.
     # This should correspond to the ARCHIVETYPES list above.
 
-    if [ "$ARCHIVETYPE" = "zip" ]; then
+    if [ "${ARCHIVENAME##*.}" = "zip" ]; then
         unzip "$ARCHIVE" -d "$ARCHIVEPATH"
-    elif [ "$ARCHIVETYPE" = "tar.gz" ]; then
+    elif [ "${ARCHIVENAME#*.}" = "tar.gz" ]; then
         tar zxf "$ARCHIVE" -C "$ARCHIVEPATH"
     fi
 done

@@ -48,6 +48,10 @@ else
 
         for ARCHIVETYPE in $ARCHIVETYPES; do
             PATTERN="$DATADIR/*.$ARCHIVETYPE"
+
+            # If the archive matches the pattern exactly, there was no expansion
+            # and no file actually matched.
+
             for ARCHIVE in $PATTERN; do
                 if [ "$ARCHIVE" = "$PATTERN" ]; then
                     :
