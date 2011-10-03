@@ -44,6 +44,7 @@ interaction. Participants are always implicitly referenced.
 """
 
 from irdata.data import *
+from irdata.signatures import make_signature
 import xml.sax
 import os
 
@@ -115,6 +116,8 @@ class PSIParser(EmptyElementParser):
     A class which records the properties and relationships in PSI MI XML files.
     """
 
+    # Attributes of supported elements.
+
     attribute_names = {
         # references    : property, reftype, id, dblabel, dbcode, reftypelabel, reftypecode
         "primaryRef"    : ("property", "element", "id", "db", "dbAc", "refType", "refTypeAc"), # also secondary and version
@@ -126,6 +129,8 @@ class PSIParser(EmptyElementParser):
         # organisms     : taxid
         "hostOrganism"  : ("ncbiTaxId",)
         }
+
+    # Elements defining scopes/entities.
 
     scopes = {
         "entry"                 : "entry",
@@ -194,6 +199,9 @@ class PSIParser(EmptyElementParser):
         return name == "participant" or name == "interactor" and parent == "participant"
 
     def characters(self, content):
+
+        "Handle character 'content' by stripping white-space from the ends."
+
         EmptyElementParser.characters(self, content.strip())
 
     def startElement(self, name, attrs):
@@ -227,6 +235,9 @@ class PSIParser(EmptyElementParser):
         EmptyElementParser.startElement(self, name, attrs)
 
     def endElement(self, name):
+
+        "End the element using a scope as a logical name in place of 'name'."
+
         EmptyElementParser.endElement(self, self.scopes.get(name, name))
 
     def handleElement(self, content):
@@ -235,6 +246,8 @@ class PSIParser(EmptyElementParser):
 
         if "entry" not in self.current_path:
             return
+
+        # Get the element names in order of decreasing locality, padding with None.
 
         element, parent, property, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
         attrs = dict(self.current_attrs[-1])
@@ -272,6 +285,15 @@ class PSIParser(EmptyElementParser):
             if parent == "interactor":
                 implicit = self.is_implicit(parent, property) and "implicit" or "explicit"
                 self.writer.append((element, entry, parent, self.path_to_attrs["interactor"]["id"], implicit, attrs["ncbiTaxId"]))
+
+        # Sequence data.
+        # Use the "legacy" mode to upper-case and strip white-space from interactors.
+        # Note that this should never be used for interaction signatures/digests.
+
+        elif element == "sequence":
+            if parent == "interactor":
+                implicit = self.is_implicit(parent, property) and "implicit" or "explicit"
+                self.writer.append((element, entry, parent, self.path_to_attrs["interactor"]["id"], implicit, make_signature(content, legacy=1)))
 
         # Get other data. This is of the form...
         # section/property/parent/element
@@ -340,6 +362,7 @@ class Writer:
     filenames = (
         "experiment", "interactor",     # mappings
         "names", "xref", "organisms",   # properties
+        "sequences"                     # properties
         )
 
     data_type_files = {
@@ -349,6 +372,7 @@ class Writer:
         "interactor"            : "interactor",
         "hostOrganismList"      : "organisms",
         "organism"              : "organisms",
+        "sequence"              : "sequences",
         "names"                 : "names",
         "xref"                  : "xref",
         }
@@ -379,6 +403,12 @@ class Writer:
             self.files[key] = codecs.open(self.get_filename(key), "a", encoding="utf-8")
 
     def append(self, data):
+
+        """
+        Write out the given 'data', using the first element of 'data' to
+        determine the data type.
+        """
+
         element = data[0]
         file = self.data_type_files[element]
 

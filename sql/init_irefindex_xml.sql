@@ -54,4 +54,13 @@ create table xml_organisms (
     taxid integer not null
 );
 
+create table xml_sequences (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    scope varchar not null,
+    parentid varchar not null, -- integer for PSI MI XML 2.5
+    sequence varchar not null
+);
+
 commit;

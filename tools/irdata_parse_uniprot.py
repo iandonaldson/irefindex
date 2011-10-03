@@ -2,6 +2,8 @@
 
 "Parse UniProt text files."
 
+import re
+
 def parse_line(line):
     if not line:
         raise EOFError
@@ -13,6 +15,12 @@ def parse_line(line):
 class Parser:
 
     "A parser for UniProt text files."
+
+    null = r"\N"
+    date_regexp = re.compile(r"(\d{2})-([A-Z]{3})-(\d{4})")
+    months = {}
+    for i, name in enumerate(("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")):
+        months[name] = i + 1
 
     def __init__(self, f, f_main, f_accessions):
         self.f = f
@@ -60,6 +68,30 @@ class Parser:
     def _get_accessions(self, s):
         return [i.strip() for i in s.split(";") if i.strip()]
 
+    def parse_dates(self, line):
+
+        "See: http://web.expasy.org/docs/userman.html#DT_line"
+
+        code, rest = line
+        creation = self._get_date(rest) # creation date
+        sequence = None
+        code, rest = self.next_line()
+        while code == "DT":
+            if not sequence:
+                sequence = self._get_date(rest)
+            code, rest = self.next_line()
+        else:
+            self.save_line()
+        return sequence or creation or self.null
+
+    def _get_date(self, s):
+        match = self.date_regexp.match(s)
+        if match:
+            day, month, year = match.groups()
+            return "%s%02d%s" % (year, self.months[month], day)
+        else:
+            return None
+
     def parse_taxonomy(self, line):
         code, rest = line
         key, value = rest.rstrip(";").split("=")
@@ -81,6 +113,7 @@ class Parser:
     handlers = {
         "ID" : parse_identifier,
         "AC" : parse_accessions,
+        "DT" : parse_dates,
         "OX" : parse_taxonomy,
         "SQ" : parse_sequence,
         }
@@ -102,7 +135,7 @@ class Parser:
 
     def write_record(self, record):
         record["AC1"] = record["AC"][0]
-        self.f_main.write("%(ID)s\t%(AC1)s\t%(OX)s\t%(SQ)s\n" % record)
+        self.f_main.write("%(ID)s\t%(AC1)s\t%(DT)s\t%(OX)s\t%(SQ)s\n" % record)
         for accession in record["AC"]:
             self.f_accessions.write("%s\t%s\n" % (record["ID"], accession))
 

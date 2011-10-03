@@ -60,11 +60,22 @@ create temporary table tmp_organisms (
     taxid integer not null
 );
 
+create temporary table tmp_sequences (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    scope varchar not null,
+    parentid varchar not null, -- integer for PSI MI XML 2.5
+    refclass varchar not null, -- implicit or explicit reference
+    sequence varchar not null  -- actually a signature/digest
+);
+
 \copy tmp_experiments from '<directory>/experiment.txt'
 \copy tmp_interactors from '<directory>/interactor.txt'
 \copy tmp_names from '<directory>/names.txt'
 \copy tmp_xref from '<directory>/xref.txt'
 \copy tmp_organisms from '<directory>/organisms.txt'
+\copy tmp_sequences from '<directory>/sequences.txt'
 
 -- De-duplicate experiment identifier usage (seen in OPHID).
 
@@ -91,7 +102,7 @@ insert into xml_names
     from tmp_names;
 
 -- Select references which use the active refclass scheme for interactors, plus
--- all other name definitions.
+-- all other reference definitions.
 
 delete from tmp_xref
 where scope = 'interactor'
@@ -102,7 +113,7 @@ insert into xml_xref
     from tmp_xref;
 
 -- Select organism definitions which use the active refclass scheme for
--- interactors, plus all other name definitions.
+-- interactors, plus all other organism definitions.
 
 delete from tmp_organisms
 where scope = 'interactor'
@@ -111,5 +122,16 @@ where scope = 'interactor'
 insert into xml_organisms
     select source, filename, entry, scope, parentid, taxid
     from tmp_organisms;
+
+-- Select sequence definitions which use the active refclass scheme for
+-- interactors. There should be no other sequence definitions.
+
+delete from tmp_sequences
+where scope = 'interactor'
+    and refclass not in (select distinct refclass from tmp_interactors);
+
+insert into xml_sequences
+    select source, filename, entry, scope, parentid, sequence
+    from tmp_sequences;
 
 commit;

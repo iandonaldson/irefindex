@@ -5,6 +5,8 @@ Parse FASTA format text files, writing protein flat files to the output data
 directory.
 """
 
+import re
+
 try:
     set
 except NameError:
@@ -15,6 +17,7 @@ class Parser:
     "A parser for FASTA format text files."
 
     NULL = r"\N"
+    header_regexp = re.compile("[|\x01]")
 
     def __init__(self, f, f_main, identifier_types):
         self.f = f
@@ -30,39 +33,63 @@ class Parser:
             self.f_main = None
 
     def parse_header(self, line):
-        fields = line.rstrip("\n").lstrip(">").split("|")
-        identifier_type = None
+        fields = self.header_regexp.split(line.rstrip("\n").lstrip(">"))
+
+        records = []
         identifiers = {}
+        identifier_type = None
 
         for field in fields:
+
+            # Check for an identifier type name.
+
             if not identifier_type:
                 if field in self.identifier_types:
                     identifier_type = field
+
+            # With an identifier type, get the following field's value.
+
             else:
-                identifiers[identifier_type] =  field
+                if identifiers.has_key(identifier_type):
+                    records.append(identifiers)
+                    identifiers = {}
+                identifiers[identifier_type] = field
                 identifier_type = None
 
-        record = []
-        for identifier_type in self.identifier_types:
-            record.append(identifiers.get(identifier_type, self.NULL))
-        return record
+        # Finish any open record.
+
+        else:
+            if identifiers:
+                records.append(identifiers)
+
+        # Convert the records to lists.
+
+        converted_records = []
+        for identifiers in records:
+            converted_record = []
+            for identifier_type in self.identifier_types:
+                converted_record.append(identifiers.get(identifier_type, self.NULL))
+            converted_records.append(converted_record)
+        return converted_records
 
     def parse(self):
-        record = []
+        records = []
         sequence = []
         for line in self.f.xreadlines():
             if line.startswith(">"):
-                if record:
-                    record.append("".join(sequence))
-                    self.write_record(record)
-                record = self.parse_header(line)
+                if records:
+                    for record in records:
+                        record.append("".join(sequence))
+                        self.write_record(record)
+                records = self.parse_header(line)
                 sequence = []
             else:
                 sequence.append(line.rstrip("\n"))
         else:
-            if record:
-                record.append("".join(sequence))
-                self.write_record(record)
+            if records:
+                for record in records:
+                    record.append("".join(sequence))
+                    self.write_record(record)
 
     def write_record(self, record):
         self.f_main.write("\t".join(record) + "\n")

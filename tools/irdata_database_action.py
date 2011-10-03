@@ -36,7 +36,7 @@ def execute_command(cmd, database_name):
             fc.write(cmd)
         finally:
             fc.close()
-        if os.system("""psql -f %s %s""" % (cmd_filename, database_name)):
+        if os.system("""psql -v ON_ERROR_STOP=true -f %s %s""" % (cmd_filename, database_name)):
             sys.exit(1)
     finally:
         os.remove(cmd_filename)

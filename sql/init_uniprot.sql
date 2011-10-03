@@ -3,6 +3,7 @@
 create table uniprot_proteins (
     uniprotid varchar not null,
     primaryaccession varchar not null,
+    sequencedate varchar not null,
     taxid integer not null,
     "sequence" varchar not null,
     primary key(uniprotid)

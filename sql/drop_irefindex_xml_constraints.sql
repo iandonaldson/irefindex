@@ -1,8 +1,5 @@
 begin;
 
-alter table xml_experiments drop constraint xml_experiments_pkey;
-analyze xml_experiments;
-
 alter table xml_interactors drop constraint xml_interactors_pkey;
 analyze xml_interactors;
 
