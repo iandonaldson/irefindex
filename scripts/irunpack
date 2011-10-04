@@ -54,6 +54,10 @@ else
         DATADIR="$DATA/$SOURCEDIR"
 
         for ARCHIVETYPE in $ARCHIVETYPES; do
+            if [[ "$ARCHIVETYPE" = 'gz' && ! "$INCLUDE_GZIP" ]]; then
+                continue
+            fi
+
             PATTERN="$DATADIR/*.$ARCHIVETYPE"
 
             # If the archive matches the pattern exactly, there was no expansion
