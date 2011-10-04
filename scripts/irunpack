@@ -10,14 +10,21 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --all | <source>... | - ]
+Usage: $PROGNAME [ --include-gzip-files ] [ --all | <source>... | - ]
 
-Unpack data from the different sources. These are configured to be the
-following when --all is specified:
+Unpack data from the different sources. If --include-gzip-files is specified,
+uncompress .gz files that do not appear to be archives.
+
+The sources are configured to be the following when --all is specified:
 
 $ALLSOURCES
 EOF
     exit 1
+fi
+
+if [ "$1" = '--include-gzip-files' ]; then
+    INCLUDE_GZIP=$1
+    shift 1
 fi
 
 SOURCES=$*
@@ -56,7 +63,7 @@ else
                 if [ "$ARCHIVE" = "$PATTERN" ]; then
                     :
                 else
-                    "$SCRIPTS/irunpack-archive" "$ARCHIVE"
+                    "$SCRIPTS/irunpack-archive" $INCLUDE_GZIP "$ARCHIVE"
                 fi
             done
         done

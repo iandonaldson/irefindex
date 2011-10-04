@@ -10,12 +10,15 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME --show-types | <archive filename>...
+Usage: $PROGNAME --show-types | ( [ --include-gzip-files ] <archive filename>... )
 
 This scripts accepts archive filenames and unpacks each archive into the
 directory in which it currently resides. If the list of archive files is
 specified as - then the script tries to read archive filenames from standard
 input until an end-of-file condition occurs.
+
+If --include-gzip-files is specified, uncompress .gz files that do not appear to
+be archives.
 EOF
     exit 1
 fi
@@ -26,11 +29,16 @@ if [ ! "$*" ]; then
     exit 1
 fi
 
-ARCHIVETYPES="zip tar.gz"
+ARCHIVETYPES="zip tar.gz gz"
 
 if [ "$1" = '--show-types' ]; then
     echo $ARCHIVETYPES
     exit 0
+fi
+
+if [ "$1" = '--include-gzip-files' ]; then
+    INCLUDE_GZIP=$1
+    shift 1
 fi
 
 while [ "$*" ]; do
@@ -57,8 +65,10 @@ while [ "$*" ]; do
     # This should correspond to the ARCHIVETYPES list above.
 
     if [ "${ARCHIVENAME##*.}" = "zip" ]; then
-        unzip "$ARCHIVE" -d "$ARCHIVEPATH"
+        unzip -n "$ARCHIVE" -d "$ARCHIVEPATH"
     elif [ "${ARCHIVENAME#*.}" = "tar.gz" ]; then
-        tar zxf "$ARCHIVE" -C "$ARCHIVEPATH"
+        tar zxkf "$ARCHIVE" -C "$ARCHIVEPATH"
+    elif [[ "$INCLUDE_GZIP" && "${ARCHIVENAME##*.}" = "gz" ]]; then
+        gunzip "$ARCHIVE"
     fi
 done
