@@ -103,7 +103,7 @@ PROCESSES=4                                   # number of process groups to use
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM INNATEDB INTACT MATRIXDB MINT MPACT MPPI"
 TABSOURCES="MPIDB"
-OTHERSOURCES="GENE MMDB PDB REFSEQ TAXONOMY UNIPROT"
+OTHERSOURCES="FLY GENE IPI MMDB PDB REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
@@ -145,13 +145,14 @@ DIP_XML_FILE_PATTERN='*.mif25'
 ############################################################
 # Entrez Gene
 
-GENE_DOWNLOAD_FILES="gene2refseq.gz"
+GENE_DOWNLOAD_FILES="gene2refseq.gz gene_info.gz"
 GENE_MIRROR='ftp://ftp.ncbi.nlm.nih.gov'
 
 GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"
 GENE_DIR_NAME="Entrez_Gene"
 GENE_OTHER_FILE_PATTERN='*.gz'
 GENE_PARSER='irdata_parse_gene2refseq.sh'
+# NOTE: Need parser for gene_info.
 
 ############################################################
 # HPRD
@@ -178,6 +179,17 @@ INNATEDB_MIRROR='http://www.innatedb.com'
 INNATEDB_RELEASE_URL="$INNATEDB_MIRROR/download/interactions/"
 INNATEDB_DIR_NAME="InnateDB"
 INNATEDB_XML_FILE_PATTERN='*.xml'
+
+############################################################
+# IPI
+
+IPI_DOWNLOAD_FILES='*.fasta.gz'
+IPI_MIRROR='ftp://ftp.ebi.ac.uk'
+
+IPI_RELEASE_URL="$IPI_MIRROR/pub/databases/IPI/current/"
+IPI_DIR_NAME="IPI"
+IPI_OTHER_FILE_PATTERN='*.fasta'
+# NOTE: Need parser.
 
 ############################################################
 # MatrixDB
@@ -269,6 +281,17 @@ REFSEQ_OTHER_FILE_PATTERN='*.gnp'
 REFSEQ_PARSER='irdata_parse_refseq.py'
 
 ############################################################
+# SEGUID
+
+SEGUID_DOWNLOAD_FILES="seguidannotation"
+SEGUID_MIRROR='ftp://bioinformatics.anl.gov'
+
+SEGUID_RELEASE_URL="$SEGUID_MIRROR/seguid/"
+SEGUID_DIR_NAME="SEGUID"
+SEGUID_OTHER_FILE_PATTERN='seguidannotation'
+# NOTE: Need parser.
+
+############################################################
 # Entrez Taxonomy (not an interaction source)
 
 TAXONOMY_DOWNLOAD_FILES="taxdump.tar.gz"
@@ -292,3 +315,25 @@ UNIPROT_RELEASE_URL="$UNIPROT_MIRROR/pub/databases/uniprot/$UNIPROT_RELEASE/know
 UNIPROT_DIR_NAME="UniProt"
 UNIPROT_OTHER_FILE_PATTERN='*.dat.gz *.dat *.fasta.gz *.fasta'
 UNIPROT_PARSER='irdata_parse_uniprot.sh'
+
+############################################################
+# UniProt (Fly)
+
+FLY_DOWNLOAD_FILES="fly.txt"
+FLY_MIRROR='http://www.uniprot.org'
+
+FLY_RELEASE_URL="$FLY_MIRROR/docs/"
+FLY_DIR_NAME="fly"
+FLY_OTHER_FILE_PATTERN='*.txt'
+# NOTE: Need parser.
+
+############################################################
+# UniProt (Yeast)
+
+YEAST_DOWNLOAD_FILES="yeast.txt"
+YEAST_MIRROR='http://www.uniprot.org'
+
+YEAST_RELEASE_URL="$YEAST_MIRROR/docs/"
+YEAST_DIR_NAME="yeast"
+YEAST_OTHER_FILE_PATTERN='*.txt'
+# NOTE: Need parser.

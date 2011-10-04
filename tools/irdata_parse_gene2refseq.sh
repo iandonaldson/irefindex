@@ -28,11 +28,19 @@ if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
     exit 1
 fi
 
+FILETYPE=${FILENAME##*.}
+
+if [ "$FILETYPE" = "gz" ]; then
+    READER='gunzip -c "$FILENAME"'
+else
+    READER='cat "$FILENAME"'
+fi
+
 # Uncompress, remove the header, extract the taxid, geneid and protein accession
 # version. Then filter out records where information is missing. Finally, trim
 # the version from the accession and remove duplicates.
 
-  gunzip -c "$FILENAME" \
+  eval "$READER" \
 | tail -n +2 \
 | cut -f 1,2,6 \
 | grep -v -e '-' \
