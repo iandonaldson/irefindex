@@ -324,7 +324,7 @@ FLY_MIRROR='http://www.uniprot.org'
 FLY_RELEASE_URL="$FLY_MIRROR/docs/"
 FLY_DIR_NAME="fly"
 FLY_OTHER_FILE_PATTERN='*.txt'
-# NOTE: Need parser.
+FLY_PARSER='irdata_parse_fly.sh'
 
 ############################################################
 # UniProt (Yeast)
@@ -335,4 +335,4 @@ YEAST_MIRROR='http://www.uniprot.org'
 YEAST_RELEASE_URL="$YEAST_MIRROR/docs/"
 YEAST_DIR_NAME="yeast"
 YEAST_OTHER_FILE_PATTERN='*.txt'
-# NOTE: Need parser.
+YEAST_PARSER='irdata_parse_fly.sh'

@@ -114,6 +114,9 @@ for FILEPATTERN in $FILEPATTERNS; do
                 echo "$PROGNAME: XML processing for source $SOURCE failed." 1>&2
                 exit 1
             fi
+        elif [ ! "$PARSER" ]; then
+            echo "$PROGNAME: No parser defined for source $SOURCE." 1>&2
+            exit 1
         else
             if ! "$TOOLS/$PARSER" "$OUTPUTDIR" $FILES ; then
                 echo "$PROGNAME: Data processing for source $SOURCE failed." 1>&2

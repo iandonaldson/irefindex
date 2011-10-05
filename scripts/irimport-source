@@ -57,7 +57,7 @@ fi
 # Import XML sources using a common template.
 
 if [ "$XMLFILEPATTERN" ]; then
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_xml.sql" "$IMPORTDATADIR" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_psixml.sql" "$IMPORTDATADIR" ; then
         echo "$PROGNAME: Import failed for XML files from $SOURCE." 1>&2
         exit 1
     fi
