@@ -62,8 +62,11 @@ if [ "$XMLFILEPATTERN" ]; then
         exit 1
     fi
 else
+    eval TEMPLATE='$'"$SOURCE"_IMPORT_TEMPLATE
     source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_$source.sql" "$IMPORTDATADIR" ; then
+    TEMPLATE=${TEMPLATE:-"import_$source.sql"}
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/$TEMPLATE" "$IMPORTDATADIR" ; then
         echo "$PROGNAME: Import failed for data files from $SOURCE." 1>&2
         exit 1
     fi

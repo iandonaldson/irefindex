@@ -319,21 +319,14 @@ if __name__ == "__main__":
     progname = os.path.split(sys.argv[0])[-1]
 
     try:
-        reset = sys.argv[1] == "--reset"
-        i = reset and 2 or 1
-        mitab = sys.argv[i] == "--mitab"
-        i = mitab and i+1 or i
-        directory = sys.argv[i]
-        filenames = sys.argv[i+1:]
+        directory = sys.argv[1]
+        filenames = sys.argv[2:]
     except IndexError:
-        print >>sys.stderr, "Usage: %s [ --reset ] [ --mitab ] <data_directory> <filename>..." % progname
+        print >>sys.stderr, "Usage: %s <output data directory> <filename>..." % progname
         sys.exit(1)
 
-    writer_cls = mitab and MITABWriter or iRefIndexWriter
-
-    writer = writer_cls(directory)
-    if reset:
-        writer.reset()
+    writer = iRefIndexWriter(directory)
+    writer.reset()
 
     parser = Parser(writer)
     try:

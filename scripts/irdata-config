@@ -240,7 +240,9 @@ MPIDB_MIRROR='http://www.jcvi.org'
 
 MPIDB_RELEASE_URL="$MPIDB_MIRROR/mpidb/download.php?dbsource="
 MPIDB_DIR_NAME="MPIDB"
-# MPIDB provides no XML files.
+MPIDB_OTHER_FILE_PATTERN='MPI-*'
+MPIDB_PARSER='irdata_parse_mpidb.py'
+MPIDB_IMPORT_TEMPLATE='import_mitab.sql'
 
 ############################################################
 # MPPI (also known as MIPS)
