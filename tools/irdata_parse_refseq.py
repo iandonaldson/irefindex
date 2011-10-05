@@ -130,8 +130,9 @@ if __name__ == "__main__":
     f_out = open(join(data_directory, "refseq_proteins.txt"), "w")
     try:
         for filename in filenames:
-            basename, ext = splitext(split(filename)[-1])
-            print >>sys.stderr, "Parsing", basename
+            leafname = split(filename)[-1]
+            basename, ext = splitext(leafname)
+            print >>sys.stderr, "Parsing", leafname
 
             if ext.endswith("gz"):
                 opener = gzip.open

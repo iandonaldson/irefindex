@@ -153,7 +153,10 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <data file>" % progname
         sys.exit(1)
 
-    basename, ext = splitext(split(filename)[-1])
+    leafname = split(filename)[-1]
+    basename, ext = splitext(leafname)
+    print >>sys.stderr, "Parsing", leafname
+
     mainfile = join(data_directory, "%s_proteins%stxt" % (basename, extsep))
     accessionsfile = join(data_directory, "%s_accessions%stxt" % (basename, extsep))
 
