@@ -1,4 +1,3 @@
-drop aggregate array_accum(anyelement);
 drop table mitab_uid;
 drop table mitab_alternatives;
 drop table mitab_aliases;

@@ -168,19 +168,13 @@ class MITABWriter(Writer):
     def get_filename(self):
         return os.path.join(self.directory, "mpidb_mitab.txt")
 
-    def reset(self):
-        try:
-            os.remove(self.get_filename())
-        except OSError:
-            pass
-
     def start(self, filename):
         self.filename = filename
 
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
 
-        self.out = open(self.get_filename(), "a")
+        self.out = open(self.get_filename(), "w")
         print >>self.out, "#" + "\t".join(standard_fields)
 
     def append(self, data):
@@ -219,21 +213,15 @@ class iRefIndexWriter(Writer):
     def get_filename(self, key):
         return os.path.join(self.directory, "mitab_%s%stxt" % (key, os.path.extsep))
 
-    def reset(self):
-        for key in self.filenames:
-            try:
-                os.remove(self.get_filename(key))
-            except OSError:
-                pass
-
     def start(self, filename):
         self.filename = filename
+        self.source = os.path.split(filename)[-1]
 
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
 
         for key in self.filenames:
-            self.files[key] = open(self.get_filename(key), "a")
+            self.files[key] = open(self.get_filename(key), "w")
 
     def append(self, data):
 
@@ -243,35 +231,35 @@ class iRefIndexWriter(Writer):
 
         # Interactor-specific records.
 
-        self.write_line(self.files["uid"], (self.filename, data["interaction"], "0") + split_value(data["uidA"]) + (split_value(data["taxA"])[1],))
-        self.write_line(self.files["uid"], (self.filename, data["interaction"], "1") + split_value(data["uidB"]) + (split_value(data["taxB"])[1],))
+        self.write_line(self.files["uid"], (self.source, self.filename, data["interaction"], "0") + split_value(data["uidA"]) + (split_value(data["taxA"])[1],))
+        self.write_line(self.files["uid"], (self.source, self.filename, data["interaction"], "1") + split_value(data["uidB"]) + (split_value(data["taxB"])[1],))
 
         for position, key in enumerate(("aliasA", "aliasB")):
             for entry, s in enumerate(data[key]):
                 prefix, value = split_value(s)
-                self.write_line(self.files["alias"], (self.filename, data["interaction"], str(position), prefix, value, str(entry)))
+                self.write_line(self.files["alias"], (self.source, self.filename, data["interaction"], str(position), prefix, value, str(entry)))
 
         # Experiment-specific records.
 
         for entry, exp_data in enumerate(experiment_data):
             for key in ("authors",):
                 for s in exp_data[key]:
-                    self.write_line(self.files[key], (self.filename, exp_data["line"], data["interaction"], s, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], s, entry))
 
             for key in ("method", "interactionType", "sourcedb"):
                 for s in exp_data[key]:
                     term, description = split_vocabulary_term(s)
-                    self.write_line(self.files[key], (self.filename, exp_data["line"], data["interaction"], term, description, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], term, description, entry))
 
             for key in ("pmids",):
                 for s in exp_data[key]:
                     prefix, value = split_value(s)
-                    self.write_line(self.files[key], (self.filename, exp_data["line"], data["interaction"], value, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], value, entry))
 
             for key in ("interactionIdentifiers",):
                 for s in exp_data[key]:
                     prefix, value = split_value(s)
-                    self.write_line(self.files[key], (self.filename, exp_data["line"], data["interaction"], prefix, value, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], prefix, value, entry))
 
 # Value processing.
 
@@ -326,7 +314,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     writer = iRefIndexWriter(directory)
-    writer.reset()
 
     parser = Parser(writer)
     try:
