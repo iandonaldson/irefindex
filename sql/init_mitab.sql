@@ -42,7 +42,7 @@ create table mitab_aliases (
     position integer not null,
     dbname varchar not null,
     alias varchar not null,
-    entry varchar not null, -- counter
+    entry integer not null, -- counter
     primary key(source, filename, interaction, position, entry)
 );
 
@@ -57,7 +57,7 @@ create table mitab_method_names (
     interaction varchar not null,
     code varchar not null,
     name varchar not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, line, entry)
 );
 
@@ -71,7 +71,7 @@ create table mitab_authors (
     line integer not null,
     interaction varchar not null,
     author varchar not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, line, entry)
 );
 
@@ -85,7 +85,7 @@ create table mitab_pubmed (
     line integer not null,
     interaction varchar not null,
     pmid integer not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, line, entry)
 );
 
@@ -100,7 +100,7 @@ create table mitab_interaction_type_names (
     interaction varchar not null,
     code varchar not null,
     name varchar not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, line, entry)
 );
 
@@ -115,7 +115,7 @@ create table mitab_sources (
     interaction varchar not null,
     sourcedb varchar not null,
     name varchar not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, line, entry)
 );
 
@@ -130,7 +130,7 @@ create table mitab_interaction_identifiers (
     interaction varchar not null,
     dbname varchar not null,
     "uid" varchar not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, interaction, line, entry)
 );
 
@@ -145,7 +145,7 @@ create table mitab_confidence (
     interaction varchar not null,
     "type" varchar not null,
     confidence integer not null,
-    entry varchar not null,
+    entry integer not null,
     primary key(source, filename, line, entry)
 );
 
