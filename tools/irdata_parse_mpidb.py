@@ -116,6 +116,7 @@ class Writer:
         self.init()
 
     def start(self, filename):
+        self.filename = filename
         self.output_line = 1
 
     def write_line(self, out, values):
@@ -176,8 +177,6 @@ class MITABWriter(Writer):
         if self.out is not None:
             return
 
-        self.filename = filename
-
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
 
@@ -226,7 +225,6 @@ class iRefIndexWriter(Writer):
         if self.files:
             return
 
-        self.filename = filename
         self.source = os.path.split(filename)[-1]
 
         if not os.path.exists(self.directory):
