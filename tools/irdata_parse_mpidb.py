@@ -2,7 +2,9 @@
 
 """
 Convert MPIDB MITAB files to standard MITAB format or to iRefIndex-compatible
-data.
+data. Note that some fields contain multivalued data which should be expanded to
+make multiple output lines for each input line, with each output line
+representing an experiment.
 """
 
 import os
