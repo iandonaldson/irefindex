@@ -113,8 +113,10 @@ class Writer:
     def __init__(self, directory):
         self.directory = directory
         self.filename = None
-        self.output_line = 1
         self.init()
+
+    def start(self, filename):
+        self.output_line = 1
 
     def write_line(self, out, values):
         print >>out, "\t".join(map(str, values))
@@ -169,6 +171,11 @@ class MITABWriter(Writer):
         return os.path.join(self.directory, "mpidb_mitab.txt")
 
     def start(self, filename):
+        Writer.start(self, filename)
+
+        if self.out is not None:
+            return
+
         self.filename = filename
 
         if not os.path.exists(self.directory):
@@ -214,6 +221,11 @@ class iRefIndexWriter(Writer):
         return os.path.join(self.directory, "mitab_%s%stxt" % (key, os.path.extsep))
 
     def start(self, filename):
+        Writer.start(self, filename)
+
+        if self.files:
+            return
+
         self.filename = filename
         self.source = os.path.split(filename)[-1]
 
