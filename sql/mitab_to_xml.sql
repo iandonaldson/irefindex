@@ -1,7 +1,12 @@
 -- Conversion from MITAB to PSI-MI XML-oriented data.
--- NOTE: An entry number is used to support multiple corresponding
--- NOTE: experiment-related values since MPIDB encodes information in this
--- NOTE: optimistic fashion.
+
+-- Since MPIDB encodes experiment information so that many experiments are
+-- described on the same line, an entry number is used to indicate which
+-- experiment was described first. A single interaction may therefore be
+-- associated with a number of experiments.
+
+-- Experiments are defined on a per line basis in the MPIDB import data files.
+-- As a result, the source, filename and line columns act as experiment keys.
 
 begin;
 
@@ -10,18 +15,16 @@ begin;
 create temporary sequence mitab_interactor;
 
 -- A temporary table for interactors.
--- Experiments are defined on a per line basis in the revised MPIDB data files.
--- As a result, the source, filename and line columns act as experiment keys.
 
 create temporary table tmp_mitab_interactors as
-    select source, filename, interaction as interactionid, position as participantid,
+    select source, filename, interaction, position,
         nextval('mitab_interactor') as interactorid, dbname, acc, taxid
     from mitab_uid;
 
 -- Entity tables.
 
 insert into xml_interactors
-    select source, filename, 0 as entry, interactorid, participantid, interactionid
+    select source, filename, 0 as entry, interactorid, position as participantid, interaction as interactionid
     from tmp_mitab_interactors;
 
 insert into xml_experiments
@@ -38,16 +41,19 @@ insert into xml_xref
 
     -- Interactor primary references.
 
-    select source, filename, 0 as entry, 'interactor' as scope, interactorid as parentid,
-        'interactor' as property, 'primaryRef' as reftype, acc as refvalue, dbname as dblabel
+    select source, filename, 0 as entry, 'interactor' as scope, cast(interactorid as varchar) as parentid,
+        'interactor' as property,
+        'primaryRef' as reftype,
+        acc as refvalue,
+        dbname as dblabel, null as dbcode
     from tmp_mitab_interactors
     union all
 
     -- Experiment methods.
 
-    select source, filename, 0 as entry, 'experimentDescription' as scope, line as parentid,
+    select source, filename, 0 as entry, 'experimentDescription' as scope, cast(line as varchar) as parentid,
         'interactionDetectionMethod' as property,
-        case when 0 = any (array_accum(entry)) then 'primaryRef' else 'secondaryRef' end as reftype,
+        'primaryRef' as reftype,
         code as refvalue,
         'psi-mi' as dblabel, 'MI:0488' as dbcode
     from mitab_method_names
@@ -55,10 +61,10 @@ insert into xml_xref
 
     -- Experiment document information.
 
-    select source, filename, 0 as entry, 'experimentDescription' as scope, line as parentid,
+    select source, filename, 0 as entry, 'experimentDescription' as scope, cast(line as varchar) as parentid,
         'bibref' as property,
-        case when 0 = any (array_accum(entry)) then 'primaryRef' else 'secondaryRef' end as reftype,
-        pmid as refvalue,
+        'primaryRef' as reftype,
+        cast(pmid as varchar) as refvalue,
         'pubmed' as dblabel, 'MI:0446' as dbcode
     from mitab_pubmed
     union all
@@ -66,16 +72,23 @@ insert into xml_xref
     -- Interaction type names.
 
     select source, filename, 0 as entry, 'interaction' as scope, interaction as parentid,
-        'interactionType' as property, 'primaryRef' as reftype, code as refvalue,
+        'interactionType' as property,
+        'primaryRef' as reftype,
+        code as refvalue,
         'psi-mi' as dblabel, 'MI:0488' as dbcode
     from mitab_interaction_type_names
+    group by source, filename, interaction, code
     union all
 
     -- Interaction primary references.
 
     select source, filename, 0 as entry, 'interaction' as scope, interaction as parentid,
-        'interaction' as property, 'primaryRef' as reftype, "uid" as refvalue
-    from mitab_interaction_identifiers;
+        'interaction' as property,
+        'primaryRef' as reftype,
+        "uid" as refvalue,
+        null as dblabel, null as dbcode
+    from mitab_interaction_identifiers
+    group by source, filename, interaction, "uid";
 
 -- Names, labels, aliases.
 
@@ -84,8 +97,10 @@ insert into xml_names
     -- Interactor aliases.
     -- The first alias is regarded as being equivalent to the PSI MI XML short label.
 
-    select source, filename, 0 as entry, 'interactor' as scope, interactorid as parentid,
-        'interactor' as property, case when entry = 1 then 'shortLabel' else 'alias' as nametype,
+    select A.source, A.filename, 0 as entry, 'interactor' as scope, cast(interactorid as varchar) as parentid,
+        'interactor' as property,
+        case when entry = 0 then 'shortLabel' else 'alias' end as nametype,
+        null as typelabel, null as typecode,
         alias as name
     from mitab_aliases as A
     inner join tmp_mitab_interactors as I
@@ -97,24 +112,22 @@ insert into xml_names
 
     -- Experiment methods.
 
-    select source, filename, 0 as entry, 'experimentDescription' as scope, line as parentid,
-        'interactionDetectionMethod' as property, 'shortLabel' as nametype, name as name
+    select source, filename, 0 as entry, 'experimentDescription' as scope, cast(line as varchar) as parentid,
+        'interactionDetectionMethod' as property,
+        'shortLabel' as nametype,
+        null as typelabel, null as typecode,
+        name as name
     from mitab_method_names
-    union all
-
-    -- Experiments authors.
-
-    select source, filename, 0 as entry, 'experimentDescription' as scope, line as parentid,
-        'shortLabel' as nametype, author as name
-    from mitab_authors
     union all
 
     -- Interaction type names.
 
     select source, filename, 0 as entry, 'interaction' as scope, interaction as parentid,
-        'interactionType' as property, 'shortLabel' as nametype,
-        case when 0 = any (array_accum(entry)) then 'shortLabel' else 'alias' end as nametype,
+        'interactionType' as property,
+        'shortLabel' as nametype,
+        null as typelabel, null as typecode,
         name as name
-    from mitab_interaction_type_names;
+    from mitab_interaction_type_names
+    group by source, filename, interaction, name;
 
 commit;

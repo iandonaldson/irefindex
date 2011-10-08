@@ -3,7 +3,7 @@
 
 -- Interactions: source, filename, interaction
 -- Interactors:  source, filename, interaction, position
--- Experiments:  source, filename, line
+-- Experiments:  source, filename, line (in parsed import data)
 
 begin;
 
@@ -34,6 +34,7 @@ create table mitab_alternatives (
 
 -- Aliases (columns 5 and 6)
 -- The entry column replaces dbname, alias in the key.
+-- The entry column provides a counter related to the interactor.
 
 create table mitab_aliases (
     source varchar not null,
@@ -42,7 +43,7 @@ create table mitab_aliases (
     position integer not null,
     dbname varchar not null,
     alias varchar not null,
-    entry integer not null, -- counter
+    entry integer not null,
     primary key(source, filename, interaction, position, entry)
 );
 

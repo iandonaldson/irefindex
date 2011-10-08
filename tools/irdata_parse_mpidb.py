@@ -249,7 +249,7 @@ class iRefIndexWriter(Writer):
         for position, key in enumerate(("aliasA", "aliasB")):
             for entry, s in enumerate(data[key]):
                 prefix, value = split_value(s)
-                self.write_line(self.files["alias"], (self.source, self.filename, data["interaction"], str(position), prefix, value, str(entry)))
+                self.write_line(self.files["alias"], (self.source, self.filename, data["interaction"], position, prefix, value, entry))
 
         # Experiment-specific records.
 
