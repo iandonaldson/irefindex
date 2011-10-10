@@ -87,6 +87,7 @@ class Parser:
             else:
                 for value in continuation[0].split("; "):
                     self.write_record([value] + continuation[1:])
+                    break # after the first name, since the others may not be gene names
                 return None, self.END
 
         else:
