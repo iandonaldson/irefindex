@@ -168,7 +168,7 @@ INTACT_MIRROR='ftp://ftp.ebi.ac.uk'
 
 INTACT_RELEASE_URL="$INTACT_MIRROR/pub/databases/intact/current/psi25/"
 INTACT_DIR_NAME="IntAct"
-INTACT_XML_FILE_PATTERN='*.xml'
+INTACT_XML_FILE_PATTERN='pmid/*/*.xml'
 
 ############################################################
 # InnateDB
