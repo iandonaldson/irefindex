@@ -14,11 +14,12 @@ class Parser:
     NO_RECORD, CONTINUE, END = 0, 1, 2
     column_pattern = re.compile(r"(\s+)")
 
-    def __init__(self, f, f_out, f_log, filetype):
+    def __init__(self, f, f_out, f_log, filetype, progname):
         self.f = f
         self.f_out = f_out
         self.f_log = f_log
         self.filetype = filetype
+        self.progname = progname
         self.columns = None
         self.lineno = None
 
@@ -122,7 +123,7 @@ class Parser:
         self.f_out.write("\t".join(record) + "\n")
 
     def write_log(self, level, message):
-        self.f_log.write("%d: %s: %s\n" % (self.lineno, level, message))
+        self.f_log.write("%s (%s): %d: %s: %s\n" % (self.progname, self.filetype, self.lineno, level, message))
 
 if __name__ == "__main__":
     from os.path import split
@@ -136,7 +137,7 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s ( fly | yeast )" % progname
         sys.exit(1)
 
-    parser = Parser(sys.stdin, sys.stdout, sys.stderr, filetype)
+    parser = Parser(sys.stdin, sys.stdout, sys.stderr, filetype, progname)
     parser.parse()
 
 # vim: tabstop=4 expandtab shiftwidth=4

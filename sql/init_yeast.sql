@@ -8,6 +8,6 @@ create table yeast_accessions (
     sgdxref varchar not null,
     sequencelength integer not null,
     structure3d boolean not null,
-    chromosome integer not null,
+    chromosome varchar not null,
     primary key(genename)
 );
