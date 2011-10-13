@@ -301,6 +301,8 @@ TAXONOMY_MIRROR='ftp://ftp.ncbi.nih.gov'
 
 TAXONOMY_RELEASE_URL="$TAXONOMY_MIRROR/pub/taxonomy/"
 TAXONOMY_DIR_NAME="Taxonomy"
+TAXONOMY_OTHER_FILE_PATTERN='names.dmp'
+TAXONOMY_PARSER='irdata_parse_taxonomy.sh'
 
 ############################################################
 # UniProt
