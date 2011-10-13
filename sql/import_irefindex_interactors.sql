@@ -76,4 +76,8 @@ insert into xml_xref_sequences
         on M.accession = P.accession
         and M.gi = P.gi;
 
+    -- FlyBase accession matches.
+
+    -- Yeast accession matches.
+
 commit;

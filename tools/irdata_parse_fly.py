@@ -77,6 +77,13 @@ class Parser:
         # Handle compound values in Yeast.
 
         elif self.filetype == "yeast":
+
+            # Fix the 3D column.
+
+            values[6] = values[6] and "true" or "false"
+
+            # Now combine the values with any open record.
+
             if continuation:
                 continuation[0] += " " + values[0]
             else:
