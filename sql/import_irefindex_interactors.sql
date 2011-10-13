@@ -21,7 +21,7 @@ create temporary table tmp_xref_interactors as
         and property = 'interactor'
         and reftype in ('primaryRef', 'secondaryRef')
         and (dblabel like 'uniprot%'
-            or dblabel = 'refseq'
+            or dblabel in ('refseq', 'flybase', 'sgd')
             or dblabel like 'entrezgene%'
             or dblabel like '%pdb'
             );
@@ -74,10 +74,30 @@ insert into xml_xref_sequences
         and X.refvalue = M.accession
     inner join pdb_proteins as P
         on M.accession = P.accession
-        and M.gi = P.gi;
+        and M.gi = P.gi
+    union all
 
-    -- FlyBase accession matches.
+    -- UniProt matches via FlyBase accessions.
 
-    -- Yeast accession matches.
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate, cast(null as integer) as gi
+    from tmp_xref_interactors as X
+    inner join fly_accessions as A
+        on X.dblabel = 'flybase'
+        and X.refvalue = A.flyaccession
+    inner join uniprot_proteins as P
+        on A.uniprotid = P.uniprotid
+    union all
+
+    -- UniProt matches via Yeast accessions.
+
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate, cast(null as integer) as gi
+    from tmp_xref_interactors as X
+    inner join yeast_accessions as A
+        on X.dblabel = 'sgd'
+        and X.refvalue = A.sgdxref
+    inner join uniprot_proteins as P
+        on A.uniprotid = P.uniprotid;
 
 commit;
