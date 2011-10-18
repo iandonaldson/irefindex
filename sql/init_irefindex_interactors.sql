@@ -12,10 +12,14 @@ create table xml_xref_sequences (
     taxid integer,
     sequence varchar,
 
+    -- Link to sequence database describing how the connection was made.
+
+    sequencelink varchar,
+
     -- Sequence reference database information.
 
-    reftaxid integer not null,
-    refsequence varchar not null,
+    reftaxid integer,
+    refsequence varchar,
     refdate varchar,
     gi integer
 );
