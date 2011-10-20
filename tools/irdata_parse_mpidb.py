@@ -223,11 +223,10 @@ class iRefIndexWriter(Writer):
 
     def start(self, filename):
         Writer.start(self, filename)
+        self.source = os.path.split(filename)[-1]
 
         if self.files:
             return
-
-        self.source = os.path.split(filename)[-1]
 
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
