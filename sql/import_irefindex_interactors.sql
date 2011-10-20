@@ -21,7 +21,7 @@ create temporary table tmp_xref_interactors as
         and property = 'interactor'
         and reftype in ('primaryRef', 'secondaryRef')
         and (dblabel like 'uniprot%'
-            or dblabel in ('refseq', 'flybase', 'sgd')
+            or dblabel in ('SP', 'refseq', 'flybase', 'sgd')
             or dblabel like 'entrezgene%'
             or dblabel like '%pdb'
             );
@@ -37,7 +37,7 @@ insert into xml_xref_sequences
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate, cast(null as integer) as gi
     from tmp_xref_interactors as X
     inner join uniprot_accessions as A
-        on X.dblabel like 'uniprot%'
+        on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
         and X.refvalue = A.accession
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
