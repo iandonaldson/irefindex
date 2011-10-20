@@ -31,11 +31,17 @@ fi
 for FILENAME in $FILENAMES; do
     BASENAME=`basename "$FILENAME"`
     FILETYPE=${BASENAME#*.}
+
+    # Parse the FASTA files.
+
     if [[ "$FILETYPE" = 'fasta' || "$FILETYPE" = 'fasta.gz' ]]; then
-        if ! "$TOOLS/irdata_parse_fasta.py" "$DATADIR" 'sp' "$FILENAME" ; then
+        if ! "$TOOLS/irdata_parse_fasta.py" "$DATADIR" 'sp,acc,id' 'id,acc,date,taxid' "$FILENAME" ; then
             echo "$PROGNAME: FASTA parsing of $FILENAME failed." 1>&2
             exit 1
         fi
+
+    # Parse the data files.
+
     elif [[ "$FILETYPE" = 'dat' || "$FILETYPE" = 'dat.gz' ]]; then
         if ! "$TOOLS/irdata_parse_uniprot.py" "$DATADIR" "$FILENAME" ; then
             echo "$PROGNAME: UniProt text parsing of $FILENAME failed." 1>&2

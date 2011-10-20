@@ -2,7 +2,8 @@
 
 create table pdb_proteins (
     accession varchar not null,
+    chain varchar not null,
     gi integer not null,
     "sequence" varchar not null,
-    primary key(accession, gi)
+    primary key(accession, chain)
 );

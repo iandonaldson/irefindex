@@ -3,10 +3,10 @@
 create table uniprot_proteins (
     uniprotid varchar not null,
     primaryaccession varchar not null,
-    sequencedate varchar not null,
-    taxid integer not null,
+    sequencedate varchar, -- not supplied by FASTA
+    taxid integer,        -- not supplied by FASTA
     "sequence" varchar not null,
-    primary key(uniprotid)
+    primary key(uniprotid, primaryaccession, sequence)
 );
 
 create table uniprot_accessions (
