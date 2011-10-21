@@ -96,4 +96,6 @@ insert into irefindex_assignments
     select *
     from tmp_unambiguous_null_references;
 
+analyze irefindex_assignments;
+
 commit;

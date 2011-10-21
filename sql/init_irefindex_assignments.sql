@@ -11,7 +11,7 @@ create table irefindex_assignments (
 
     -- Link to sequence database describing how the connection was made.
 
-    sequencelinks varchar[],
+    sequencelinks varchar[] not null,
 
     -- Reference type responsible for providing the sequence.
 
