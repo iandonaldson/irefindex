@@ -67,6 +67,12 @@ class Parser:
         code, rest = line
         record[code] = rest
 
+    def parse_version(self, line, record):
+        code, rest = line
+        version, gi = rest.split()
+        record["VERSION"] = version
+        record["GI"] = gi.split(":")[1] # strip "GI:" from the identifier
+
     def parse_features(self, line, record):
         code, rest = self.next_line()
         while not code:
@@ -93,6 +99,7 @@ class Parser:
         "ACCESSION" : parse_accession,
         "FEATURES" : parse_features,
         "ORIGIN" : parse_origin,
+        "VERSION" : parse_version,
         }
 
     def parse(self):
@@ -111,7 +118,7 @@ class Parser:
             pass
 
     def write_record(self, record):
-        self.f_main.write("%(ACCESSION)s\t%(TAXID)s\t%(SEQUENCE)s\n" % record)
+        self.f_main.write("%(ACCESSION)s\t%(VERSION)s\t%(GI)s\t%(TAXID)s\t%(SEQUENCE)s\n" % record)
 
 if __name__ == "__main__":
     from os.path import extsep, join, split, splitext

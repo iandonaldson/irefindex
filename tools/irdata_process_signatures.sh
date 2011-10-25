@@ -20,7 +20,17 @@ fi
 
 DATADIR=$1
 
+if [ ! "$DATADIR" ]; then
+    echo "$PROGNAME: A data directory must be specified." 1>&2
+    exit 1
+fi
+
 for FILENAME in "$DATADIR/"*_proteins.txt ; do
+    if [ "$FILENAME" = "$DATADIR/*_proteins.txt" ]; then
+        echo "$PROGNAME: No processable files were found." 1>&2
+        exit 1
+    fi
+
     if ! "$TOOLS/irdata_process_signatures.py" "$FILENAME" "$FILENAME.seq" ; then
         echo "$PROGNAME: Sequence digest processing of $FILENAME failed." 1>&2
         exit 1

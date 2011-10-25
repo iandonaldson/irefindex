@@ -119,7 +119,7 @@ BIND_TRANSLATION_XML_FILE_PATTERN='*.xml'
 ############################################################
 # BioGRID
 
-BIOGRID_DOWNLOAD_FILES="BIOGRID-ORGANISM-3.1.81.psi25.zip"
+BIOGRID_DOWNLOAD_FILES="BIOGRID-ALL-3.1.81.psi25.zip"
 BIOGRID_MIRROR='http://thebiogrid.org'
 
 BIOGRID_RELEASE_URL="$BIOGRID_MIRROR/downloads/archives/Release%20Archive/BIOGRID-3.1.81/"
@@ -279,8 +279,8 @@ REFSEQ_MIRROR='ftp://ftp.ncbi.nih.gov/refseq/release/'
 
 REFSEQ_RELEASE_URL="$REFSEQ_MIRROR/complete/"
 REFSEQ_DIR_NAME="RefSeq"
-REFSEQ_OTHER_FILE_PATTERN='*.gnp'
-REFSEQ_PARSER='irdata_parse_refseq.py'
+REFSEQ_OTHER_FILE_PATTERN='*.gpff* *.gnp'
+REFSEQ_PARSER='irdata_parse_refseq.sh'
 
 ############################################################
 # SEGUID

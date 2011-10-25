@@ -20,6 +20,7 @@ create table xml_xref_sequences (
 
     reftaxid integer,
     refsequence varchar,
-    refdate varchar,
-    gi integer
+    refdate varchar
+
+    -- Constraints are added after import.
 );

@@ -29,10 +29,10 @@ if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
 fi
 
 # Remove comment lines, convert the field delimiters, extract the PDB accession,
-# gi and taxid.
+# chain, gi and taxid.
 
   grep -v -e '^#' "$FILENAME" \
 | sed 's/^ *//' \
 | sed $'s/ \{2,\}/\t/'g \
-| cut -f 2,4,5 \
+| cut -f 2,3,4,5 \
 > "$DATADIR/$OUTFILE"

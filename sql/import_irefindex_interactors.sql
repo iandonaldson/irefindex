@@ -21,7 +21,7 @@ create temporary table tmp_xref_interactors as
         and property = 'interactor'
         and reftype in ('primaryRef', 'secondaryRef')
         and (dblabel like 'uniprot%'
-            or dblabel in ('SP', 'refseq', 'flybase', 'sgd')
+            or dblabel in ('SP', 'refseq', 'flybase', 'sgd', 'protein genbank identifier')
             or dblabel like 'entrezgene%'
             or dblabel like '%pdb'
             );
@@ -34,7 +34,7 @@ insert into xml_xref_sequences
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'uniprotkb' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate, cast(null as integer) as gi
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from tmp_xref_interactors as X
     inner join uniprot_accessions as A
         on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
@@ -47,18 +47,29 @@ insert into xml_xref_sequences
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'refseq' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate, cast(null as integer) as gi
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from tmp_xref_interactors as X
     inner join refseq_proteins as P
         on X.dblabel = 'refseq'
         and X.refvalue = P.accession
     union all
 
+    -- GenBank protein identifier matches.
+
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
+        'refseq/genbank' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from tmp_xref_interactors as X
+    inner join refseq_proteins as P
+        on X.dblabel = 'protein genbank identifier'
+        and X.refvalue = cast(P.gi as varchar)
+    union all
+
     -- RefSeq accession matches via Entrez Gene.
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'refseq/entrezgene' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate, cast(null as integer) as gi
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from tmp_xref_interactors as X
     inner join gene2refseq as G
         on X.dblabel like 'entrezgene%'
@@ -71,21 +82,21 @@ insert into xml_xref_sequences
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'pdb/mmdb' as sequencelink,
-        M.taxid as reftaxid, P.sequence as refsequence, null as refdate, P.gi
+        M.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from tmp_xref_interactors as X
     inner join mmdb_pdb_accessions as M
         on X.dblabel like '%pdb'
         and X.refvalue = M.accession
     inner join pdb_proteins as P
         on M.accession = P.accession
-        and M.gi = P.gi
+        and M.chain = P.chain
     union all
 
     -- UniProt matches via FlyBase accessions.
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'uniprotkb/flybase' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate, cast(null as integer) as gi
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from tmp_xref_interactors as X
     inner join fly_accessions as A
         on X.dblabel = 'flybase'
@@ -98,7 +109,7 @@ insert into xml_xref_sequences
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'uniprotkb/sgd' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate, cast(null as integer) as gi
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from tmp_xref_interactors as X
     inner join yeast_accessions as A
         on X.dblabel = 'sgd'
@@ -112,7 +123,7 @@ analyze xml_xref_sequences;
 insert into xml_xref_sequences
     select I.source, I.filename, I.entry, I.interactorid, I.reftype, I.dblabel, I.refvalue, I.taxid, I.sequence,
         null as sequencelink,
-        null as reftaxid, null as refsequence, null as refdate, cast(null as integer) as gi
+        null as reftaxid, null as refsequence, null as refdate
     from tmp_xref_interactors as I
     left outer join xml_xref_sequences as X
         on (I.source, I.filename, I.entry, I.interactorid) = (X.source, X.filename, X.entry, X.interactorid)
