@@ -65,7 +65,7 @@ class Parser:
 
     def parse_accession(self, line, record):
         code, rest = line
-        record[code] = rest
+        record[code] = rest.split()[0] # ignore trailing accessions (presumably expired)
 
     def parse_version(self, line, record):
         code, rest = line
@@ -134,24 +134,22 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <data file>..." % progname
         sys.exit(1)
 
-    f_out = open(join(data_directory, "refseq_proteins.txt"), "w")
-    try:
-        for filename in filenames:
-            leafname = split(filename)[-1]
-            basename, ext = splitext(leafname)
-            print >>sys.stderr, "Parsing", leafname
+    for filename in filenames:
+        leafname = split(filename)[-1]
+        basename, ext = splitext(leafname)
+        print >>sys.stderr, "Parsing", leafname
 
-            if ext.endswith("gz"):
-                opener = gzip.open
-            else:
-                opener = open
+        if ext.endswith("gz"):
+            opener = gzip.open
+        else:
+            opener = open
 
-            parser = Parser(opener(filename), f_out)
-            try:
-                parser.parse()
-            finally:
-                parser.close()
-    finally:
-        f_out.close()
+        f_out = open(join(data_directory, basename), "w")
+        parser = Parser(opener(filename), f_out)
+        try:
+            parser.parse()
+        finally:
+            parser.close()
+            f_out.close()
 
 # vim: tabstop=4 expandtab shiftwidth=4

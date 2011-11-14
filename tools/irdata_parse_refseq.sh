@@ -30,10 +30,14 @@ fi
 
 # Parse the data files.
 
-if ! "$TOOLS/irdata_parse_refseq.py" "$DATADIR" $FILENAMES ; then
-    echo "$PROGNAME: RefSeq text parsing failed." 1>&2
-    exit 1
-fi
+  "$SCRIPTS/argument-per-line" $FILENAMES \
+| "$SCRIPTS/irparallel" "\"$TOOLS/irdata_parse_refseq.py\" \"$DATADIR\" {}"
+
+# Concatenate the output data.
+
+cat "$DATADIR"/* > "$DATADIR/refseq_proteins.txt"
+
+# Process the sequence data.
 
 "$TOOLS/irdata_process_signatures.sh" "$DATADIR"
 exit $?
