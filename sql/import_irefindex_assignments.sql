@@ -17,6 +17,7 @@ create table irefindex_null_references as
     having count(distinct refsequence) = 0;
 
 -- Unambiguous primary or secondary references.
+-- The sequence chosen is the sequence database sequence.
 -- The reference type will be 'primaryRef' if present.
 
 create temporary table tmp_unambiguous_references as
@@ -95,6 +96,7 @@ create temporary table tmp_unambiguous_primary_references as
 
 -- Interactors whose only sequence information originates from the interaction
 -- record.
+-- The reference type will be 'primaryRef' if present.
 
 create temporary table tmp_unambiguous_null_references as
     select source, filename, entry, interactorid, min(sequence) as sequence,
@@ -103,7 +105,10 @@ create temporary table tmp_unambiguous_null_references as
         cast('interaction' as varchar) as method
     from xml_xref_sequences
     where sequence is not null
-        and refsequence is null
+        and (source, filename, entry, interactorid) in (
+            select source, filename, entry, interactorid
+            from irefindex_null_references
+            )
     group by source, filename, entry, interactorid
     having count(distinct sequence) = 1;
 
@@ -130,11 +135,13 @@ analyze irefindex_assignments;
 -- Remaining unassigned interactors.
 
 create table irefindex_unassigned as
-    select *
-    from irefindex_ambiguous_references
+    select source, filename, entry, interactorid,
+        count(distinct sequence) as sequences, count(distinct refsequence) as refsequences
+    from xml_xref_sequences
     where (source, filename, entry, interactorid) not in (
         select source, filename, entry, interactorid
         from irefindex_assignments
-        );
+        )
+    group by source, filename, entry, interactorid;
 
 commit;

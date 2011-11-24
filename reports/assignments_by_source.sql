@@ -20,4 +20,14 @@ create temporary table tmp_unassigned_by_source as
 
 \copy tmp_unassigned_by_source to '<directory>/unassigned_by_source'
 
+-- Show the number of unassigned interactors by number of sequences.
+
+create temporary table tmp_unassigned_by_sequences as
+    select sequences, refsequences, count(distinct array[source, filename, cast(entry as varchar), interactorid]) as total
+    from irefindex_unassigned
+    group by sequences, refsequences
+    order by sequences, refsequences;
+
+\copy tmp_unassigned_by_sequences to '<directory>/unassigned_by_sequences'
+
 rollback;

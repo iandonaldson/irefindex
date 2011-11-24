@@ -38,7 +38,22 @@ insert into xml_xref_sequences
     from tmp_xref_interactors as X
     inner join uniprot_accessions as A
         on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
+        and position('-' in X.refvalue) = 0
         and X.refvalue = A.accession
+    inner join uniprot_proteins as P
+        on A.uniprotid = P.uniprotid
+    union all
+
+    -- UniProt accession matches discarding versioning.
+
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
+        'uniprotkb' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
+    from tmp_xref_interactors as X
+    inner join uniprot_accessions as A
+        on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
+        and position('-' in X.refvalue) <> 0
+        and substring(X.refvalue from 1 for position('-' in X.refvalue) - 1) = A.accession
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
     union all
@@ -52,6 +67,17 @@ insert into xml_xref_sequences
     inner join refseq_proteins as P
         on X.dblabel = 'refseq'
         and X.refvalue = P.accession
+    union all
+
+    -- RefSeq accession matches using versioning.
+
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
+        'refseq' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from tmp_xref_interactors as X
+    inner join refseq_proteins as P
+        on X.dblabel = 'refseq'
+        and X.refvalue = P.version
     union all
 
     -- GenBank protein identifier matches.
