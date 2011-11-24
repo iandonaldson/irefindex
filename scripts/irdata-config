@@ -16,6 +16,12 @@ DATA=${DATA:-}                              # user defined data directory locati
 PROGNAME=`basename "$0"`
 SCRIPTS=`dirname "$0"`
 
+# Fix the scripts directory if this file was read by one of the tools.
+
+if [ `basename "$SCRIPTS"` = 'tools' ]; then
+    SCRIPTS=`dirname "$SCRIPTS"`/scripts
+fi
+
 # Allow directories to be created.
 
 if [ "$1" = '--make-system-dirs' ]; then
@@ -145,7 +151,7 @@ DIP_XML_FILE_PATTERN='*.mif25'
 ############################################################
 # Entrez Gene
 
-GENE_DOWNLOAD_FILES="gene2refseq.gz gene_info.gz"
+GENE_DOWNLOAD_FILES="gene2refseq.gz gene_info.gz gene2go.gz"
 GENE_MIRROR='ftp://ftp.ncbi.nlm.nih.gov'
 
 GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"
