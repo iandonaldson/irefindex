@@ -38,13 +38,25 @@ insert into xml_xref_sequences
     from tmp_xref_interactors as X
     inner join uniprot_accessions as A
         on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
-        and position('-' in X.refvalue) = 0
         and X.refvalue = A.accession
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
     union all
 
-    -- UniProt accession matches discarding versioning.
+    -- UniProt isoform matches.
+
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
+        'uniprotkb/isoform' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
+    from tmp_xref_interactors as X
+    inner join uniprot_isoforms as I
+        on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
+        and X.refvalue = I.accession
+    inner join uniprot_proteins as P
+        on I.uniprotid = P.uniprotid
+    union all
+
+    -- UniProt accession matches for unexpected isoforms.
 
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, X.taxid, X.sequence,
         'uniprotkb' as sequencelink,
@@ -56,6 +68,10 @@ insert into xml_xref_sequences
         and substring(X.refvalue from 1 for position('-' in X.refvalue) - 1) = A.accession
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
+    left outer join uniprot_isoforms as I
+        on (X.dblabel like 'uniprot%' or X.dblabel = 'SP')
+        and X.refvalue = I.accession
+    where I.uniprotid is null
     union all
 
     -- RefSeq accession matches.

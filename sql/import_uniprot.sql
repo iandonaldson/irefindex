@@ -6,6 +6,8 @@ begin;
 \copy uniprot_proteins from '<directory>/uniprot_trembl_proteins.txt.seq'
 \copy uniprot_accessions from '<directory>/uniprot_sprot_accessions.txt'
 \copy uniprot_accessions from '<directory>/uniprot_trembl_accessions.txt'
+\copy uniprot_identifiers from '<directory>/uniprot_sprot_identifiers.txt'
+\copy uniprot_identifiers from '<directory>/uniprot_trembl_identifiers.txt'
 
 create index uniprot_accessions_accession on uniprot_accessions(accession);
 analyze uniprot_accessions;
@@ -28,21 +30,21 @@ create temporary table tmp_uniprot_proteins (
 
 analyze tmp_uniprot_proteins;
 
--- Remove trailing "-n" from accessions.
+-- Merge with the imported proteins.
 
 insert into uniprot_proteins
     select A.uniprotid, A.primaryaccession, A.sequencedate, A.taxid, A.sequence
-    from (
-        select uniprotid,
-            case when length(primaryaccession) > 6 then substring(primaryaccession from 1 for 6)
-            else primaryaccession
-            end as primaryaccession,
-            sequencedate, taxid, sequence
-        from tmp_uniprot_proteins
-        ) as A
+    from tmp_uniprot_proteins as A
     left outer join uniprot_proteins as B
         on (A.uniprotid, A.primaryaccession, A.sequence) =
             (B.uniprotid, B.primaryaccession, B.sequence)
     where B.uniprotid is null;
+
+-- Add the isoform mapping.
+
+insert into uniprot_isoforms
+    select uniprotid, primaryaccession as accession, substring(primaryaccession from 1 for 6) as isoform
+    from uniprot_proteins
+    where length(primaryaccession) > 6;
 
 commit;

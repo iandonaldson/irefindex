@@ -14,3 +14,18 @@ create table uniprot_accessions (
     accession varchar not null,
     primary key(uniprotid, accession)
 );
+
+create table uniprot_identifiers (
+    uniprotid varchar not null,
+    dblabel varchar not null,
+    refvalue varchar not null,
+    position integer not null,
+    primary key(uniprotid, dblabel, refvalue)
+);
+
+create table uniprot_isoforms (
+    uniprotid varchar not null,
+    accession varchar not null,
+    isoform varchar not null,
+    primary key(uniprotid, accession, isoform)
+);

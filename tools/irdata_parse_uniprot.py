@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-"Parse UniProt text files."
+"""
+Parse UniProt text files.
+
+See: http://web.expasy.org/docs/userman.html
+"""
 
 import re
 
@@ -18,14 +22,17 @@ class Parser:
 
     null = r"\N"
     date_regexp = re.compile(r"(\d{2})-([A-Z]{3})-(\d{4})")
+    pubmed_regexp = re.compile(r"PubMed=(\d+);")
+
     months = {}
     for i, name in enumerate(("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")):
         months[name] = i + 1
 
-    def __init__(self, f, f_main, f_accessions):
+    def __init__(self, f, f_main, f_accessions, f_identifiers):
         self.f = f
         self.f_main = f_main
         self.f_accessions = f_accessions
+        self.f_identifiers = f_identifiers
         self.line = None
         self.return_last = 0
 
@@ -39,6 +46,9 @@ class Parser:
         if self.f_accessions is not None:
             self.f_accessions.close()
             self.f_accessions = None
+        if self.f_identifiers is not None:
+            self.f_identifiers.close()
+            self.f_identifiers = None
 
     def next_line(self):
         if not self.return_last:
@@ -93,6 +103,9 @@ class Parser:
             return None
 
     def parse_taxonomy(self, line):
+
+        "See: http://web.expasy.org/docs/userman.html#OX_line"
+
         code, rest = line
         key, value = rest.rstrip(";").split("=")
         if key == "NCBI_TaxID":
@@ -101,6 +114,9 @@ class Parser:
             return None
 
     def parse_sequence(self, line):
+
+        "See: http://web.expasy.org/docs/userman.html#SQ_line"
+
         sequence = []
         code, rest = self.next_line()
         while code == "  ":
@@ -110,12 +126,56 @@ class Parser:
             self.save_line()
         return "".join(sequence).replace(" ", "")
 
+    def parse_pubmed(self, line):
+
+        "See: http://web.expasy.org/docs/userman.html#RX_line"
+
+        code, rest = line
+        pmids = []
+        while code == "RX":
+            pmid = self._get_pubmed(rest)
+            if pmid:
+                pmids.append(pmid)
+            code, rest = self.next_line()
+        else:
+            self.save_line()
+        return pmids
+
+    def _get_pubmed(self, s):
+        match = self.pubmed_regexp.match(s)
+        if match:
+            return match.groups()[0]
+        else:
+            return None
+
+    def parse_identifiers(self, line):
+
+        "See: http://web.expasy.org/docs/userman.html#DR_line"
+
+        code, rest = line
+        identifiers = set()
+        while code == "DR":
+            parts = rest.rstrip(".").split(";")
+
+            # Only the first identifier is recorded.
+
+            if len(parts) > 1:
+                type = parts[0].strip()
+                value = parts[1].strip()
+                identifiers.add((type, value))
+            code, rest = self.next_line()
+        else:
+            self.save_line()
+        return identifiers
+
     handlers = {
         "ID" : parse_identifier,
         "AC" : parse_accessions,
         "DT" : parse_dates,
         "OX" : parse_taxonomy,
         "SQ" : parse_sequence,
+        "RX" : parse_pubmed,
+        "DR" : parse_identifiers,
         }
 
     def parse(self):
@@ -136,8 +196,23 @@ class Parser:
     def write_record(self, record):
         record["AC1"] = record["AC"][0]
         self.f_main.write("%(ID)s\t%(AC1)s\t%(DT)s\t%(OX)s\t%(SQ)s\n" % record)
+
+        # Write accessions for each identifier.
+
         for accession in record["AC"]:
             self.f_accessions.write("%s\t%s\n" % (record["ID"], accession))
+
+        # Write PubMed references.
+
+        if record.has_key("RX"):
+            for pos, pmid in enumerate(record["RX"]):
+                self.f_identifiers.write("%s\tPubMed\t%s\t%s\n" % (record["ID"], pmid, pos))
+
+        # Write cross-references.
+
+        if record.has_key("DR"):
+            for type, identifier in record["DR"]:
+                self.f_identifiers.write("%s\t%s\t%s\t0\n" % (record["ID"], type, identifier))
 
 if __name__ == "__main__":
     from os.path import extsep, join, split, splitext
@@ -159,13 +234,14 @@ if __name__ == "__main__":
 
     mainfile = join(data_directory, "%s_proteins%stxt" % (basename, extsep))
     accessionsfile = join(data_directory, "%s_accessions%stxt" % (basename, extsep))
+    identifiersfile = join(data_directory, "%s_identifiers%stxt" % (basename, extsep))
 
     if ext.endswith("gz"):
         opener = gzip.open
     else:
         opener = open
 
-    parser = Parser(opener(filename), open(mainfile, "w"), open(accessionsfile, "w"))
+    parser = Parser(opener(filename), open(mainfile, "w"), open(accessionsfile, "w"), open(identifiersfile, "w"))
     try:
         parser.parse()
     finally:
