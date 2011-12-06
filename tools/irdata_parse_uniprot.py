@@ -23,23 +23,22 @@ class Parser:
     null = r"\N"
     date_regexp = re.compile(r"(\d{2})-([A-Z]{3})-(\d{4})")
     pubmed_regexp = re.compile(r"PubMed=(\d+);")
+    gene_name_regexp = re.compile(r"Name=(.+?);")
 
     months = {}
     for i, name in enumerate(("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")):
         months[name] = i + 1
 
-    def __init__(self, f, f_main, f_accessions, f_identifiers):
+    def __init__(self, f, f_main, f_accessions, f_identifiers, f_gene_names):
         self.f = f
         self.f_main = f_main
         self.f_accessions = f_accessions
         self.f_identifiers = f_identifiers
+        self.f_gene_names = f_gene_names
         self.line = None
         self.return_last = 0
 
     def close(self):
-        if self.f is not None:
-            self.f.close()
-            self.f = None
         if self.f_main is not None:
             self.f_main.close()
             self.f_main = None
@@ -49,6 +48,9 @@ class Parser:
         if self.f_identifiers is not None:
             self.f_identifiers.close()
             self.f_identifiers = None
+        if self.f_gene_names is not None:
+            self.f_gene_names.close()
+            self.f_gene_names = None
 
     def next_line(self):
         if not self.return_last:
@@ -168,6 +170,28 @@ class Parser:
             self.save_line()
         return identifiers
 
+    def parse_gene_names(self, line):
+
+        "See: http://web.expasy.org/docs/userman.html#GN_line"
+
+        code, rest = line
+        names = set()
+        while code == "GN":
+            gene_name = self._get_gene_name(rest)
+            if gene_name:
+                names.add(gene_name)
+            code, rest = self.next_line()
+        else:
+            self.save_line()
+        return names
+
+    def _get_gene_name(self, s):
+        match = self.gene_name_regexp.search(s)
+        if match:
+            return match.groups()[0]
+        else:
+            return None
+
     handlers = {
         "ID" : parse_identifier,
         "AC" : parse_accessions,
@@ -176,6 +200,7 @@ class Parser:
         "SQ" : parse_sequence,
         "RX" : parse_pubmed,
         "DR" : parse_identifiers,
+        "GN" : parse_gene_names,
         }
 
     def parse(self):
@@ -214,6 +239,12 @@ class Parser:
             for type, identifier in record["DR"]:
                 self.f_identifiers.write("%s\t%s\t%s\t0\n" % (record["ID"], type, identifier))
 
+        # Write gene names.
+
+        if record.has_key("GN"):
+            for pos, name in enumerate(record["GN"]):
+                self.f_gene_names.write("%s\t%s\t%s\n" % (record["ID"], name, pos))
+
 if __name__ == "__main__":
     from os.path import extsep, join, split, splitext
     import sys, gzip
@@ -224,27 +255,42 @@ if __name__ == "__main__":
         i = 1
         data_directory = sys.argv[i]
         filename = sys.argv[i+1]
+        if len(sys.argv) > i+2:
+            format = sys.argv[i+2]
+        else:
+            format = None
     except IndexError:
-        print >>sys.stderr, "Usage: %s <output data directory> <data file>" % progname
+        print >>sys.stderr, "Usage: %s <output data directory> <data file> [ <format> ]" % progname
         sys.exit(1)
 
     leafname = split(filename)[-1]
     basename, ext = splitext(leafname)
-    print >>sys.stderr, "Parsing", leafname
 
-    mainfile = join(data_directory, "%s_proteins%stxt" % (basename, extsep))
-    accessionsfile = join(data_directory, "%s_accessions%stxt" % (basename, extsep))
-    identifiersfile = join(data_directory, "%s_identifiers%stxt" % (basename, extsep))
+    # Use a default format like "uniprot_sprot_%s.txt".
 
-    if ext.endswith("gz"):
-        opener = gzip.open
+    format = format or ("%s" % basename) + "_%s" + ("%stxt" % extsep)
+    mainfile = join(data_directory, format % "proteins")
+    accessionsfile = join(data_directory, format % "accessions")
+    identifiersfile = join(data_directory, format % "identifiers")
+    genenamesfile = join(data_directory, format % "gene_names")
+
+    if filename == "-":
+        print >>sys.stderr, "Parsing standard input"
+        f = sys.stdin
     else:
-        opener = open
+        print >>sys.stderr, "Parsing", leafname
+        if ext.endswith("gz"):
+            opener = gzip.open
+        else:
+            opener = open
+        f = opener(filename)
 
-    parser = Parser(opener(filename), open(mainfile, "w"), open(accessionsfile, "w"), open(identifiersfile, "w"))
+    parser = Parser(f, open(mainfile, "w"), open(accessionsfile, "w"), open(identifiersfile, "w"), open(genenamesfile, "w"))
     try:
         parser.parse()
     finally:
         parser.close()
+        if filename != "-":
+            f.close()
 
 # vim: tabstop=4 expandtab shiftwidth=4

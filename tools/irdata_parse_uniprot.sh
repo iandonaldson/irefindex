@@ -43,10 +43,37 @@ for FILENAME in $FILENAMES; do
     # Parse the data files.
 
     elif [[ "$FILETYPE" = 'dat' || "$FILETYPE" = 'dat.gz' ]]; then
-        if ! "$TOOLS/irdata_parse_uniprot.py" "$DATADIR" "$FILENAME" ; then
-            echo "$PROGNAME: UniProt text parsing of $FILENAME failed." 1>&2
-            exit 1
+
+        # Unpack any gzip archives since the slicing of these files is not
+        # efficient if done repeatedly.
+
+        if [ "$FILETYPE" = 'dat.gz' ]; then
+            echo "$PROGNAME: Unpacking $FILENAME..." 1>&2
+            "$SCRIPTS/irunpack-archive" --include-gzip-files "$FILENAME"
+            FILENAME=${FILENAME%.gz}
         fi
+
+        # Remove the extension from the filename.
+
+        BASENAME=`basename "$FILENAME"`
+        LEAFNAME=${BASENAME%.dat}
+
+        # Split the data file into pieces by first finding the offsets in the
+        # filename.
+
+          "$TOOLS/irdata_split.py" -1 "$UNIPROT_SPLIT_INTERVAL" "$FILENAME" '//' \
+        | "$SCRIPTS/irparallel" "echo {} | \"$SCRIPTS/irslice\" \"$FILENAME\" - | \"$TOOLS/irdata_parse_uniprot.py\" \"$DATADIR\" - \"${LEAFNAME}_%s-{}.txt\""
+
+        # Merge the pieces.
+
+        for TYPE in "accessions" "gene_names" "identifiers" "proteins" ; do
+            if cat "$DATADIR/${LEAFNAME}_${TYPE}-"*".txt" > "$DATADIR/${LEAFNAME}_${TYPE}.txt" ; then
+                for PIECE in "$DATADIR/${LEAFNAME}_${TYPE}-"*".txt" ; do
+                    rm "$PIECE"
+                done
+            fi
+        done
+
     else
         echo "$PROGNAME: Data file $FILENAME is not supported." 1>&2
     fi

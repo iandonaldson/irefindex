@@ -8,6 +8,8 @@ begin;
 \copy uniprot_accessions from '<directory>/uniprot_trembl_accessions.txt'
 \copy uniprot_identifiers from '<directory>/uniprot_sprot_identifiers.txt'
 \copy uniprot_identifiers from '<directory>/uniprot_trembl_identifiers.txt'
+\copy uniprot_gene_names from '<directory>/uniprot_sprot_gene_names.txt'
+\copy uniprot_gene_names from '<directory>/uniprot_trembl_gene_names.txt'
 
 create index uniprot_accessions_accession on uniprot_accessions(accession);
 analyze uniprot_accessions;

@@ -23,6 +23,13 @@ create table uniprot_identifiers (
     primary key(uniprotid, dblabel, refvalue)
 );
 
+create table uniprot_gene_names (
+    uniprotid varchar not null,
+    genename varchar not null,
+    position integer not null,
+    primary key(uniprotid, genename)
+);
+
 create table uniprot_isoforms (
     uniprotid varchar not null,
     accession varchar not null,

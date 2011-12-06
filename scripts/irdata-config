@@ -156,9 +156,8 @@ GENE_MIRROR='ftp://ftp.ncbi.nlm.nih.gov'
 
 GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"
 GENE_DIR_NAME="Entrez_Gene"
-GENE_OTHER_FILE_PATTERN='*.gz'
-GENE_PARSER='irdata_parse_gene2refseq.sh'
-# NOTE: Need parser for gene_info.
+GENE_OTHER_FILE_PATTERN='gene*'
+GENE_PARSER='irdata_parse_gene.sh'
 
 ############################################################
 # HPRD
@@ -274,7 +273,7 @@ PDB_MIRROR='ftp://ftp.ncbi.nih.gov'
 
 PDB_RELEASE_URL="$PDB_MIRROR/blast/db/FASTA/"
 PDB_DIR_NAME="PDB"
-PDB_OTHER_FILE_PATTERN='*.gz *.fasta'
+PDB_OTHER_FILE_PATTERN='pdbaa*'
 PDB_PARSER='irdata_parse_pdb.sh'
 
 ############################################################
@@ -324,6 +323,8 @@ UNIPROT_RELEASE_URL="$UNIPROT_MIRROR/pub/databases/uniprot/$UNIPROT_RELEASE/know
 UNIPROT_DIR_NAME="UniProt"
 UNIPROT_OTHER_FILE_PATTERN='*.dat.gz *.dat *.fasta.gz *.fasta'
 UNIPROT_PARSER='irdata_parse_uniprot.sh'
+
+UNIPROT_SPLIT_INTERVAL=100000000
 
 ############################################################
 # UniProt (Fly)

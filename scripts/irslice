@@ -1,0 +1,58 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME <filename> ( - | <start> [ <length> ] )
+
+Extract the content of the file with the given filename, starting at the
+specified starting byte offset (which is a 1-based offset) and reading a slice
+of the given length. If no length is given, the remainder of the file will be
+read as the slice.
+
+If - is given instead of start and length arguments, then the start and length
+values will be read from standard input. Again, the length argument can be
+omitted to produce the remainder of the file.
+EOF
+    exit 1
+fi
+
+FILENAME=$1
+
+if [ ! "$FILENAME" ]; then
+    echo "$PROGNAME: No filename specified." 1>&2
+    exit 1
+fi
+
+if [ ! -e "$FILENAME" ]; then
+    echo "$PROGNAME: The specified file ($FILENAME) does not exist." 1>&2
+    exit 1
+fi
+
+if [ "$2" = '-' ]; then
+    read -r START LENGTH
+else
+    START=$2
+    LENGTH=$3
+fi
+
+if [ ! "$START" ]; then
+    echo "$PROGNAME: A start offset must be specified." 1>&2
+    exit 1
+fi
+
+if [ "$LENGTH" ]; then
+    SLICER="head -c \"$LENGTH\""
+else
+    SLICER="tee"
+fi
+
+  tail -c +"$START" "$FILENAME" \
+| eval "$SLICER"
