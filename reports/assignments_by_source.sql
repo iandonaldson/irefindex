@@ -13,10 +13,16 @@ create temporary table tmp_assignments_by_source as
 -- Show the number of unassigned interactors by data source.
 
 create temporary table tmp_unassigned_by_source as
-    select source, count(distinct array[filename, cast(entry as varchar), interactorid]) as total
-    from irefindex_unassigned
-    group by source
-    order by source;
+    select source, count(distinct array[filename, cast(entry as varchar), interactorid]) as total, havesequences
+    from (
+        select source, filename, entry, interactorid,
+            case when refsequences = 0 then false
+            else true
+            end as havesequences
+        from irefindex_unassigned
+        ) as X
+    group by havesequences, source
+    order by havesequences, source;
 
 \copy tmp_unassigned_by_source to '<directory>/unassigned_by_source'
 
