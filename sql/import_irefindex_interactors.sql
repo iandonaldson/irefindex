@@ -23,6 +23,7 @@ create temporary table tmp_xref_interactors as
         and (dblabel like 'uniprot%'
             or dblabel in ('SP', 'refseq', 'flybase', 'sgd', 'protein genbank identifier')
             or dblabel like 'entrezgene%'
+            or dblabel like 'entrez gene%'
             or dblabel like '%pdb'
             );
 
