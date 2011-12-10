@@ -17,6 +17,9 @@ analyze uniprot_accessions;
 create index uniprot_proteins_sequence on uniprot_proteins(sequence);
 analyze uniprot_proteins;
 
+create index uniprot_gene_names_genename on uniprot_gene_names(genename);
+analyze uniprot_gene_names;
+
 create temporary table tmp_uniprot_proteins (
     uniprotid varchar not null,
     primaryaccession varchar not null,
@@ -48,5 +51,7 @@ insert into uniprot_isoforms
     select uniprotid, primaryaccession as accession, substring(primaryaccession from 1 for 6) as isoform
     from uniprot_proteins
     where length(primaryaccession) > 6;
+
+analyze uniprot_isoforms;
 
 commit;
