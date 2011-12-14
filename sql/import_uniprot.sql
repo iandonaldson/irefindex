@@ -22,11 +22,11 @@ analyze uniprot_gene_names;
 
 create temporary table tmp_uniprot_proteins (
     uniprotid varchar not null,
-    primaryaccession varchar not null,
+    accession varchar not null,
     sequencedate varchar,
     taxid integer,
     sequence varchar not null,
-    primary key(uniprotid, primaryaccession, sequence)
+    primary key(accession)
 );
 
 -- Add FASTA data.
@@ -38,19 +38,20 @@ analyze tmp_uniprot_proteins;
 -- Merge with the imported proteins.
 
 insert into uniprot_proteins
-    select A.uniprotid, A.primaryaccession, A.sequencedate, A.taxid, A.sequence
+    select A.uniprotid, A.accession, A.sequencedate, A.taxid, A.sequence
     from tmp_uniprot_proteins as A
     left outer join uniprot_proteins as B
-        on (A.uniprotid, A.primaryaccession, A.sequence) =
-            (B.uniprotid, B.primaryaccession, B.sequence)
+        on A.accession = B.accession
     where B.uniprotid is null;
+
+analyze uniprot_proteins;
 
 -- Add the isoform mapping.
 
 insert into uniprot_isoforms
-    select uniprotid, primaryaccession as accession, substring(primaryaccession from 1 for 6) as isoform
+    select uniprotid, accession, substring(accession from 1 for 6) as parent
     from uniprot_proteins
-    where length(primaryaccession) > 6;
+    where length(accession) > 6;
 
 analyze uniprot_isoforms;
 

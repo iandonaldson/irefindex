@@ -1,12 +1,15 @@
 -- A simple schema purely for completing interactor data.
 
+-- Accessions in the proteins table are primary accessions from the main
+-- UniProt data files and isoforms from the FASTA files.
+
 create table uniprot_proteins (
     uniprotid varchar not null,
-    primaryaccession varchar not null,
-    sequencedate varchar, -- not supplied by FASTA
-    taxid integer,        -- not supplied by FASTA
+    accession varchar not null,
+    sequencedate varchar,           -- not supplied by FASTA
+    taxid integer,                  -- not supplied by FASTA
     "sequence" varchar not null,
-    primary key(uniprotid, primaryaccession, sequence)
+    primary key(accession)
 );
 
 create table uniprot_accessions (
@@ -32,7 +35,7 @@ create table uniprot_gene_names (
 
 create table uniprot_isoforms (
     uniprotid varchar not null,
-    accession varchar not null,
     isoform varchar not null,
-    primary key(uniprotid, accession, isoform)
+    parent varchar not null,
+    primary key(isoform)
 );
