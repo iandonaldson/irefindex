@@ -45,7 +45,7 @@ interaction. Participants are always implicitly referenced.
 
 from irdata.data import *
 from irdata.signatures import make_signature
-from irdata.xml import *
+from irdata.xmldata import *
 import os
 
 class PSIParser(EmptyElementParser):
