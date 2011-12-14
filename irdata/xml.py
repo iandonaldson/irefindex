@@ -5,6 +5,8 @@ XML parsing utilities.
 """
 
 import xml.sax
+import gzip
+from os.path import splitext
 
 class Parser(xml.sax.handler.ContentHandler):
 
@@ -31,7 +33,14 @@ class Parser(xml.sax.handler.ContentHandler):
         Parse the file with the given 'filename'.
         """
 
-        f = open(filename, "rb")
+        basename, ext = splitext(filename)
+
+        if ext.endswith("gz"):
+            opener = gzip.open
+        else:
+            opener = open
+
+        f = opener(filename, "rb")
         try:
             parser = xml.sax.make_parser()
             parser.setContentHandler(self)
