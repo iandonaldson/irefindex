@@ -293,7 +293,7 @@ class PSIParser(EmptyElementParser):
         self.writer.start(filename)
         EmptyElementParser.parse(self, filename)
 
-class Writer:
+class PSIWriter(Writer):
 
     "A simple writer of tabular data."
 
@@ -316,29 +316,8 @@ class Writer:
         }
 
     def __init__(self, directory, source):
-        self.directory = directory
+        Writer.__init__(self, directory)
         self.source = source
-        self.files = {}
-        self.filename = None
-
-    def get_filename(self, key):
-        return os.path.join(self.directory, "%s%stxt" % (key, os.path.extsep))
-
-    def reset(self):
-        for key in self.filenames:
-            try:
-                os.remove(self.get_filename(key))
-            except OSError:
-                pass
-
-    def start(self, filename):
-        self.filename = filename
-
-        if not os.path.exists(self.directory):
-            os.mkdir(self.directory)
-
-        for key in self.filenames:
-            self.files[key] = codecs.open(self.get_filename(key), "a", encoding="utf-8")
 
     def append(self, data):
 
@@ -356,11 +335,6 @@ class Writer:
         data = map(tab_to_space, data)
         data = map(bulkstr, data)
         print >>self.files[file], "\t".join(data)
-
-    def close(self):
-        for f in self.files.values():
-            f.close()
-        self.files = {}
 
 if __name__ == "__main__":
     import sys
