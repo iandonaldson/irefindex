@@ -8,7 +8,7 @@ create temporary table tmp_interactors_by_source as
         select source, filename, entry, interactorid, case
             when refsequence is null then false
             else true end as havesequence
-        from xml_xref_sequences
+        from xml_xref_interactor_sequences
         ) as X
     group by source, havesequence
     order by source, havesequence;

@@ -4,7 +4,7 @@ begin;
 
 create table irefindex_ambiguous_references as
     select source, filename, entry, interactorid
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     group by source, filename, entry, interactorid
     having count(distinct refsequence) > 1;
 
@@ -12,7 +12,7 @@ create table irefindex_ambiguous_references as
 
 create table irefindex_null_references as
     select source, filename, entry, interactorid, count(distinct sequence) as sequences
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     group by source, filename, entry, interactorid
     having count(distinct refsequence) = 0;
 
@@ -25,7 +25,7 @@ create temporary table tmp_unambiguous_references as
         min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
         min(reftype) as reftype,
         cast('unambiguous' as varchar) as method
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     group by source, filename, entry, interactorid
     having count(distinct refsequence) = 1;
 
@@ -39,7 +39,7 @@ create temporary table tmp_unambiguous_matching_sequence_references as
         min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
         min(reftype) as reftype,
         cast('matching sequence' as varchar) as method
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     where sequence = refsequence
         and (source, filename, entry, interactorid) in (
             select source, filename, entry, interactorid
@@ -57,7 +57,7 @@ create temporary table tmp_unambiguous_matching_species_references as
         min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
         min(reftype) as reftype,
         cast('matching species' as varchar) as method
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     where taxid = reftaxid
         and (source, filename, entry, interactorid) in (
             select source, filename, entry, interactorid
@@ -78,7 +78,7 @@ create temporary table tmp_unambiguous_primary_references as
         min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
         min(reftype) as reftype,
         cast('primary' as varchar) as method
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     where reftype = 'primaryRef'
         and (source, filename, entry, interactorid) in (
             select source, filename, entry, interactorid
@@ -103,7 +103,7 @@ create temporary table tmp_unambiguous_null_references as
         min(taxid) as taxid, array[cast(null as varchar)] as sequencelinks,
         min(reftype) as reftype,
         cast('interaction' as varchar) as method
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     where sequence is not null
         and (source, filename, entry, interactorid) in (
             select source, filename, entry, interactorid
@@ -137,7 +137,7 @@ analyze irefindex_assignments;
 create table irefindex_unassigned as
     select source, filename, entry, interactorid,
         count(distinct sequence) as sequences, count(distinct refsequence) as refsequences
-    from xml_xref_sequences
+    from xml_xref_interactor_sequences
     where (source, filename, entry, interactorid) not in (
         select source, filename, entry, interactorid
         from irefindex_assignments

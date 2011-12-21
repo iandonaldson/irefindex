@@ -2,28 +2,45 @@ begin;
 
 -- Get interactor cross-references of interest.
 
-insert into xml_xref_interactors
-    select distinct X.source, X.filename, X.entry, X.parentid as interactorid, reftype,
+insert into xml_xref_all_interactors
+
+    -- Normalise database labels.
+
+    select distinct source, filename, entry, parentid as interactorid, reftype, reftypelabel,
         case when dblabel like 'uniprot%' or dblabel = 'SP' then 'uniprotkb'
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
              else dblabel
         end as dblabel,
-        refvalue, taxid, sequence
-    from xml_xref as X
-    left outer join xml_organisms as O
-        on (X.source, X.filename, X.entry, X.parentid, X.scope) = (O.source, O.filename, O.entry, O.parentid, O.scope)
-    left outer join xml_sequences as S
-        on (X.source, X.filename, X.entry, X.parentid, X.scope) = (S.source, S.filename, S.entry, S.parentid, S.scope)
-    where X.scope = 'interactor'
+        refvalue
+    from xml_xref
+
+    -- Restrict to interactors and specifically to primary and secondary references.
+
+    where scope = 'interactor'
         and property = 'interactor'
-        and reftype in ('primaryRef', 'secondaryRef')
-        and (dblabel in ('SP', 'refseq', 'flybase', 'sgd', 'protein genbank identifier')
-            or dblabel like 'uniprot%'
-            or dblabel like 'entrezgene%'
-            or dblabel like 'entrez gene%'
-            or dblabel like '%pdb'
-            );
+        and reftype in ('primaryRef', 'secondaryRef');
+
+analyze xml_xref_all_interactors;
+
+-- Narrow the cross-references to those actually describing each interactor
+-- using supported databases.
+
+insert into xml_xref_interactors
+    select X.source, X.filename, X.entry, interactorid, reftype, dblabel, refvalue, taxid, sequence
+    from xml_xref_all_interactors as X
+
+    -- Add organism and interaction database sequence information.
+
+    left outer join xml_organisms as O
+        on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (O.source, O.filename, O.entry, O.parentid, O.scope)
+    left outer join xml_sequences as S
+        on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
+
+    -- Select specific references.
+
+    where (reftype = 'primaryRef' or reftype = 'secondaryRef' and reftypelabel = 'identity')
+        and dblabel in ('entrezgene', 'flybase', 'pdb', 'protein genbank identifier', 'refseq', 'sgd', 'SP', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;
@@ -239,7 +256,7 @@ create temporary table tmp_yeast_primary as
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from xml_xref_interactors as X
     inner join yeast_accessions as A
-        on X.refvalue = A.sgdxref
+        on 'S' || lpad(ltrim(X.refvalue, 'S0'), 9, '0') = A.sgdxref
     inner join uniprot_proteins as P
         on A.accession = P.accession
     where X.dblabel = 'sgd';
@@ -252,7 +269,7 @@ create temporary table tmp_yeast_non_primary as
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from xml_xref_interactors as X
     inner join yeast_accessions as A
-        on X.refvalue = A.sgdxref
+        on 'S' || lpad(ltrim(X.refvalue, 'S0'), 9, '0') = A.sgdxref
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
 
@@ -329,13 +346,16 @@ insert into xml_xref_sequences
 create index xml_xref_sequences_index on xml_xref_sequences(dblabel, refvalue);
 analyze xml_xref_sequences;
 
-insert into xml_xref_sequences
-    select distinct I.dblabel, I.refvalue, null as sequencelink,
-        cast(null as integer) as reftaxid, null as refsequence, null as refdate
+-- Combine the interactor details with the identifier sequence details.
+
+insert into xml_xref_interactor_sequences
+    select source, filename, entry, interactorid, reftype, I.dblabel, I.refvalue,
+        taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
-    left outer join xml_xref_sequences as X
-        on I.dblabel = X.dblabel
-        and I.refvalue = X.refvalue
-    where X.dblabel is null;
+    left outer join xml_xref_sequences as S
+        on (I.dblabel, I.refvalue) = (S.dblabel, S.refvalue);
+
+create index xml_xref_interactor_sequences_index on xml_xref_interactor_sequences(dblabel, refvalue);
+analyze xml_xref_interactor_sequences;
 
 commit;

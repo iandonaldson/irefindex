@@ -2,8 +2,16 @@ begin;
 
 -- Show the number of distinct assignments by data source.
 
-create temporary table tmp_assignments_by_source as
+create temporary table tmp_sequences_by_source as
     select source, count(distinct sequence) as total
+    from irefindex_assignments
+    group by source
+    order by source;
+
+\copy tmp_sequences_by_source to '<directory>/sequences_by_source'
+
+create temporary table tmp_assignments_by_source as
+    select source, count(distinct array[filename, cast(entry as varchar), interactorid]) as total
     from irefindex_assignments
     group by source
     order by source;
@@ -21,8 +29,8 @@ create temporary table tmp_unassigned_by_source as
             end as havesequences
         from irefindex_unassigned
         ) as X
-    group by havesequences, source
-    order by havesequences, source;
+    group by source, havesequences
+    order by source, havesequences;
 
 \copy tmp_unassigned_by_source to '<directory>/unassigned_by_source'
 
