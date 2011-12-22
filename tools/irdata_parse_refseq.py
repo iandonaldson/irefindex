@@ -39,19 +39,27 @@ class Parser:
 
     taxid_regexp = re.compile('/db_xref="taxon:(.*?)"')
 
-    def __init__(self, f, f_main):
+    def __init__(self, f, f_main, f_identifiers, f_nucleotides):
         self.f = f
         self.f_main = f_main
+        self.f_identifiers = f_identifiers
+        self.f_nucleotides = f_nucleotides
         self.line = None
         self.return_last = 0
 
-    def close(self, both=False):
+    def close(self):
         if self.f is not None:
             self.f.close()
             self.f = None
-        if both and self.f_main is not None:
+        if self.f_main is not None:
             self.f_main.close()
             self.f_main = None
+        if self.f_identifiers is not None:
+            self.f_identifiers.close()
+            self.f_identifiers = None
+        if self.f_nucleotides is not None:
+            self.f_nucleotides.close()
+            self.f_nucleotides = None
 
     def next_line(self):
         if not self.return_last:
@@ -67,11 +75,11 @@ class Parser:
         code, rest = line
         record[code] = rest.split()[0] # ignore trailing accessions (presumably expired)
 
-    def parse_version(self, line, record):
+    def parse_dbsource(self, line, record):
         code, rest = line
-        version, gi = rest.split()
-        record["VERSION"] = version
-        record["GI"] = gi.split(":")[1] # strip "GI:" from the identifier
+        parts = rest.split()
+        if parts[0] == "REFSEQ:":
+            record["REFSEQ"] = parts[-1]
 
     def parse_features(self, line, record):
         code, rest = self.next_line()
@@ -95,10 +103,30 @@ class Parser:
             self.save_line()
         record["SEQUENCE"] = "".join(sequence).upper()
 
+    def parse_reference(self, line, record):
+        pmids = []
+        code, rest = self.next_line()
+        while not code:
+            fields = rest.split()
+            if fields[0] == "PUBMED":
+                pmids.append(fields[1])
+            code, rest = self.next_line()
+        else:
+            self.save_line()
+        record["PUBMED"] = pmids
+
+    def parse_version(self, line, record):
+        code, rest = line
+        version, gi = rest.split()
+        record["VERSION"] = version
+        record["GI"] = gi.split(":")[1] # strip "GI:" from the identifier
+
     handlers = {
         "ACCESSION" : parse_accession,
+        "DBSOURCE" : parse_dbsource,
         "FEATURES" : parse_features,
         "ORIGIN" : parse_origin,
+        "REFERENCE" : parse_reference,
         "VERSION" : parse_version,
         }
 
@@ -119,6 +147,11 @@ class Parser:
 
     def write_record(self, record):
         self.f_main.write("%(ACCESSION)s\t%(VERSION)s\t%(GI)s\t%(TAXID)s\t%(SEQUENCE)s\n" % record)
+        if record.has_key("PUBMED"):
+            for pos, pmid in enumerate(record["PUBMED"]):
+                self.f_identifiers.write("%s\tPubMed\t%s\t%s\n" % (record["ACCESSION"], pmid, pos))
+        if record.has_key("REFSEQ"):
+            self.f_nucleotides.write("%(REFSEQ)s\t%(ACCESSION)s\n" % record)
 
 if __name__ == "__main__":
     from os.path import extsep, join, split, splitext
@@ -144,12 +177,13 @@ if __name__ == "__main__":
         else:
             opener = open
 
-        f_out = open(join(data_directory, basename), "w")
-        parser = Parser(opener(filename), f_out)
+        f_main = open(join(data_directory, basename + "_proteins"), "w")
+        f_identifiers = open(join(data_directory, basename + "_identifiers"), "w")
+        f_nucleotides = open(join(data_directory, basename + "_nucleotides"), "w")
+        parser = Parser(opener(filename), f_main, f_identifiers, f_nucleotides)
         try:
             parser.parse()
         finally:
             parser.close()
-            f_out.close()
 
 # vim: tabstop=4 expandtab shiftwidth=4

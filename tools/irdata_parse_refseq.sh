@@ -35,7 +35,9 @@ fi
 
 # Concatenate the output data.
 
-cat "$DATADIR"/* > "$DATADIR/refseq_proteins.txt"
+cat "$DATADIR"/*_proteins > "$DATADIR/refseq_proteins.txt"
+cat "$DATADIR"/*_identifiers > "$DATADIR/refseq_identifiers.txt"
+cat "$DATADIR"/*_nucleotides > "$DATADIR/refseq_nucleotides.txt"
 
 # Process the sequence data.
 

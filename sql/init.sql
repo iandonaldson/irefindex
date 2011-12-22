@@ -6,3 +6,10 @@ create aggregate array_accum (
     stype = anyarray,
     initcond = '{}'
 );
+
+create aggregate array_array_accum (
+    sfunc = array_cat,
+    basetype = anyarray,
+    stype = anyarray,
+    initcond = '{}'
+);
