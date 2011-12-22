@@ -16,16 +16,28 @@ create temporary table tmp_all_interactors_by_database as
 \copy tmp_all_interactors_by_database to '<directory>/all_interactors_by_database'
 
 create temporary table tmp_interactors_by_database as
-    select dblabel, count(distinct refvalue) as total, havesequence
+    select coalesce(notfound.dblabel, found.dblabel) as dblabel,
+        coalesce(notfound.total, 0) as unmatched, coalesce(found.total, 0) as matched,
+        round(
+            cast(
+                cast(coalesce(found.total, 0) as real) / (coalesce(notfound.total, 0) + coalesce(found.total, 0)) * 100
+                as numeric
+                ), 2
+            ) as coverage
     from (
-        select dblabel, refvalue, case
-            when count(refsequence) = 0 then false
-            else true end as havesequence
+        select dblabel, count(distinct refvalue) as total
         from xml_xref_interactor_sequences
-        group by dblabel, refvalue
-        ) as X
-    group by dblabel, havesequence
-    order by dblabel, havesequence;
+        where refsequence is null
+        group by dblabel
+        ) as notfound
+    full outer join (
+        select dblabel, count(distinct refvalue) as total
+        from xml_xref_interactor_sequences
+        where refsequence is not null
+        group by dblabel
+        ) as found
+        on notfound.dblabel = found.dblabel
+    order by coalesce(notfound.dblabel, found.dblabel);
 
 \copy tmp_interactors_by_database to '<directory>/interactors_by_database'
 
