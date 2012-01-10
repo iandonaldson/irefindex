@@ -7,7 +7,7 @@ insert into xml_xref_all_interactors
     -- Normalise database labels.
 
     select distinct source, filename, entry, parentid as interactorid, reftype, reftypelabel,
-        case when dblabel like 'uniprot%' or dblabel = 'SP' then 'uniprotkb'
+        case when dblabel like 'uniprot%' or dblabel = 'SP' or dblabel = 'Swiss-Prot' then 'uniprotkb'
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
              else dblabel
@@ -40,7 +40,7 @@ insert into xml_xref_interactors
     -- Select specific references.
 
     where (reftype = 'primaryRef' or reftype = 'secondaryRef' and reftypelabel = 'identity')
-        and dblabel in ('entrezgene', 'flybase', 'pdb', 'protein genbank identifier', 'refseq', 'sgd', 'SP', 'uniprotkb');
+        and dblabel in ('entrezgene', 'flybase', 'pdb', 'protein genbank identifier', 'refseq', 'sgd', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;
