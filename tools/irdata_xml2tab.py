@@ -350,7 +350,7 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <data directory> <data source name> <data file>..." % progname
         sys.exit(1)
 
-    writer = Writer(data_directory, source)
+    writer = PSIWriter(data_directory, source)
     writer.reset()
 
     parser = PSIParser(writer)
