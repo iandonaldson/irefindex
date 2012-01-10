@@ -10,12 +10,16 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME ( --all | <source>... )
+Usage: $PROGNAME ( --all | --xml | <source>... )
 
 Import data from the different sources into the configured database. The sources
 are configured to be the following when --all is specified:
 
 $ALLSOURCES
+
+If --xml is specified, only the following XML-based sources will be imported:
+
+$XMLSOURCES
 EOF
     exit 1
 fi
@@ -23,6 +27,8 @@ fi
 SOURCES=$*
 
 if [ "$SOURCES" = '--all' ]; then
+    SOURCES=$ALLSOURCES
+elif [ "$SOURCES" = '--xml' ]; then
     SOURCES=$XMLSOURCES
 elif [ ! "$SOURCES" ]; then
     echo "$PROGNAME: No sources specified." 1>&2
