@@ -7,9 +7,10 @@ insert into xml_xref_all_interactors
     -- Normalise database labels.
 
     select distinct source, filename, entry, parentid as interactorid, reftype, reftypelabel,
-        case when dblabel like 'uniprot%' or dblabel = 'SP' or dblabel = 'Swiss-Prot' then 'uniprotkb'
+        case when dblabel like 'uniprot%' or dblabel in ('SP', 'Swiss-Prot', 'TREMBL') then 'uniprotkb'
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
+             when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
              else dblabel
         end as dblabel,
         refvalue
@@ -38,9 +39,14 @@ insert into xml_xref_interactors
         on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
 
     -- Select specific references.
+    -- NOTE: HPRD provides its own identifiers for interactor primary references.
 
-    where (reftype = 'primaryRef' or reftype = 'secondaryRef' and reftypelabel = 'identity')
-        and dblabel in ('entrezgene', 'flybase', 'pdb', 'protein genbank identifier', 'refseq', 'sgd', 'uniprotkb');
+    where (
+        reftype = 'primaryRef'
+        or reftype = 'secondaryRef' and reftypelabel = 'identity'
+        or X.source = 'HPRD'
+        )
+        and dblabel in ('entrezgene', 'flybase', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;
@@ -320,7 +326,7 @@ insert into xml_xref_sequences
         P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
     inner join refseq_proteins as P
-        on X.dblabel = 'protein genbank identifier'
+        on X.dblabel = 'genbank_protein_gi'
         and X.refvalue = cast(P.gi as varchar)
     union all
 
