@@ -388,7 +388,7 @@ insert into xml_xref_interactor_sequences
     left outer join xml_xref_sequences as S
         on (I.dblabel, I.refvalue) = (S.dblabel, S.refvalue);
 
-create index xml_xref_interactor_sequences_index on xml_xref_interactor_sequences(dblabel, refvalue);
+create index xml_xref_interactor_sequences_index on xml_xref_interactor_sequences(source, filename, entry, interactorid);
 analyze xml_xref_interactor_sequences;
 
 commit;

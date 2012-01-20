@@ -2,146 +2,150 @@ begin;
 
 -- Ambiguous references.
 
-create table irefindex_ambiguous_references as
-    select source, filename, entry, interactorid
-    from xml_xref_interactor_sequences
-    group by source, filename, entry, interactorid
-    having count(distinct refsequence) > 1;
+insert into irefindex_ambiguity
+    select source, filename, entry, interactorid, reftype, refsequences
+    from (
+        select source, filename, entry, interactorid, reftype, count(distinct refsequence) as refsequences
+        from xml_xref_interactor_sequences
+        group by source, filename, entry, interactorid, reftype
+        ) as X;
 
--- References without sequence database information.
+create index irefindex_ambiguity_reftype_sequences on irefindex_ambiguity (reftype, refsequences);
 
-create table irefindex_null_references as
-    select source, filename, entry, interactorid, count(distinct sequence) as sequences
-    from xml_xref_interactor_sequences
-    group by source, filename, entry, interactorid
-    having count(distinct refsequence) = 0;
+analyze irefindex_ambiguity;
 
--- Unambiguous primary or secondary references.
--- The sequence chosen is the sequence database sequence.
--- The reference type will be 'primaryRef' if present.
+-- Unambiguous primary and secondary references.
 
 create temporary table tmp_unambiguous_references as
-    select source, filename, entry, interactorid, min(refsequence) as sequence,
+    select I.source, I.filename, I.entry, I.interactorid, min(refsequence) as sequence,
         min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
-        min(reftype) as reftype,
+        I.reftype, array_array_accum(distinct array[[I.dblabel, I.refvalue]]) as identifiers,
         cast('unambiguous' as varchar) as method
-    from xml_xref_interactor_sequences
-    group by source, filename, entry, interactorid
-    having count(distinct refsequence) = 1;
+    from xml_xref_interactor_sequences as I
+    inner join irefindex_ambiguity as A
+        on (I.source, I.filename, I.entry, I.interactorid, I.reftype)
+            = (A.source, A.filename, A.entry, A.interactorid, A.reftype)
+    where A.refsequences = 1
+    group by I.source, I.filename, I.entry, I.interactorid, I.reftype;
 
--- Ambiguous references resolved by selecting records with identical interaction
--- and sequence database sequences, thus excluding the above completely
--- unambiguous references.
--- The reference type will be 'primaryRef' if present.
+analyze tmp_unambiguous_references;
+
+-- Ambiguous primary and secondary references disambiguated by interactor
+-- sequence information.
+
+-- Since interactor descriptions should only provide a single sequence, at most
+-- one ambiguous sequence database sequence can match. This will potentially
+-- provide one correspondence per reference type (one primary reference and one
+-- secondary reference) involving a matching sequence.
+
+-- NOTE: This will eventually need to distinguish between gene and non-gene
+-- NOTE: references and to exclude gene references for which the canonical
+-- NOTE: representative will instead be chosen.
 
 create temporary table tmp_unambiguous_matching_sequence_references as
-    select source, filename, entry, interactorid, min(refsequence) as sequence,
+    select I.source, I.filename, I.entry, I.interactorid, min(refsequence) as sequence,
         min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
-        min(reftype) as reftype,
+        I.reftype, array_array_accum(distinct array[[I.dblabel, I.refvalue]]) as identifiers,
         cast('matching sequence' as varchar) as method
-    from xml_xref_interactor_sequences
-    where sequence = refsequence
-        and (source, filename, entry, interactorid) in (
-            select source, filename, entry, interactorid
-            from irefindex_ambiguous_references
-            )
-    group by source, filename, entry, interactorid
-    having count(distinct refsequence) = 1;
+    from xml_xref_interactor_sequences as I
+    inner join irefindex_ambiguity as A
+        on (I.source, I.filename, I.entry, I.interactorid, I.reftype)
+            = (A.source, A.filename, A.entry, A.interactorid, A.reftype)
+    where A.refsequences > 1
+        and sequence = refsequence
+    group by I.source, I.filename, I.entry, I.interactorid, I.reftype;
 
--- Ambiguous references resolved by selecting records with identical interaction
--- and sequence database taxonomy identifiers.
--- The reference type will be 'primaryRef' if present.
+create index tmp_unambiguous_matching_sequence_references_index on
+    tmp_unambiguous_matching_sequence_references (source, filename, entry, interactorid);
 
-create temporary table tmp_unambiguous_matching_species_references as
-    select source, filename, entry, interactorid, min(refsequence) as sequence,
-        min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
-        min(reftype) as reftype,
-        cast('matching species' as varchar) as method
-    from xml_xref_interactor_sequences
-    where taxid = reftaxid
-        and (source, filename, entry, interactorid) in (
-            select source, filename, entry, interactorid
-            from irefindex_ambiguous_references
-            except all
-            select source, filename, entry, interactorid
-            from tmp_unambiguous_matching_sequence_references
-            )
-    group by source, filename, entry, interactorid
-    having count(distinct refsequence) = 1;
+analyze tmp_unambiguous_matching_sequence_references;
 
--- Ambiguous references resolved by selecting records providing a valid primary
--- reference.
--- The reference type will be 'primaryRef' if present.
-
-create temporary table tmp_unambiguous_primary_references as
-    select source, filename, entry, interactorid, min(refsequence) as sequence,
-        min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
-        min(reftype) as reftype,
-        cast('primary' as varchar) as method
-    from xml_xref_interactor_sequences
-    where reftype = 'primaryRef'
-        and (source, filename, entry, interactorid) in (
-            select source, filename, entry, interactorid
-            from irefindex_ambiguous_references
-            except all (
-                select source, filename, entry, interactorid
-                from tmp_unambiguous_matching_sequence_references
-                union all
-                select source, filename, entry, interactorid
-                from tmp_unambiguous_matching_species_references
-                )
-            )
-    group by source, filename, entry, interactorid
-    having count(distinct refsequence) = 1;
-
--- Interactors whose only sequence information originates from the interaction
--- record.
--- The reference type will be 'primaryRef' if present.
+-- Null primary and secondary references where an interactor sequence is
+-- available but not any sequence database sequence.
 
 create temporary table tmp_unambiguous_null_references as
-    select source, filename, entry, interactorid, min(sequence) as sequence,
-        min(taxid) as taxid, array[cast(null as varchar)] as sequencelinks,
-        min(reftype) as reftype,
-        cast('interaction' as varchar) as method
-    from xml_xref_interactor_sequences
-    where sequence is not null
-        and (source, filename, entry, interactorid) in (
-            select source, filename, entry, interactorid
-            from irefindex_null_references
-            )
-    group by source, filename, entry, interactorid
-    having count(distinct sequence) = 1;
+    select I.source, I.filename, I.entry, I.interactorid, I.sequence,
+        taxid, cast(null as varchar[]) as sequencelinks,
+        I.reftype, cast(null as varchar[][]) as identifiers,
+        cast('interactor sequence' as varchar) as method
+    from xml_xref_interactor_sequences as I
+    inner join irefindex_ambiguity as A
+        on (I.source, I.filename, I.entry, I.interactorid, I.reftype)
+            = (A.source, A.filename, A.entry, A.interactorid, A.reftype)
+    where A.refsequences = 0
+        and I.sequence is not null
+    group by I.source, I.filename, I.entry, I.interactorid, I.reftype, I.taxid, I.sequence;
+
+analyze tmp_unambiguous_null_references;
 
 -- Combine the different interactors.
 
-insert into irefindex_assignments
+create temporary table tmp_primary_references as
     select *
     from tmp_unambiguous_references
+    where reftype = 'primaryRef'
     union all
     select *
     from tmp_unambiguous_matching_sequence_references
+    where reftype = 'primaryRef';
+
+analyze tmp_primary_references;
+
+create temporary table tmp_secondary_references as
+    select *
+    from tmp_unambiguous_references
+    where reftype = 'secondaryRef'
     union all
     select *
-    from tmp_unambiguous_matching_species_references
+    from tmp_unambiguous_matching_sequence_references
+    where reftype = 'secondaryRef';
+
+analyze tmp_secondary_references;
+
+insert into irefindex_assignments
+    select *
+    from tmp_primary_references
     union all
     select *
-    from tmp_unambiguous_primary_references
-    union all
-    select *
-    from tmp_unambiguous_null_references;
+    from tmp_secondary_references
+    where (source, filename, entry, interactorid) not in (
+        select source, filename, entry, interactorid
+        from tmp_primary_references);
+
+analyze irefindex_assignments;
+
+insert into irefindex_assignments
+    select N.*
+    from tmp_unambiguous_null_references as N
+    left outer join irefindex_assignments as A
+        on (N.source, N.filename, N.entry, N.interactorid) =
+            (A.source, A.filename, A.entry, A.interactorid)
+    where N.reftype = 'primaryRef'
+        and A.interactorid is null;
+
+insert into irefindex_assignments
+    select N.*
+    from tmp_unambiguous_null_references as N
+    left outer join irefindex_assignments as A
+        on (N.source, N.filename, N.entry, N.interactorid) =
+            (A.source, A.filename, A.entry, A.interactorid)
+    where N.reftype = 'secondaryRef'
+        and A.interactorid is null;
 
 analyze irefindex_assignments;
 
 -- Remaining unassigned interactors.
 
-create table irefindex_unassigned as
-    select source, filename, entry, interactorid,
-        count(distinct sequence) as sequences, count(distinct refsequence) as refsequences
-    from xml_xref_interactor_sequences
-    where (source, filename, entry, interactorid) not in (
-        select source, filename, entry, interactorid
-        from irefindex_assignments
-        )
-    group by source, filename, entry, interactorid;
+insert into irefindex_unassigned
+    select I.source, I.filename, I.entry, I.interactorid,
+        count(distinct I.sequence) as sequences, count(distinct refsequence) as refsequences
+    from xml_xref_interactor_sequences as I
+    left outer join irefindex_assignments as A
+        on (I.source, I.filename, I.entry, I.interactorid) =
+            (A.source, A.filename, A.entry, A.interactorid)
+    where A.interactorid is null
+    group by I.source, I.filename, I.entry, I.interactorid;
+
+analyze irefindex_unassigned;
 
 commit;
