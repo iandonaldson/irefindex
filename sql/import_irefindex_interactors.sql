@@ -46,7 +46,7 @@ insert into xml_xref_interactors
         or reftype = 'secondaryRef' and reftypelabel = 'identity'
         or X.source = 'HPRD'
         )
-        and dblabel in ('entrezgene', 'flybase', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
+        and dblabel in ('cygd', 'entrezgene', 'flybase', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;
@@ -289,10 +289,10 @@ create temporary table tmp_yeast_primary as
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from xml_xref_interactors as X
     inner join yeast_accessions as A
-        on 'S' || lpad(ltrim(X.refvalue, 'S0'), 9, '0') = A.sgdxref
+        on X.dblabel = 'sgd' and 'S' || lpad(ltrim(X.refvalue, 'S0'), 9, '0') = A.sgdxref
+        or X.dblabel = 'cygd' and lower(X.refvalue) = lower(A.orderedlocus)
     inner join uniprot_proteins as P
-        on A.accession = P.accession
-    where X.dblabel = 'sgd';
+        on A.accession = P.accession;
 
 create index tmp_yeast_primary_refvalue on tmp_yeast_primary(refvalue);
 analyze tmp_yeast_primary;
@@ -302,7 +302,8 @@ create temporary table tmp_yeast_non_primary as
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from xml_xref_interactors as X
     inner join yeast_accessions as A
-        on 'S' || lpad(ltrim(X.refvalue, 'S0'), 9, '0') = A.sgdxref
+        on X.dblabel = 'sgd' and 'S' || lpad(ltrim(X.refvalue, 'S0'), 9, '0') = A.sgdxref
+        or X.dblabel = 'cygd' and lower(X.refvalue) = lower(A.orderedlocus)
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
 
@@ -310,8 +311,7 @@ create temporary table tmp_yeast_non_primary as
 
     left outer join tmp_yeast_primary as P2
         on X.refvalue = P2.refvalue
-    where X.dblabel = 'sgd'
-        and P2.refvalue is null;
+    where P2.refvalue is null;
 
 -- Create a mapping from accessions to reference sequences.
 -- Combine the UniProt and RefSeq details with those from other sources.
