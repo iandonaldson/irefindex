@@ -32,7 +32,7 @@ if __name__ == "__main__":
             record_terminator = sys.argv[i+2]
         else:
             record_terminator = ""
-    except ValueError:
+    except (IndexError, ValueError):
         print >>sys.stderr, """\
 Usage: %s [ -1 ] <interval> <input filename> [ <record terminator> ]
 
