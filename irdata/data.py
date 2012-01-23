@@ -7,12 +7,44 @@ database.
 
 import codecs, os
 
+class Reader:
+
+    "Provide properly unbuffered stream reading."
+
+    def __init__(self, stream, encoding="utf-8"):
+        self.stream = stream
+        self.encoding = encoding
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        s = self.stream.readline()
+        if not s:
+            raise StopIteration
+        return self._decode(s)
+
+    def read(self, size=-1):
+        return self._decode(self.stream.read(size))
+
+    def close(self):
+        self.stream.close()
+
+    def _decode(self, s):
+        return unicode(s, self.encoding)
+
 def rewrite(stream, encoding="utf-8"):
 
     "Re-open the given 'stream' for writing, applying the specified 'encoding'."
 
     writer = codecs.getwriter(encoding)
     return writer(stream)
+
+def reread(stream, encoding="utf-8"):
+
+    "Re-open the given 'stream' for reading, applying the specified 'encoding'."
+
+    return Reader(stream, encoding)
 
 # Basic value handling.
 
@@ -36,6 +68,62 @@ def tab_to_space(x):
         return x.replace("\t", " ")
 
 # Utility classes.
+
+class RawImportFile:
+
+    """
+    A tab-separated import file writer which does not observe the PostgreSQL
+    encoding conventions.
+    """
+
+    def __init__(self, filename_or_stream, encoding="utf-8", delimiter="\t"):
+        self.delimiter = delimiter
+        if hasattr(filename_or_stream, "write"):
+            self.file = filename_or_stream
+        else:
+            self.file = codecs.open(filename_or_stream, "w+", encoding=encoding)
+        self.last_write = ""
+
+    def append(self, values):
+        # Convert None to the empty string, since there is no sensible
+        # distinction between the two values in this format.
+        self.last_write = self.delimiter.join([(value is not None and unicode(value) or u"") for value in values]) + "\n"
+        self.file.write(self.last_write)
+
+    def remove_last(self):
+        self.file.seek(-len(self.last_write), 1)
+        self.last_write = ""
+
+    def close(self):
+        self.file.close()
+
+    def time_now(self):
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+
+class RawImportFileReader:
+
+    """
+    A tab-separated import file reader which does not observe the PostgreSQL
+    encoding conventions.
+    """
+
+    def __init__(self, filename_or_stream, encoding="utf-8", delimiter="\t"):
+        self.delimiter = delimiter
+        if hasattr(filename_or_stream, "read"):
+            self.file = filename_or_stream
+        else:
+            self.file = codecs.open(filename_or_stream, encoding=encoding)
+        self.iterator = None
+
+    def __iter__(self):
+        self.iterator = iter(self.file)
+        return self
+
+    def next(self):
+        return self.iterator.next().rstrip("\n").split(self.delimiter)
+
+    def close(self):
+        self.file.close()
 
 class Writer:
 
@@ -69,5 +157,42 @@ class Writer:
         for f in self.files.values():
             f.close()
         self.files = {}
+
+# Miscellaneous conversion functions.
+
+def index_for_int(x):
+
+    "Convert 'x' from a 1-based index to a 0-based index."
+
+    if x is not None:
+        return max(0, int(x) - 1)
+    else:
+        return None
+
+def partition(l, start=None, end=None):
+
+    """
+    Partition 'l' using the index positions 'start' and 'end', returning the
+    preceding slice, the slice described by 'start' and 'end', and the following
+    slice.
+    """
+
+    if start is not None:
+        preceding = l[:start]
+    else:
+        preceding = []
+
+    if end is not None:
+        following = l[end:]
+    else:
+        following = []
+
+    return preceding, l[start:end], following
+
+def int_or_none(x):
+    if x is not None:
+        return int(x)
+    else:
+        return None
 
 # vim: tabstop=4 expandtab shiftwidth=4

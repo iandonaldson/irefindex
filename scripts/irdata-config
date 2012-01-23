@@ -210,7 +210,7 @@ IPI_MIRROR='ftp://ftp.ebi.ac.uk'
 IPI_RELEASE_URL="$IPI_MIRROR/pub/databases/IPI/current/"
 IPI_DIR_NAME="IPI"
 IPI_OTHER_FILE_PATTERN='*.fasta'
-# NOTE: Need parser.
+IPI_PARSER='irdata_parse_ipi.sh'
 
 ############################################################
 # MatrixDB
