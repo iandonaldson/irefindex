@@ -11,6 +11,14 @@ DATA=${DATA:-}                              # user defined data directory locati
 
 
 ############################################################
+# Authentication information for certain data sources.
+
+DIP_USERNAME=                               # DIP download credentials
+DIP_PASSWORD=
+
+
+
+############################################################
 # Program and resource locations.
 
 PROGNAME=`basename "$0"`
@@ -105,10 +113,9 @@ XARGS_I='-I'                                # get round annoying GNU xargs incom
 # followed by calculated definitions that should probably
 # not be changed.
 
-# NOTE: To add for downloading: DIP HPRD
 # NOTE: To add for acquisition by other means: OPHID
 
-XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM INNATEDB INTACT MATRIXDB MINT MPACT MPPI"
+XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI"
 TABSOURCES="MPIDB"
 OTHERSOURCES="FLY GENE IPI MMDB PDB REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
@@ -146,6 +153,10 @@ CORUM_XML_FILE_PATTERN='*.xml'
 ############################################################
 # DIP
 
+DIP_DOWNLOAD_FILES="dip20111027.mif25.gz"
+DIP_MIRROR="ftp://$DIP_USERNAME:$DIP_PASSWORD@dip.doe-mbi.ucla.edu"
+
+DIP_RELEASE_URL="$DIP_MIRROR/2011/mif25/"
 DIP_DIR_NAME="DIP"
 DIP_XML_FILE_PATTERN='*.mif25'
 
@@ -163,6 +174,10 @@ GENE_PARSER='irdata_parse_gene.sh'
 ############################################################
 # HPRD
 
+HPRD_DOWNLOAD_FILES="HPRD_PSIMI_041310"
+HPRD_MIRROR='http://www.hprd.org'
+
+HPRD_RELEASE_URL="$HPRD_MIRROR/edownload/"
 HPRD_DIR_NAME="HPRD"
 HPRD_XML_FILE_PATTERN='PSIMI_XML/*.xml'
 
