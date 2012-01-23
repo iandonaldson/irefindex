@@ -73,7 +73,9 @@ class Parser:
     def parse(self):
         records = []
         sequence = []
-        for self.lineno, line in enumerate(self.f.xreadlines()):
+        self.lineno = 1
+        line = self.f.readline()
+        while line:
             if line.startswith(">"):
                 if records:
                     for record in records:
@@ -83,6 +85,8 @@ class Parser:
                 sequence = []
             else:
                 sequence.append(line.rstrip("\n"))
+            self.lineno += 1
+            line = self.f.readline()
         else:
             if records:
                 for record in records:
