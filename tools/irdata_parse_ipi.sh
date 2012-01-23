@@ -40,26 +40,20 @@ for FILENAME in $FILENAMES; do
         # Get the accession mapping by extracting header lines and splitting the entries.
         # Remove the ">" marker.
         # Split using " " and extract the identifiers and taxid.
-        # Convert the " " delimiter.
-        # Swap the taxid and identifiers for transposition.
+        # Convert the " " delimiter to make the taxid like the other identifiers.
         # Transpose the contents of the identifiers, grouping by the first "IPI:..." field.
-        # Split using ":" to separate database labels and identifiers.
-        # Remove the redundant "IPI" labels.
+        # Split using ":" and "=" to separate database labels and identifiers.
+        # Remove the redundant "IPI" label.
         # Transpose the identifiers where provided in a list.
-        # Remove the "Tax_Id=" prefix.
-        # Swap the IPI and taxonomy identifiers.
 
           grep -e '^>' "$FILENAME" \
         | cut -d '>' -f 2- \
         | cut -d ' ' -f 1,2 \
-        | sed -e 's/ /\t/g' \
-        | "$TOOLS/irdata_text_cut.py" -f 2,1 - \
+        | sed -e 's/ /|/g' \
         | "$TOOLS/irdata_text_transpose.py" -f 2 -d '|' - \
-        | sed -e 's/:/\t/g' \
-        | cut -f 1,3- \
-        | "$TOOLS/irdata_text_transpose.py" -f 4 -w ';' - \
-        | cut -d '=' -f 2- \
-        | "$TOOLS/irdata_text_cut.py" -f 2,1,3,4 - \
+        | sed -e 's/[:=]/\t/g' \
+        | cut -f 2- \
+        | "$TOOLS/irdata_text_transpose.py" -f 3 -w ';' - \
         > "$DATADIR/${BASENAME}_identifiers.txt"
 
     else

@@ -8,7 +8,6 @@ create table ipi_proteins (
 
 create table ipi_identifiers (
     accession varchar not null,
-    taxid integer not null,
     dblabel varchar not null,
     refvalue varchar not null,
     primary key(accession, dblabel, refvalue)
