@@ -39,14 +39,16 @@ insert into xml_xref_interactors
         on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
 
     -- Select specific references.
+    -- NOTE: MPACT has secondary references that may be more usable that various
+    -- NOTE: primary references (having a UniProt accession of "unknown", for example).
     -- NOTE: HPRD provides its own identifiers for interactor primary references.
 
     where (
         reftype = 'primaryRef'
-        or reftype = 'secondaryRef' and reftypelabel = 'identity'
+        or reftype = 'secondaryRef' and (reftypelabel = 'identity' or X.source = 'MPACT')
         or X.source = 'HPRD'
         )
-        and dblabel in ('cygd', 'entrezgene', 'flybase', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
+        and dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;
@@ -91,7 +93,7 @@ create temporary table tmp_uniprot_non_primary as
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_uniprot_primary as P2
         on X.refvalue = P2.refvalue
@@ -111,7 +113,7 @@ create temporary table tmp_uniprot_isoform_primary as
         on position('-' in X.refvalue) <> 0
         and substring(X.refvalue from 1 for position('-' in X.refvalue) - 1) = P.accession
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_uniprot_primary as P2
         on X.refvalue = P2.refvalue
@@ -136,7 +138,7 @@ create temporary table tmp_uniprot_isoform_non_primary as
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_uniprot_primary as P2
         on X.refvalue = P2.refvalue
@@ -161,7 +163,7 @@ create temporary table tmp_uniprot_gene as
     inner join gene2uniprot as P
         on X.refvalue = cast(P.geneid as varchar)
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_uniprot_primary as P2
         on X.refvalue = P2.refvalue
@@ -216,7 +218,7 @@ create temporary table tmp_refseq_nucleotide as
     inner join refseq_proteins as P
         on N.protein = P.accession
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_refseq as P2
         on X.refvalue = P2.refvalue
@@ -237,7 +239,7 @@ create temporary table tmp_refseq_gene as
     inner join refseq_proteins as P
         on G.accession = P.version
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_refseq as P2
         on X.refvalue = P2.refvalue
@@ -275,7 +277,7 @@ create temporary table tmp_fly_non_primary as
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_fly_primary as P2
         on X.refvalue = P2.refvalue
@@ -307,11 +309,131 @@ create temporary table tmp_yeast_non_primary as
     inner join uniprot_proteins as P
         on A.uniprotid = P.uniprotid
 
-    -- Exclude prior matches.
+    -- Exclude previous matches.
 
     left outer join tmp_yeast_primary as P2
         on X.refvalue = P2.refvalue
     where P2.refvalue is null;
+
+-- GenBank protein identifier matches in RefSeq.
+
+create temporary table tmp_refseq_genbank as
+    select distinct X.dblabel, X.refvalue, 'refseq/genbank-gi' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join refseq_proteins as P
+        on X.dblabel = 'genbank_protein_gi'
+        and X.refvalue ~ '^[[:digit:]]+$'
+        and cast(X.refvalue as integer) = P.gi;
+
+analyze tmp_refseq_genbank;
+
+-- GenBank matches in GenPept using GenBank identifiers.
+
+create temporary table tmp_genpept_genbank_gi as
+    select distinct X.dblabel, X.refvalue, 'genpept/genbank-gi' as sequencelink,
+        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join genpept_proteins as P
+        on X.dblabel = 'genbank_protein_gi'
+        and X.refvalue ~ '^[[:digit:]]+$'
+        and cast(X.refvalue as integer) = P.gi
+
+    -- Exclude previous matches.
+
+    left outer join tmp_refseq_genbank as P2
+        on X.refvalue = P2.refvalue
+    where P2.refvalue is null;
+
+create temporary table tmp_genpept_genbank_accession as
+    select distinct X.dblabel, X.refvalue, 'genpept/genbank-accession' as sequencelink,
+        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join genpept_proteins as P
+        on X.dblabel = 'ddbj/embl/genbank'
+        and X.refvalue = P.accession
+    union all
+    select distinct X.dblabel, X.refvalue, 'genpept/genbank-accession-bad-gi' as sequencelink,
+        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join genpept_proteins as P
+        on X.dblabel = 'genbank_protein_gi'
+        and not X.refvalue ~ '^[[:digit:]]+$'
+        and X.refvalue = P.accession;
+
+analyze tmp_genpept_genbank_accession;
+
+create temporary table tmp_genpept_genbank_shortform as
+    select distinct X.dblabel, X.refvalue, 'genpept/genbank-shortform' as sequencelink,
+        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join genpept_accessions as A
+        on X.dblabel = 'ddbj/embl/genbank'
+        and (X.refvalue = A.shortform or
+            substring(X.refvalue from '[^.]*') = A.shortform
+            )
+    inner join genpept_proteins as P
+        on A.accession = P.accession
+
+    -- Exclude previous matches.
+
+    left outer join tmp_genpept_genbank_accession as P2
+        on X.refvalue = P2.refvalue
+    where P2.refvalue is null
+    union all
+    select distinct X.dblabel, X.refvalue, 'genpept/genbank-shortform-bad-gi' as sequencelink,
+        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join genpept_accessions as A
+        on X.dblabel = 'genbank_protein_gi'
+        and not X.refvalue ~ '^[[:digit:]]+$'
+        and (X.refvalue = A.shortform or
+            substring(X.refvalue from '[^.]*') = A.shortform
+            )
+    inner join genpept_proteins as P
+        on A.accession = P.accession
+
+    -- Exclude previous matches.
+
+    left outer join tmp_genpept_genbank_accession as P2
+        on X.refvalue = P2.refvalue
+    where P2.refvalue is null;
+
+-- IPI matches.
+
+create temporary table tmp_ipi_accession as
+    select distinct X.dblabel, X.refvalue, 'ipi-accession' as sequencelink,
+        cast(T.refvalue as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join ipi_proteins as P
+        on X.refvalue = P.accession
+    inner join ipi_identifiers as T
+        on X.refvalue = T.accession
+        and T.dblabel = 'Tax_Id'
+    where X.dblabel = 'ipi';
+
+analyze tmp_ipi_accession;
+
+create temporary table tmp_ipi_shortform as
+    select distinct X.dblabel, X.refvalue, 'ipi-shortform' as sequencelink,
+        cast(T.refvalue as integer) as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join ipi_accessions as A
+        on (X.refvalue = A.shortform or
+            substring(X.refvalue from '[^.]*') = A.shortform
+            )
+    inner join ipi_proteins as P
+        on A.accession = P.accession
+    inner join ipi_identifiers as T
+        on A.accession = T.accession
+        and T.dblabel = 'Tax_Id'
+
+    -- Exclude previous matches.
+
+    left outer join tmp_ipi_accession as P2
+        on X.refvalue = P2.refvalue
+    where X.dblabel = 'ipi'
+        and P2.refvalue is null;
 
 -- Create a mapping from accessions to reference sequences.
 -- Combine the UniProt and RefSeq details with those from other sources.
@@ -319,16 +441,6 @@ create temporary table tmp_yeast_non_primary as
 -- provide multiple sequences for accessions.
 
 insert into xml_xref_sequences
-
-    -- GenBank protein identifier matches.
-
-    select distinct X.dblabel, X.refvalue, 'refseq/genbank' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
-    from xml_xref_interactors as X
-    inner join refseq_proteins as P
-        on X.dblabel = 'genbank_protein_gi'
-        and X.refvalue = cast(P.gi as varchar)
-    union all
 
     -- PDB accession matches via MMDB.
 
@@ -374,7 +486,25 @@ insert into xml_xref_sequences
 
     select * from tmp_refseq
     union all
-    select * from tmp_refseq_gene;
+    select * from tmp_refseq_gene
+    union all
+
+    -- GenBank matches.
+
+    select * from tmp_refseq_genbank
+    union all
+    select * from tmp_genpept_genbank_gi
+    union all
+    select * from tmp_genpept_genbank_accession
+    union all
+    select * from tmp_genpept_genbank_shortform
+    union all
+
+    -- IPI matches
+
+    select * from tmp_ipi_accession
+    union all
+    select * from tmp_ipi_shortform;
 
 create index xml_xref_sequences_index on xml_xref_sequences(dblabel, refvalue);
 analyze xml_xref_sequences;

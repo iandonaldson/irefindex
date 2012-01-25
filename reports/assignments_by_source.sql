@@ -45,6 +45,9 @@ create temporary table tmp_unassigned_by_sequences as
 \copy tmp_unassigned_by_sequences to '<directory>/unassigned_by_sequences'
 
 -- Show the coverage of each source (like Table 3 from the iRefIndex paper).
+-- The output table has the following form:
+--
+-- <source> <total interactors> <total assignments> <total unassigned> <percent assigned> <assignable> <unassignable> <unique proteins>
 
 create temporary table tmp_assignment_coverage as
     select coalesce(assigned.source, assignable.source, unassignable.source) as source,

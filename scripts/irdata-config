@@ -115,9 +115,9 @@ XARGS_I='-I'                                # get round annoying GNU xargs incom
 
 # NOTE: To add for acquisition by other means: OPHID
 
-XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI"
+XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
-OTHERSOURCES="FLY GENE IPI MMDB PDB REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
+OTHERSOURCES="FLY GENE GENPEPT IPI MMDB PDB REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
@@ -170,6 +170,17 @@ GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"
 GENE_DIR_NAME="Entrez_Gene"
 GENE_OTHER_FILE_PATTERN='gene*'
 GENE_PARSER='irdata_parse_gene.sh'
+
+############################################################
+# GenPept
+
+GENPEPT_DOWNLOAD_FILES='gb*.fsa_aa.gz'
+GENPEPT_MIRROR='ftp://ftp.ncbi.nih.gov'
+
+GENPEPT_RELEASE_URL="$GENPEPT_MIRROR/ncbi-asn1/protein_fasta/"
+GENPEPT_DIR_NAME="GenPept"
+GENPEPT_OTHER_FILE_PATTERN='gb*'
+GENPEPT_PARSER='irdata_parse_genpept.sh'
 
 ############################################################
 # HPRD
