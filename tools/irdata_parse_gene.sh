@@ -40,4 +40,4 @@ for FILENAME in $FILENAMES; do
     fi
 done
 
-# NOTE: Need parsers for gene_info, gene2go.
+# NOTE: Need parser for gene2go.
