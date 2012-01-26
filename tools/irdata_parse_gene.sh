@@ -35,6 +35,8 @@ for FILENAME in $FILENAMES; do
         "$TOOLS/irdata_parse_gene2refseq.sh" "$DATADIR" "$FILENAME"
     elif [ "$LEAFNAME" = 'gene_info' ]; then
         "$TOOLS/irdata_parse_gene_info.sh" "$DATADIR" "$FILENAME"
+    elif [ "$LEAFNAME" = 'gene_history' ]; then
+        "$TOOLS/irdata_parse_gene_history.sh" "$DATADIR" "$FILENAME"
     fi
 done
 

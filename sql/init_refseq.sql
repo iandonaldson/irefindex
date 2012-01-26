@@ -24,3 +24,9 @@ create table refseq_nucleotides (
     protein varchar not null,
     primary key(nucleotide, protein)
 );
+
+create table refseq_nucleotide_accessions (
+    nucleotide varchar not null,
+    shortform varchar not null,
+    primary key(nucleotide)
+);

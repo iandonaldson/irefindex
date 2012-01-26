@@ -13,3 +13,11 @@ create table gene_info (
     symbol varchar not null,
     primary key(geneid, symbol)
 );
+
+create table gene_history (
+    taxid integer not null,
+    geneid integer,
+    oldgeneid integer not null,
+    oldsymbol varchar not null,
+    primary key(oldgeneid)
+);

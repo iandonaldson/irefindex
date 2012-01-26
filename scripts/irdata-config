@@ -163,7 +163,7 @@ DIP_XML_FILE_PATTERN='*.mif25'
 ############################################################
 # Entrez Gene
 
-GENE_DOWNLOAD_FILES="gene2refseq.gz gene_info.gz gene2go.gz"
+GENE_DOWNLOAD_FILES="gene2refseq.gz gene_info.gz gene2go.gz gene_history.gz"
 GENE_MIRROR='ftp://ftp.ncbi.nlm.nih.gov'
 
 GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"

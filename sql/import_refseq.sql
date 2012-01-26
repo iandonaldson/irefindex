@@ -14,4 +14,11 @@ analyze refseq_identifiers;
 
 analyze refseq_nucleotides;
 
+insert into refseq_nucleotide_accessions
+    select distinct nucleotide, substring(nucleotide from '[^.]*') as shortform
+    from refseq_nucleotides;
+
+create index refseq_nucleotide_accessions_shortform on refseq_nucleotide_accessions(shortform);
+analyze refseq_nucleotide_accessions;
+
 commit;
