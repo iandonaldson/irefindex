@@ -27,36 +27,29 @@ fi
 
 QUERYFILE="$FILENAME.query"
 RESULTFILE="$FILENAME.result"
-ACCESSIONSFILE="$FILENAME.accessions"
-SEQUENCESFILE="$FILENAME.sequences"
+
+# Execute a query to get feature table output for proteins.
+
+echo -n "tool=$EUTILS_TOOL&email=$EUTILS_EMAIL&db=protein&rettype=gp&retmode=text&id=" > "$QUERYFILE"
 
 # Convert the list of identifiers into form-encoded parameters.
 
-echo -n 'db=protein&id=' > "$QUERYFILE"
 python -c 'import sys; sys.stdout.write(sys.stdin.read().replace("\n", ",").rstrip(","))' < "$FILENAME" >> "$QUERYFILE"
 
-# Perform the identifier upload.
+wget -O "$RESULTFILE" "$EFETCH_URL" --post-file="$QUERYFILE"
 
-wget --post-file="$QUERYFILE" -O "$RESULTFILE" "$EPOST_URL"
+# Parse the feature table output, producing files similar to those normally
+# available for RefSeq.
 
-# Process the upload results and extract the WebEnv identifier, building the
-# form-encoded parameters.
+"$TOOLS/irdata_parse_refseq.py" "$DATADIR" "$RESULTFILE"
 
-cat "$RESULTFILE"
-WEBENV=`xsltproc "$TOOLS/irdata_epost2text.xsl" "$RESULTFILE"`
+# Concatenate the output data.
 
-# Execute a query to get accessions, one per line.
+cat "$DATADIR"/*_proteins > "$DATADIR/refseq_proteins.txt"
+cat "$DATADIR"/*_identifiers > "$DATADIR/refseq_identifiers.txt"
+cat "$DATADIR"/*_nucleotides > "$DATADIR/refseq_nucleotides.txt"
 
-wget -O "$ACCESSIONSFILE" "$EFETCH_URL?db=protein&rettype=acc&retmode=text&query_key=1&WebEnv=$WEBENV"
+# Process the sequence data.
 
-# Execute a query to get sequences.
-
-wget -O "$SEQUENCESFILE" "$EFETCH_URL?db=protein&rettype=fasta&retmode=xml&query_key=1&WebEnv=$WEBENV"
-
-# Combine the accessions.
-
-paste "$FILENAME" "$ACCESSIONSFILE" > "$DATADIR/unknown_refseq_accessions.txt"
-
-# Process the results.
-
-xsltproc "$TOOLS/irdata_tseq2tab.xsl" "$RESULTFILE" > "$DATADIR/unknown_refseq_proteins.txt"
+"$TOOLS/irdata_process_signatures.sh" "$DATADIR"
+exit $?

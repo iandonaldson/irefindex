@@ -374,3 +374,14 @@ YEAST_RELEASE_URL="$YEAST_MIRROR/docs/"
 YEAST_DIR_NAME="yeast"
 YEAST_OTHER_FILE_PATTERN='*.txt'
 YEAST_PARSER='irdata_parse_fly.sh'
+
+
+
+############################################################
+# Entrez Utilities details
+
+EUTILS_URL='http://eutils.ncbi.nlm.nih.gov/entrez/eutils'
+EFETCH_URL="$EUTILS_URL/efetch.fcgi"
+
+EUTILS_TOOL='irdata'
+EUTILS_EMAIL="$EMAIL"
