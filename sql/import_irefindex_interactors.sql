@@ -228,6 +228,30 @@ create temporary table tmp_refseq_nucleotide as
 create index tmp_refseq_nucleotide_refvalue on tmp_refseq_nucleotide(refvalue);
 analyze tmp_refseq_nucleotide;
 
+create temporary table tmp_refseq_nucleotide_shortform as
+    select distinct X.dblabel, X.refvalue, 'refseq/nucleotide-shortform' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join refseq_nucleotide_accessions as A
+        on X.refvalue = A.shortform
+    inner join refseq_nucleotides as N
+        on A.nucleotide = N.nucleotide
+    inner join refseq_proteins as P
+        on N.protein = P.accession
+
+    -- Exclude previous matches.
+
+    left outer join tmp_refseq as P2
+        on X.refvalue = P2.refvalue
+    left outer join tmp_refseq_nucleotide as P3
+        on X.refvalue = P3.refvalue
+    where X.dblabel = 'refseq'
+        and P2.refvalue is null
+        and P3.refvalue is null;
+
+create index tmp_refseq_nucleotide_shortform_refvalue on tmp_refseq_nucleotide_shortform(refvalue);
+analyze tmp_refseq_nucleotide_shortform;
+
 -- RefSeq accession matches via Entrez Gene.
 
 create temporary table tmp_refseq_gene as
@@ -245,9 +269,12 @@ create temporary table tmp_refseq_gene as
         on X.refvalue = P2.refvalue
     left outer join tmp_refseq_nucleotide as P3
         on X.refvalue = P3.refvalue
+    left outer join tmp_refseq_nucleotide_shortform as P4
+        on X.refvalue = P3.refvalue
     where X.dblabel = 'entrezgene'
         and P2.refvalue is null
-        and P3.refvalue is null;
+        and P3.refvalue is null
+        and P4.refvalue is null;
 
 -- Partition UniProt matches via FlyBase accessions.
 
