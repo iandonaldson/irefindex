@@ -270,7 +270,7 @@ create temporary table tmp_refseq_gene as
     left outer join tmp_refseq_nucleotide as P3
         on X.refvalue = P3.refvalue
     left outer join tmp_refseq_nucleotide_shortform as P4
-        on X.refvalue = P3.refvalue
+        on X.refvalue = P4.refvalue
     where X.dblabel = 'entrezgene'
         and P2.refvalue is null
         and P3.refvalue is null
@@ -512,6 +512,10 @@ insert into xml_xref_sequences
     -- RefSeq matches.
 
     select * from tmp_refseq
+    union all
+    select * from tmp_refseq_nucleotide
+    union all
+    select * from tmp_refseq_nucleotide_shortform
     union all
     select * from tmp_refseq_gene
     union all
