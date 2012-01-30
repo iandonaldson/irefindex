@@ -17,6 +17,9 @@ analyze uniprot_accessions;
 create index uniprot_proteins_sequence on uniprot_proteins(sequence);
 analyze uniprot_proteins;
 
+create index uniprot_proteins_index on uniprot_proteins(uniprotid);
+analyze uniprot_proteins;
+
 create index uniprot_gene_names_genename on uniprot_gene_names(genename);
 analyze uniprot_gene_names;
 
@@ -45,6 +48,17 @@ insert into uniprot_proteins
     where B.uniprotid is null;
 
 analyze uniprot_proteins;
+
+-- Add missing taxid information.
+
+update uniprot_proteins as P
+    set taxid = (
+        select min(Q.taxid)
+        from uniprot_proteins as Q
+        where Q.uniprotid = P.uniprotid
+            and Q.taxid is not null
+        )
+    where taxid is null;
 
 -- Add the isoform mapping.
 
