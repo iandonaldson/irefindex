@@ -1,0 +1,43 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ] || [ "$1" != '--build' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME --build
+
+Build interactor and assignment information from the imported source data.
+EOF
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" ; then
+    echo "$PROGNAME: Could not convert MITAB data to the common data representation." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml_constraints.sql" ; then
+    echo "$PROGNAME: Constraints could not be applied to the common data representation." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactors.sql" ; then
+    echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+    exit 1
+fi
+
+if ! "$SCRIPTS/irmissing" ; then
+    echo "$PROGNAME: Did not retrieve missing/unknown sequences." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_assignments.sql" ; then
+    echo "$PROGNAME: Could not build assignment information from the imported data." 1>&2
+    exit 1
+fi

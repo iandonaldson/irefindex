@@ -170,6 +170,7 @@ GENE_RELEASE_URL="$GENE_MIRROR/gene/DATA/"
 GENE_DIR_NAME="Entrez_Gene"
 GENE_OTHER_FILE_PATTERN='gene*'
 GENE_PARSER='irdata_parse_gene.sh'
+GENE_SCHEMA='gene'
 
 ############################################################
 # GenPept
@@ -181,6 +182,7 @@ GENPEPT_RELEASE_URL="$GENPEPT_MIRROR/ncbi-asn1/protein_fasta/"
 GENPEPT_DIR_NAME="GenPept"
 GENPEPT_OTHER_FILE_PATTERN='gb*'
 GENPEPT_PARSER='irdata_parse_genpept.sh'
+GENPEPT_SCHEMA='genpept'
 
 ############################################################
 # HPRD
@@ -222,6 +224,7 @@ IPI_RELEASE_URL="$IPI_MIRROR/pub/databases/IPI/current/"
 IPI_DIR_NAME="IPI"
 IPI_OTHER_FILE_PATTERN='*.fasta'
 IPI_PARSER='irdata_parse_ipi.sh'
+IPI_SCHEMA='ipi'
 
 ############################################################
 # MatrixDB
@@ -253,6 +256,7 @@ MMDB_RELEASE_URL="$MMDB_MIRROR/mmdb/pdbeast/"
 MMDB_DIR_NAME="MMDB"
 MMDB_OTHER_FILE_PATTERN='table'
 MMDB_PARSER='irdata_parse_mmdb.sh'
+MMDB_SCHEMA='mmdb'
 
 ############################################################
 # MPACT
@@ -302,6 +306,7 @@ PDB_RELEASE_URL="$PDB_MIRROR/blast/db/FASTA/"
 PDB_DIR_NAME="PDB"
 PDB_OTHER_FILE_PATTERN='pdbaa*'
 PDB_PARSER='irdata_parse_pdb.sh'
+PDB_SCHEMA='pdb'
 
 ############################################################
 # RefSeq
@@ -313,6 +318,7 @@ REFSEQ_RELEASE_URL="$REFSEQ_MIRROR/complete/"
 REFSEQ_DIR_NAME="RefSeq"
 REFSEQ_OTHER_FILE_PATTERN='*.gpff* *.gnp'
 REFSEQ_PARSER='irdata_parse_refseq.sh'
+REFSEQ_SCHEMA='refseq'
 
 ############################################################
 # SEGUID
@@ -335,6 +341,7 @@ TAXONOMY_RELEASE_URL="$TAXONOMY_MIRROR/pub/taxonomy/"
 TAXONOMY_DIR_NAME="Taxonomy"
 TAXONOMY_OTHER_FILE_PATTERN='names.dmp'
 TAXONOMY_PARSER='irdata_parse_taxonomy.sh'
+TAXONOMY_SCHEMA='taxonomy'
 
 ############################################################
 # UniProt
@@ -350,6 +357,7 @@ UNIPROT_RELEASE_URL="$UNIPROT_MIRROR/pub/databases/uniprot/$UNIPROT_RELEASE/know
 UNIPROT_DIR_NAME="UniProt"
 UNIPROT_OTHER_FILE_PATTERN='*.dat.gz *.dat *.fasta.gz *.fasta'
 UNIPROT_PARSER='irdata_parse_uniprot.sh'
+UNIPROT_SCHEMA='uniprot'
 
 UNIPROT_SPLIT_INTERVAL=100000000
 
@@ -363,6 +371,7 @@ FLY_RELEASE_URL="$FLY_MIRROR/docs/"
 FLY_DIR_NAME="fly"
 FLY_OTHER_FILE_PATTERN='*.txt'
 FLY_PARSER='irdata_parse_fly.sh'
+FLY_SCHEMA='fly'
 
 ############################################################
 # UniProt (Yeast)
@@ -374,6 +383,7 @@ YEAST_RELEASE_URL="$YEAST_MIRROR/docs/"
 YEAST_DIR_NAME="yeast"
 YEAST_OTHER_FILE_PATTERN='*.txt'
 YEAST_PARSER='irdata_parse_fly.sh'
+YEAST_SCHEMA='yeast'
 
 
 

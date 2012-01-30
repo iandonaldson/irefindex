@@ -1,0 +1,37 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ] || [ "$1" != '--init' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME --init
+
+Initialise the system for import and build.
+EOF
+    exit 1
+fi
+
+if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init.sql"
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml.sql"
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_mitab.sql"
+    ) ; then
+    echo "$PROGNAME: Could not initialise the database schema." 1>&2
+    exit 1
+fi
+
+for SOURCE in $ALLSOURCES ; do
+    eval SCHEMA='$'"$SOURCE"_SCHEMA
+
+    if [ "$SCHEMA" ]; then
+        if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_${SCHEMA}.sql" ; then
+            echo "$PROGNAME: Could not initialise schema for $SOURCE." 1>&2
+            exit 1
+        fi
+    fi
+done
