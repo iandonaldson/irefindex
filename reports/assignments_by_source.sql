@@ -70,7 +70,7 @@ create temporary table tmp_assignment_coverage as
         -- Unassignable.
         coalesce(unassignable.total, 0) as unassignable_total,
         -- Unique proteins.
-        coalesce(sequences.total) as sequences_total
+        coalesce(sequences.total, 0) as sequences_total
 
     from tmp_assignments_by_source as assigned
     full outer join (
