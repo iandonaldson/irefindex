@@ -34,14 +34,23 @@ echo -n "tool=$EUTILS_TOOL&email=$EUTILS_EMAIL&db=protein&rettype=gp&retmode=tex
 
 # Convert the list of identifiers into form-encoded parameters.
 
-python -c 'import sys; sys.stdout.write(sys.stdin.read().replace("\n", ",").rstrip(","))' < "$FILENAME" >> "$QUERYFILE"
+   cat "$FILENAME" \
+|  tr '\n' ',' \
+|  sed -e 's/,$//' \
+>> "$QUERYFILE"
 
-wget -O "$RESULTFILE" "$EFETCH_URL" --post-file="$QUERYFILE"
+if ! wget -O "$RESULTFILE" "$EFETCH_URL" --post-file="$QUERYFILE" ; then
+    echo "$PROGNAME: Could not download the missing sequence records from RefSeq." 1>&2
+    exit 1
+fi
 
 # Parse the feature table output, producing files similar to those normally
 # available for RefSeq.
 
-"$TOOLS/irdata_parse_refseq.py" "$DATADIR" "$RESULTFILE"
+if ! "$TOOLS/irdata_parse_refseq.py" "$DATADIR" "$RESULTFILE" ; then
+    echo "$PROGNAME: Could not parse the retrieved data." 1>&2
+    exit 1
+fi
 
 # Concatenate the output data.
 

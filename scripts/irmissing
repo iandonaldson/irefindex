@@ -1,0 +1,59 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME [ --check-only | --download-only ]
+
+Obtain missing data by exporting identifiers that do not correspond to sequence
+information and using the list of identifiers to retrieve available records in
+an activity separate from the original download activities.
+EOF
+    exit 1
+fi
+
+if [ "$1" = '--check-only' ]; then
+    CHECK_ONLY=$1
+    shift 1
+elif [ "$1" = '--download-only' ]; then
+    DOWNLOAD_ONLY=$1
+    shift 1
+fi
+
+DATADIR="$DATA/import/RefSeq.unknown"
+
+if [ ! -e "$DATADIR" ] ; then
+    mkdir "$DATADIR"
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_unknown_refseq.sql" "$DATADIR" ; then
+    echo "$PROGNAME: Could not export identifiers missing sequences." 1>&2
+    exit 1
+fi
+
+if [ "$CHECK_ONLY" ]; then
+    echo "$DATADIR/unknown_refseq"
+    exit 0
+fi
+
+if ! "$TOOLS/irdata_fetch_refseq.sh" "$DATADIR" "$DATADIR/unknown_refseq" ; then
+    echo "$PROGNAME: No sequence records downloaded." 1>&2
+    exit 1
+fi
+
+if [ "$DOWNLOAD_ONLY" ]; then
+    echo "$DATADIR/unknown_refseq.result"
+    exit 0
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_unknown_refseq.sql" "$DATADIR" ; then
+    echo "$PROGNAME: Could not import missing sequences." 1>&2
+    exit 1
+fi

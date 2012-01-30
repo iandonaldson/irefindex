@@ -71,6 +71,14 @@ class Parser:
     def save_line(self):
         self.return_last = 1
 
+    def parse_locus(self, line, record):
+        code, rest = line
+
+        # Filter out DNA. This is useful if having to deal with eUtils.
+
+        if not ' DNA ' in rest:
+            record["LOCUS"] = rest.split()[0]
+
     def parse_accession(self, line, record):
         code, rest = line
         record[code] = rest.split()[0] # ignore trailing accessions (presumably expired)
@@ -122,12 +130,13 @@ class Parser:
         record["GI"] = gi.split(":")[1] # strip "GI:" from the identifier
 
     handlers = {
+        "LOCUS"     : parse_locus,
         "ACCESSION" : parse_accession,
-        "DBSOURCE" : parse_dbsource,
-        "FEATURES" : parse_features,
-        "ORIGIN" : parse_origin,
+        "DBSOURCE"  : parse_dbsource,
+        "FEATURES"  : parse_features,
+        "ORIGIN"    : parse_origin,
         "REFERENCE" : parse_reference,
-        "VERSION" : parse_version,
+        "VERSION"   : parse_version,
         }
 
     def parse(self):
@@ -146,12 +155,13 @@ class Parser:
             pass
 
     def write_record(self, record):
-        self.f_main.write("%(ACCESSION)s\t%(VERSION)s\t%(GI)s\t%(TAXID)s\t%(SEQUENCE)s\n" % record)
-        if record.has_key("PUBMED"):
-            for pos, pmid in enumerate(record["PUBMED"]):
-                self.f_identifiers.write("%s\tPubMed\t%s\t%s\n" % (record["ACCESSION"], pmid, pos))
-        if record.has_key("REFSEQ"):
-            self.f_nucleotides.write("%(REFSEQ)s\t%(ACCESSION)s\n" % record)
+        if record.has_key("LOCUS"):
+            self.f_main.write("%(ACCESSION)s\t%(VERSION)s\t%(GI)s\t%(TAXID)s\t%(SEQUENCE)s\n" % record)
+            if record.has_key("PUBMED"):
+                for pos, pmid in enumerate(record["PUBMED"]):
+                    self.f_identifiers.write("%s\tPubMed\t%s\t%s\n" % (record["ACCESSION"], pmid, pos))
+            if record.has_key("REFSEQ"):
+                self.f_nucleotides.write("%(REFSEQ)s\t%(ACCESSION)s\n" % record)
 
 if __name__ == "__main__":
     from os.path import extsep, join, split, splitext
