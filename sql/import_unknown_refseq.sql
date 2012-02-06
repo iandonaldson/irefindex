@@ -229,7 +229,7 @@ insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, I.dblabel, I.refvalue,
         taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
-    left outer join tmp_xml_xref_sequences as S
+    inner join tmp_xml_xref_sequences as S
         on (I.dblabel, I.refvalue) = (S.dblabel, S.refvalue);
 
 commit;
