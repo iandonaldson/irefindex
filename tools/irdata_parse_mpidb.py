@@ -82,7 +82,7 @@ class Parser:
 
     def parse_line(self, line):
 
-        "Parse the given 'line', writing to the 'out' stream."
+        "Parse the given 'line', appending output to the writer."
 
         data = dict(zip(mpidb_fields, line.strip().split("\t")))
 

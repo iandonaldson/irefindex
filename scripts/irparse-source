@@ -78,7 +78,16 @@ fi
 
 HAVEDATA=
 
+# Prevent the patterns from being expanded in the current directory.
+
+set -f
+
 for FILEPATTERN in $FILEPATTERNS; do
+
+    # Now permit the expansion.
+
+    set +f
+
     FILES="$DATADIR/$FILEPATTERN"
     HAVEFILES=
 
