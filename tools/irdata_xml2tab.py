@@ -285,7 +285,7 @@ class PSIParser(EmptyElementParser):
             if not values:
                 return
 
-            # The parent indicates the data type as is only used to select the output file.
+            # The parent indicates the data type and is only used to select the output file.
 
             self.writer.append((parent, entry, scope, self.path_to_attrs[scope]["id"], implicit) + tuple(values))
 
