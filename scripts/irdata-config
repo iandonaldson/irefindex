@@ -103,6 +103,7 @@ fi
 
 PROCESSES=4                                 # number of process groups to use
 XARGS_I='-I'                                # get round annoying GNU xargs incompatibility
+XARGS_L='-L'                                # get round annoying GNU xargs incompatibility
 
 
 
