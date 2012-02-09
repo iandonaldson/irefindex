@@ -106,11 +106,12 @@ insert into irefindex_assignments
     select *
     from tmp_primary_references
     union all
-    select *
-    from tmp_secondary_references
-    where (source, filename, entry, interactorid) not in (
-        select source, filename, entry, interactorid
-        from tmp_primary_references);
+    select S.*
+    from tmp_secondary_references as S
+    left outer join tmp_primary_references as P
+        on (S.source, S.filename, S.entry, S.interactorid) =
+            (P.source, P.filename, P.entry, P.interactorid)
+    where P.interactorid is null;
 
 analyze irefindex_assignments;
 
