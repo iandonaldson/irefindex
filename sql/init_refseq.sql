@@ -1,12 +1,12 @@
 -- A simple schema purely for completing interactor data.
 
 create table refseq_proteins (
-    accession varchar not null,
-    version varchar not null,
+    accession varchar,
+    version varchar,
     gi integer not null,
-    taxid integer not null,
+    taxid integer,
     "sequence" varchar not null,
-    primary key(accession)
+    primary key(gi)
 );
 
 create table refseq_identifiers (

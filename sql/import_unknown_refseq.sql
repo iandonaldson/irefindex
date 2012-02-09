@@ -3,28 +3,25 @@
 begin;
 
 create temporary table tmp_refseq_proteins (
-    accession varchar not null,
-    version varchar not null,
+    accession varchar,
+    version varchar,
     gi integer not null,
-    taxid integer not null,
-    "sequence" varchar not null,
-    primary key(accession)
+    taxid integer,
+    "sequence" varchar not null
 );
 
 create temporary table tmp_refseq_identifiers (
     accession varchar not null,
     dblabel varchar not null,
     refvalue varchar not null,
-    position integer not null,
-    primary key(accession, dblabel, refvalue)
+    position integer not null
 );
 
 -- A mapping from protein records to nucleotide records.
 
 create temporary table tmp_refseq_nucleotides (
     nucleotide varchar not null,
-    protein varchar not null,
-    primary key(nucleotide, protein)
+    protein varchar not null
 );
 
 create temporary table tmp_refseq_nucleotide_accessions (
@@ -41,6 +38,10 @@ insert into tmp_refseq_nucleotide_accessions
     select distinct T.nucleotide, substring(T.nucleotide from '[^.]*') as shortform
     from tmp_refseq_nucleotides as T;
 
+create index tmp_refseq_proteins_gi on tmp_refseq_proteins(gi);
+create index tmp_refseq_identifiers_accession on tmp_refseq_identifiers(accession);
+create index tmp_refseq_nucleotides_nucleotide on tmp_refseq_nucleotides(nucleotide);
+
 analyze tmp_refseq_proteins;
 analyze tmp_refseq_identifiers;
 analyze tmp_refseq_nucleotides;
@@ -49,16 +50,16 @@ analyze tmp_refseq_nucleotide_accessions;
 -- Augment the existing tables.
 
 insert into refseq_proteins
-    select T.*
+    select distinct T.*
     from tmp_refseq_proteins as T
     left outer join refseq_proteins as P
-        on T.accession = P.accession
-    where P.accession is null;
+        on T.gi = P.gi
+    where P.gi is null;
 
 analyze refseq_proteins;
 
 insert into refseq_identifiers
-    select T.*
+    select distinct T.*
     from tmp_refseq_identifiers as T
     left outer join refseq_identifiers as I
         on T.accession = I.accession
@@ -69,7 +70,7 @@ insert into refseq_identifiers
 analyze refseq_identifiers;
 
 insert into refseq_nucleotides
-    select T.*
+    select distinct T.*
     from tmp_refseq_nucleotides as T
     left outer join refseq_nucleotides as N
         on T.nucleotide = N.nucleotide
@@ -88,6 +89,7 @@ insert into refseq_nucleotide_accessions
 analyze refseq_nucleotide_accessions;
 
 -- Augment the interactor tables.
+-- NOTE: See import_irefindex_interactors.sql for much the same code.
 
 -- Partition RefSeq accession matches.
 
@@ -186,6 +188,49 @@ create temporary table tmp_refseq_gene as
         and P3.refvalue is null
         and P4.refvalue is null;
 
+-- GenBank protein identifier matches in RefSeq.
+
+create temporary table tmp_refseq_genbank as
+    select distinct X.dblabel, X.refvalue, 'refseq/genbank-gi' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join tmp_refseq_proteins as P
+        on X.dblabel = 'genbank_protein_gi'
+        and X.refvalue ~ '^[[:digit:]]{1,9}$'
+        and cast(X.refvalue as integer) = P.gi;
+
+analyze tmp_refseq_genbank;
+
+-- RefSeq accession matches via Entrez Gene history.
+
+create temporary table tmp_refseq_gene_history as
+    select distinct X.dblabel, X.refvalue, 'refseq/entrezgene-history' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join gene_history as H
+        on X.refvalue ~ '^[[:digit:]]*$'
+        and cast(X.refvalue as integer) = H.oldgeneid
+    inner join gene2refseq as G
+        on H.geneid = G.geneid
+    inner join tmp_refseq_proteins as P
+        on G.accession = P.version
+
+    -- Exclude previous matches.
+
+    left outer join tmp_refseq as P2
+        on X.refvalue = P2.refvalue
+    left outer join tmp_refseq_nucleotide as P3
+        on X.refvalue = P3.refvalue
+    left outer join tmp_refseq_nucleotide_shortform as P4
+        on X.refvalue = P4.refvalue
+    left outer join tmp_refseq_gene as P5
+        on X.refvalue = P5.refvalue
+    where X.dblabel = 'entrezgene'
+        and P2.refvalue is null
+        and P3.refvalue is null
+        and P4.refvalue is null
+        and P5.refvalue is null;
+
 -- Use a temporary table to hold new sequence information.
 
 create temporary table tmp_xml_xref_sequences (
@@ -204,7 +249,11 @@ insert into tmp_xml_xref_sequences
     union all
     select * from tmp_refseq_nucleotide_shortform
     union all
-    select * from tmp_refseq_gene;
+    select * from tmp_refseq_gene
+    union all
+    select * from tmp_refseq_genbank
+    union all
+    select * from tmp_refseq_gene_history;
 
 create index tmp_xml_xref_sequences_index on tmp_xml_xref_sequences(dblabel, refvalue);
 analyze tmp_xml_xref_sequences;
