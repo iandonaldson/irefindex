@@ -39,6 +39,11 @@ class Parser:
 
     taxid_regexp = re.compile('/db_xref="taxon:(.*?)"')
 
+    # Optional fields do not typically apply to the published RefSeq archives.
+    # They are usually only relevant to old eUtils records.
+
+    optional = "ACCESSION", "VERSION", "TAXID"
+
     def __init__(self, f, f_main, f_identifiers, f_nucleotides):
         self.f = f
         self.f_main = f_main
@@ -81,7 +86,11 @@ class Parser:
 
     def parse_accession(self, line, record):
         code, rest = line
-        record[code] = rest.split()[0] # ignore trailing accessions (presumably expired)
+
+        # Handle missing accessions in old eUtils records.
+
+        if rest:
+            record[code] = rest.split()[0] # ignore trailing accessions (presumably expired)
 
     def parse_dbsource(self, line, record):
         code, rest = line
@@ -125,8 +134,15 @@ class Parser:
 
     def parse_version(self, line, record):
         code, rest = line
-        version, gi = rest.split()
-        record["VERSION"] = version
+        version_plus_gi = rest.split()
+
+        # Handle missing versions in old eUtils records.
+
+        if len(version_plus_gi) > 1:
+            version, gi = version_plus_gi
+            record["VERSION"] = version
+        else:
+            gi = version_plus_gi[0]
         record["GI"] = gi.split(":")[1] # strip "GI:" from the identifier
 
     handlers = {
@@ -156,6 +172,12 @@ class Parser:
 
     def write_record(self, record):
         if record.has_key("LOCUS"):
+
+            # Handle missing fields in old eUtils records.
+            for key in self.optional:
+                if not record.has_key(key):
+                    record[key] = r"\N"
+
             self.f_main.write("%(ACCESSION)s\t%(VERSION)s\t%(GI)s\t%(TAXID)s\t%(SEQUENCE)s\n" % record)
             if record.has_key("PUBMED"):
                 for pos, pmid in enumerate(record["PUBMED"]):

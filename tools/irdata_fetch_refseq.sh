@@ -25,24 +25,14 @@ if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
     exit 1
 fi
 
-QUERYFILE="$FILENAME.query"
 RESULTFILE="$FILENAME.result"
 
-# Execute a query to get feature table output for proteins.
+# Split the filename into manageable pieces and process each one in turn.
+# Note that this is done serially due to Entrez usage restrictions.
 
-echo -n "tool=$EUTILS_TOOL&email=$EUTILS_EMAIL&db=protein&rettype=gp&retmode=text&id=" > "$QUERYFILE"
-
-# Convert the list of identifiers into form-encoded parameters.
-
-   cat "$FILENAME" \
-|  tr '\n' ',' \
-|  sed -e 's/,$//' \
->> "$QUERYFILE"
-
-if ! wget -O "$RESULTFILE" "$EFETCH_URL" --post-file="$QUERYFILE" ; then
-    echo "$PROGNAME: Could not download the missing sequence records from RefSeq." 1>&2
-    exit 1
-fi
+  "$TOOLS/irdata_split.py" -1 10000 "$FILENAME" \
+| xargs $XARGS_I'{}' sh -c "echo {} | \"$SCRIPTS/irslice\" \"$FILENAME\" - | \"$TOOLS/irdata_fetch_eutils.sh\" \"$DATADIR\" \"$FILENAME\"" \
+> "$RESULTFILE"
 
 # Parse the feature table output, producing files similar to those normally
 # available for RefSeq.
