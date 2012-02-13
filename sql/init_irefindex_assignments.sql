@@ -42,7 +42,7 @@ create table irefindex_unassigned (
     filename varchar not null,
     entry integer not null,
     interactorid varchar not null,
-    sequences integer not null,
+    sequence varchar,
     refsequences integer not null,
     primary key(source, filename, entry, interactorid)
 );

@@ -31,7 +31,7 @@ analyze xml_xref_all_interactors;
 -- using supported databases.
 
 insert into xml_xref_interactors
-    select X.source, X.filename, X.entry, interactorid, reftype, dblabel, refvalue, taxid, sequence
+    select X.source, X.filename, X.entry, interactorid, X.reftype, X.dblabel, X.refvalue, taxid, sequence
     from xml_xref_all_interactors as X
 
     -- Add organism and interaction database sequence information.
@@ -41,6 +41,13 @@ insert into xml_xref_interactors
     left outer join xml_sequences as S
         on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
 
+    -- Exclude non-proteins.
+
+    -- left outer join xml_xref as R
+    --    on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (R.source, R.filename, R.entry, R.parentid, R.scope)
+    --    and R.property = 'interactorType'
+    --    and R.dblabel = 'psi-mi'
+
     -- Select specific references.
     -- NOTE: MPACT has secondary references that may be more usable that various
     -- NOTE: primary references (having a UniProt accession of "unknown", for example).
@@ -49,11 +56,15 @@ insert into xml_xref_interactors
     -- NOTE: secondary references.
 
     where (
-        reftype = 'primaryRef'
-        or reftype = 'secondaryRef' and (reftypelabel = 'identity' or X.source = 'MPACT')
+        X.reftype = 'primaryRef'
+        or X.reftype = 'secondaryRef' and (X.reftypelabel = 'identity' or X.source = 'MPACT')
         or X.source in ('HPRD', 'BIND')
         )
-        and dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
+        and X.dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
+
+        -- Only interactors that are described as proteins or have no type are considered.
+
+        -- and (R.refvalue = 'MI:0326' or R.refvalue is null);
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;

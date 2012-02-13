@@ -21,26 +21,41 @@ create temporary table tmp_assignments_by_source as
 -- Show the number of unassigned interactors by data source.
 
 create temporary table tmp_unassigned_by_source as
-    select source, count(distinct array[filename, cast(entry as varchar), interactorid]) as total, havesequences
+    select source, havesequence, count(distinct array[filename, cast(entry as varchar), interactorid]) as total
     from (
         select source, filename, entry, interactorid,
-            case when refsequences = 0 then false
-            else true
-            end as havesequences
+            case when sequence is null then false else true end as havesequence
         from irefindex_unassigned
+        where refsequences = 0
         ) as X
-    group by source, havesequences
-    order by source, havesequences;
+    group by source, havesequence
+    order by source, havesequence;
 
 \copy tmp_unassigned_by_source to '<directory>/unassigned_by_source'
+
+-- Show the number of unassigned interactors by source and type.
+
+create temporary table tmp_unassigned_by_source_and_type as
+    select I.source, X.refvalue, count(distinct array[I.source, I.filename, cast(I.entry as varchar), I.interactorid])
+    from irefindex_unassigned as U
+    inner join xml_xref_interactors as I
+        on (I.source, I.filename, I.entry, I.interactorid) = (U.source, U.filename, U.entry, U.interactorid)
+    left outer join xml_xref as X
+        on (I.source, I.filename, I.entry, I.interactorid) = (X.source, X.filename, X.entry, X.parentid)
+        and X.scope = 'interactor' and X.property = 'interactorType' and X.dblabel = 'psi-mi'
+    where refsequences = 0
+    group by I.source, X.refvalue
+    order by I.source, X.refvalue;
+
+\copy tmp_unassigned_by_source_and_type to '<directory>/unassigned_by_source_and_type'
 
 -- Show the number of unassigned interactors by number of sequences.
 
 create temporary table tmp_unassigned_by_sequences as
-    select sequences, refsequences, count(distinct array[source, filename, cast(entry as varchar), interactorid]) as total
+    select sequence, refsequences, count(distinct array[source, filename, cast(entry as varchar), interactorid]) as total
     from irefindex_unassigned
-    group by sequences, refsequences
-    order by sequences, refsequences;
+    group by sequence, refsequences
+    order by sequence, refsequences;
 
 \copy tmp_unassigned_by_sequences to '<directory>/unassigned_by_sequences'
 
@@ -76,13 +91,13 @@ create temporary table tmp_assignment_coverage as
     full outer join (
         select source, total
         from tmp_unassigned_by_source
-        where havesequences
+        where havesequence
         ) as assignable
         on assigned.source = assignable.source
     full outer join (
         select source, total
         from tmp_unassigned_by_source
-        where not havesequences
+        where not havesequence
         ) as unassignable
         on assigned.source = unassignable.source
     full outer join tmp_sequences_by_source as sequences
