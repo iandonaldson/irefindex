@@ -118,7 +118,7 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
-OTHERSOURCES="BIND FLY GENE GENPEPT IPI MMDB PDB REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
+OTHERSOURCES="BIND FLY GENE GENPEPT IPI MMDB PDB PSI_MI REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
@@ -315,6 +315,18 @@ PDB_DIR_NAME="PDB"
 PDB_OTHER_FILE_PATTERN='pdbaa*'
 PDB_PARSER='irdata_parse_pdb.sh'
 PDB_SCHEMA='pdb'
+
+############################################################
+# PSI-MI
+
+PSI_MI_DOWNLOAD_FILES="psi-mi25.obo"
+PSI_MI_MIRROR='http://psidev.sourceforge.net'
+
+PSI_MI_RELEASE_URL="$PSI_MI_MIRROR/mi/rel25/data/"
+PSI_MI_DIR_NAME="PSI-MI"
+PSI_MI_OTHER_FILE_PATTERN='*.obo'
+PSI_MI_PARSER='irdata_parse_obo.py'
+PSI_MI_SCHEMA='psicv'
 
 ############################################################
 # RefSeq

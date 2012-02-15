@@ -86,7 +86,7 @@ insert into xml_xref
     select 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
         'primaryRef' as reftype, accession as refvalue, database as dblabel,
-        null as dbcode, null as reftypelabel, null as reftypecode
+        null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_interactors
     where database <> 'BIND'
         and accession not in ('-', '', 'NA')
@@ -97,7 +97,7 @@ insert into xml_xref
     select 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
         'secondaryRef' as reftype, cast(gi as varchar) as refvalue, 'genbank_protein_gi' as dblabel,
-        null as dbcode, null as reftypelabel, null as reftypecode
+        null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
     from bind_interactors
     union all
 
@@ -106,7 +106,7 @@ insert into xml_xref
     select distinct 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
         'primaryRef' as reftype, accession as refvalue, database as dblabel,
-        null as dbcode, null as reftypelabel, null as reftypecode
+        null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_complexes
     where database <> 'BIND'
         and accession not in ('-', '', 'NA')
@@ -117,7 +117,7 @@ insert into xml_xref
     select distinct 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
         'secondaryRef' as reftype, cast(gi as varchar) as refvalue, 'genbank_protein_gi' as dblabel,
-        null as dbcode, null as reftypelabel, null as reftypecode
+        null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
     from bind_complexes
     union all
 
@@ -126,7 +126,7 @@ insert into xml_xref
     select distinct 'BIND' as source, filename, 0 as entry, 'interaction' as scope,
         cast(bindid as varchar) as parentid, 'interaction' as property,
         'primaryRef' as reftype, cast(bindid as varchar) as refvalue, 'bind' as dblabel,
-        null as dbcode, null as reftypelabel, null as reftypecode
+        null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_interactors
     union all
 
@@ -135,10 +135,51 @@ insert into xml_xref
     select distinct 'BIND' as source, filename, 0 as entry, 'interaction' as scope,
         cast(bindid as varchar) as parentid, 'interaction' as property,
         'primaryRef' as reftype, cast(bindid as varchar) as refvalue, 'bind' as dblabel,
-        null as dbcode, null as reftypelabel, null as reftypecode
-    from bind_complexes;
+        null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
+    from bind_complexes
+    union all
 
-    -- NOTE: Also need PubMed, method, interaction type information.
+    -- Get the PubMed references for interactions.
+
+    select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
+        cast(I.bindid as varchar) as parentid, 'bibref' as property,
+        'primaryRef' as reftype, pmid as refvalue, 'pubmed' as dblabel,
+        'MI:0446' as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
+    from bind_interactors as I
+    inner join bind_references as R
+        on I.bindid = R.bindid
+        and pmid <> '-1'
+    union all
+
+    -- Get the PubMed references for complexes.
+
+    select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
+        cast(I.bindid as varchar) as parentid, 'bibref' as property,
+        'primaryRef' as reftype, pmid as refvalue, 'pubmed' as dblabel,
+        'MI:0446' as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
+    from bind_complexes as I
+    inner join bind_complex_references as R
+        on I.bindid = R.bindid
+        and pmid <> '-1'
+    union all
+
+    -- Get the interactor types.
+
+    select distinct 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
+        cast(I.interactorid as varchar) as parentid, 'interactorType' as property,
+        'primaryRef' as reftype, code as refvalue, 'psi-mi' as dblabel,
+        null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
+    from bind_interactors as I
+    inner join psicv_terms as T
+        on I.participanttype = T.name
+    union all
+    select distinct 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
+        cast(I.interactorid as varchar) as parentid, 'interactorType' as property,
+        'primaryRef' as reftype, code as refvalue, 'psi-mi' as dblabel,
+        null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
+    from bind_complexes as I
+    inner join psicv_terms as T
+        on I.participanttype = T.name;
 
 insert into xml_names
 
@@ -177,9 +218,18 @@ insert into xml_names
     select 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
         'alias' as nametype, null as typelabel, null as typecode, alias as name
-    from bind_complexes;
+    from bind_complexes
+    union all
 
-    -- NOTE: Also need method, interaction type information.
+    -- Get the methods.
+
+    select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
+        cast(I.bindid as varchar) as parentid, 'interactionDetectionMethod' as property,
+        'shortLabel' as nametype, null as typelabel, null as typecode, method as name
+    from bind_interactors as I
+    inner join bind_references as R
+        on I.bindid = R.bindid
+        and method is not null;
 
 insert into xml_organisms
 
@@ -196,7 +246,12 @@ insert into xml_organisms
         cast(interactorid as varchar) as parentid, taxid
     from bind_complexes;
 
--- insert into xml_experiments
---     select distinct source, filename, entry, experimentid, interactionid
+-- A one-to-one mapping from experiments to interactions is defined, reusing the
+-- interaction identifier.
+
+insert into xml_experiments
+    select distinct 'BIND' as source, filename, 0 as entry, cast(bindid as varchar) as interactionid,
+        cast(bindid as varchar) as interactionid
+    from bind_interactors;
 
 commit;

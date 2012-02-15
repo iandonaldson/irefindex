@@ -1,3 +1,5 @@
+-- Ambiguity of interactors defined in terms of matching sequences.
+
 create table irefindex_ambiguity (
     source varchar not null,
     filename varchar not null,
@@ -7,6 +9,8 @@ create table irefindex_ambiguity (
     refsequences integer not null,
     primary key(source, filename, entry, interactorid, reftype)
 );
+
+-- Assignments of sequences to interactors.
 
 create table irefindex_assignments (
     source varchar not null,
@@ -37,6 +41,8 @@ create table irefindex_assignments (
     primary key(source, filename, entry, interactorid, sequence)
 );
 
+-- Unassigned interactors.
+
 create table irefindex_unassigned (
     source varchar not null,
     filename varchar not null,
@@ -44,5 +50,17 @@ create table irefindex_unassigned (
     interactorid varchar not null,
     sequence varchar,
     refsequences integer not null,
+    primary key(source, filename, entry, interactorid)
+);
+
+-- Assignments of ROG identifiers to interactors based on the above sequence
+-- assignment.
+
+create table irefindex_rogids (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null,
+    rogid varchar not null,
     primary key(source, filename, entry, interactorid)
 );

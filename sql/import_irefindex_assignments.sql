@@ -207,4 +207,14 @@ insert into irefindex_unassigned
 
 analyze irefindex_unassigned;
 
+-- ROG identifiers.
+
+insert into irefindex_rogids
+    select source, filename, entry, interactorid, sequence || taxid as rogid
+    from irefindex_assignments
+    where sequence is not null
+        and taxid is not null;
+
+analyze irefindex_rogids;
+
 commit;

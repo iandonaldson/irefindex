@@ -4,6 +4,7 @@ create table genpept_proteins (
     accession varchar not null,
     db varchar not null,
     gi integer not null,
+    taxid integer,
     "sequence" varchar not null,
     primary key(accession, db)
 );

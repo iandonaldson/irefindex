@@ -42,7 +42,7 @@ class Parser:
             # Record data is separated from descriptions by white-space.
             # Values are separated by pipe/bar characters.
 
-            for identifier_type, field in map(None, self.identifier_types, header_record.split()[0].split("|")):
+            for identifier_type, field in map(None, self.identifier_types, header_record.split("|")):
                 identifiers[identifier_type] = field
 
             records.append(identifiers)

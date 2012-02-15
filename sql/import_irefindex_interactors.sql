@@ -540,16 +540,6 @@ create temporary table tmp_ipi_shortform as
     where X.dblabel = 'ipi'
         and P2.refvalue is null;
 
--- PDB accession|chain matches.
-
-create temporary table tmp_pdb as
-    select distinct X.dblabel, X.refvalue, 'pdb' as sequencelink,
-        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
-    from xml_xref_interactors as X
-    inner join pdb_proteins as P
-        on X.dblabel = 'pdb'
-        and X.refvalue = P.accession || '|' || P.chain;
-
 -- PDB accession matches via MMDB.
 
 create temporary table tmp_pdb_mmdb as
@@ -561,13 +551,26 @@ create temporary table tmp_pdb_mmdb as
         and X.refvalue = M.accession
     inner join pdb_proteins as P
         on M.accession = P.accession
+        and M.chain = P.chain;
+
+-- PDB accession|chain matches.
+-- NOTE: This should give a null taxid and is only of interest if nothing else
+-- NOTE: matches for an interactor.
+
+create temporary table tmp_pdb as
+    select distinct X.dblabel, X.refvalue, 'pdb' as sequencelink,
+        M.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from xml_xref_interactors as X
+    inner join pdb_proteins as P
+        on X.dblabel = 'pdb'
+        and X.refvalue = P.accession || '|' || P.chain
+    left outer join mmdb_pdb_accessions as M
+        on M.accession = P.accession
         and M.chain = P.chain
 
     -- Exclude previous matches.
 
-    left outer join tmp_pdb as P2
-        on P.accession || '|' || P.chain = P2.refvalue
-    where P2.refvalue is null;
+    where M.accession is null;
 
 -- Create a mapping from accessions to reference sequences.
 -- Combine the UniProt and RefSeq details with those from other sources.

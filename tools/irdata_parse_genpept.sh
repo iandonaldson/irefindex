@@ -29,11 +29,14 @@ if [ ! "$DATADIR" ] || [ ! "$FILENAMES" ]; then
 fi
 
   "$SCRIPTS/argument-per-line" $FILENAMES \
-| "$SCRIPTS/irparallel" "\"$TOOLS/irdata_parse_fasta.py\" \"$DATADIR\" 'gi,ginr,db,acc' 'acc,db,ginr' {}"
+| "$SCRIPTS/irparallel" "\"$TOOLS/irdata_parse_fasta.py\" \"$DATADIR\" 'gi,ginr,db,acc,organism' 'acc,db,ginr,organism' {}"
 
-# Concatenate the output data.
+# Concatenate the output data, isolating the organism name from the organism
+# column.
 
-cat "$DATADIR"/*_proteins.txt > "$DATADIR/genpept_proteins.txt"
+  cat "$DATADIR"/*_proteins.txt \
+| sed -e $'s/\(.*\)\t\(.*\)\t\(.*\)\t.*\[\(.*\)\]\t\(.*\)/\\1\t\\2\t\\3\t\\4\t\\5/' \
+> "$DATADIR/genpept_proteins.txt"
 
 "$TOOLS/irdata_process_signatures.sh" "$DATADIR"
 exit $?
