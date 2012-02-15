@@ -115,10 +115,12 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 # not be changed.
 
 # NOTE: To add for acquisition by other means: OPHID
+# NOTE: Since BIND and GenPept use PSI-MI and Taxonomy data in import, the
+# NOTE: latter are listed before the former in the other sources list.
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
-OTHERSOURCES="BIND FLY GENE GENPEPT IPI MMDB PDB PSI_MI REFSEQ SEGUID TAXONOMY UNIPROT YEAST"
+OTHERSOURCES="PSI_MI TAXONOMY BIND FLY GENE GENPEPT IPI MMDB PDB REFSEQ SEGUID UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 ############################################################
