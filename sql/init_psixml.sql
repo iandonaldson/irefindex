@@ -1,5 +1,3 @@
-begin;
-
 create table xml_experiments (
     source varchar not null,
     filename varchar not null,
@@ -62,5 +60,3 @@ create table xml_sequences (
     parentid varchar not null, -- integer for PSI MI XML 2.5
     sequence varchar not null
 );
-
-commit;

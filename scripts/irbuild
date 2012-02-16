@@ -22,7 +22,7 @@ if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" ; th
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml_constraints.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_constraints.sql" ; then
     echo "$PROGNAME: Constraints could not be applied to the common data representation." 1>&2
     exit 1
 fi
