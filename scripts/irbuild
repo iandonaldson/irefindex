@@ -41,3 +41,18 @@ if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_assig
     echo "$PROGNAME: Could not build assignment information from the imported data." 1>&2
     exit 1
 fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" ; then
+    echo "$PROGNAME: Could not export ROG identifiers for assigned sequences." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_process_signatures.py" "$DATA/rogids_for_interactions" "$DATA/rigids_for_interactions" ; then
+    echo "$PROGNAME: Could not generate RIG identifiers for the exported ROG identifiers." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" ; then
+    echo "$PROGNAME: Could not import the generated RIG identifiers." 1>&2
+    exit 1
+fi

@@ -71,7 +71,7 @@ def process_file(f, out, combine=None, digest=None, legacy=0):
         if combine is not None:
             signatures = fix_signatures([columns[i] for i in combine])
             if signatures:
-                columns.append("rigid:" + combine_signatures(signatures, legacy))
+                columns.append(combine_signatures(signatures, legacy))
             else:
                 columns.append("")
 

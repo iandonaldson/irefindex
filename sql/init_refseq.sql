@@ -3,6 +3,7 @@
 create table refseq_proteins (
     accession varchar,
     version varchar,
+    vnumber integer,
     gi integer not null,
     taxid integer,
     "sequence" varchar not null,
