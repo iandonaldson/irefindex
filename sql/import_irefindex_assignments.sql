@@ -16,8 +16,9 @@ analyze irefindex_ambiguity;
 -- Unambiguous primary and secondary references.
 
 create temporary table tmp_unambiguous_references as
-    select I.source, I.filename, I.entry, I.interactorid, min(refsequence) as sequence,
-        min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
+    select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
+        min(refsequence) as sequence, min(reftaxid) as taxid,
+        array_accum(sequencelink) as sequencelinks,
         I.reftype, array_array_accum(distinct array[[I.dblabel, I.refvalue]]) as identifiers,
         cast('unambiguous' as varchar) as method
     from xml_xref_interactor_sequences as I
@@ -25,15 +26,16 @@ create temporary table tmp_unambiguous_references as
         on (I.source, I.filename, I.entry, I.interactorid, I.reftype)
             = (A.source, A.filename, A.entry, A.interactorid, A.reftype)
     where A.refsequences = 1
-    group by I.source, I.filename, I.entry, I.interactorid, I.reftype;
+    group by I.source, I.filename, I.entry, I.interactorid, I.taxid, I.reftype;
 
 analyze tmp_unambiguous_references;
 
 -- Arbitrarily assigned references.
 
 create temporary table tmp_arbitrary_references as
-    select S.source, S.filename, S.entry, S.interactorid, refdetails[1] as sequence,
-        cast(refdetails[2] as integer) as taxid, array_accum(S.sequencelink) as sequencelinks,
+    select S.source, S.filename, S.entry, S.interactorid, S.taxid as originaltaxid,
+        refdetails[1] as sequence, cast(refdetails[2] as integer) as taxid,
+        array_accum(S.sequencelink) as sequencelinks,
         S.reftype, array_array_accum(distinct array[[S.dblabel, S.refvalue]]) as identifiers,
         cast('arbitrary' as varchar) as method
     from (
@@ -53,7 +55,7 @@ create temporary table tmp_arbitrary_references as
     inner join xml_xref_interactor_sequences as S
         on (S.source, S.filename, S.entry, S.interactorid, S.reftype, S.refsequence) =
             (X.source, X.filename, X.entry, X.interactorid, X.reftype, refdetails[1])
-    group by S.source, S.filename, S.entry, S.interactorid, S.reftype, refdetails;
+    group by S.source, S.filename, S.entry, S.interactorid, S.taxid, S.reftype, refdetails;
 
 -- Ambiguous primary and secondary references disambiguated by interactor
 -- sequence information.
@@ -68,8 +70,9 @@ create temporary table tmp_arbitrary_references as
 -- NOTE: representative will instead be chosen.
 
 create temporary table tmp_unambiguous_matching_sequence_references as
-    select I.source, I.filename, I.entry, I.interactorid, min(refsequence) as sequence,
-        min(reftaxid) as taxid, array_accum(sequencelink) as sequencelinks,
+    select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
+        min(refsequence) as sequence, min(reftaxid) as taxid,
+        array_accum(sequencelink) as sequencelinks,
         I.reftype, array_array_accum(distinct array[[I.dblabel, I.refvalue]]) as identifiers,
         cast('matching sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
@@ -78,7 +81,7 @@ create temporary table tmp_unambiguous_matching_sequence_references as
             = (A.source, A.filename, A.entry, A.interactorid, A.reftype)
     where A.refsequences > 1
         and sequence = refsequence
-    group by I.source, I.filename, I.entry, I.interactorid, I.reftype;
+    group by I.source, I.filename, I.entry, I.interactorid, I.taxid, I.reftype;
 
 create index tmp_unambiguous_matching_sequence_references_index on
     tmp_unambiguous_matching_sequence_references (source, filename, entry, interactorid);
@@ -89,8 +92,9 @@ analyze tmp_unambiguous_matching_sequence_references;
 -- available but not any sequence database sequence.
 
 create temporary table tmp_unambiguous_null_references as
-    select I.source, I.filename, I.entry, I.interactorid, I.sequence,
-        taxid, cast(null as varchar[]) as sequencelinks,
+    select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
+        I.sequence, taxid,
+        cast(null as varchar[]) as sequencelinks,
         I.reftype, cast(null as varchar[][]) as identifiers,
         cast('interactor sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
@@ -196,14 +200,14 @@ analyze irefindex_assignments;
 -- Remaining unassigned interactors.
 
 insert into irefindex_unassigned
-    select I.source, I.filename, I.entry, I.interactorid, I.sequence,
+    select I.source, I.filename, I.entry, I.interactorid, I.taxid, I.sequence,
         count(distinct refsequence) as refsequences
     from xml_xref_interactor_sequences as I
     left outer join irefindex_assignments as A
         on (I.source, I.filename, I.entry, I.interactorid) =
             (A.source, A.filename, A.entry, A.interactorid)
     where A.interactorid is null
-    group by I.source, I.filename, I.entry, I.interactorid, I.sequence;
+    group by I.source, I.filename, I.entry, I.interactorid, I.taxid, I.sequence;
 
 analyze irefindex_unassigned;
 
@@ -215,6 +219,7 @@ insert into irefindex_rogids
     where sequence is not null
         and taxid is not null;
 
+create index irefindex_rogids_rogid on irefindex_rogids(rogid);
 analyze irefindex_rogids;
 
 commit;

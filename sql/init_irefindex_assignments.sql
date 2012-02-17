@@ -17,6 +17,7 @@ create table irefindex_assignments (
     filename varchar not null,
     entry integer not null,
     interactorid varchar not null,
+    originaltaxid integer,
 
     -- Assigned sequence information.
 
@@ -48,6 +49,7 @@ create table irefindex_unassigned (
     filename varchar not null,
     entry integer not null,
     interactorid varchar not null,
+    taxid integer,
     sequence varchar,
     refsequences integer not null,
     primary key(source, filename, entry, interactorid)
