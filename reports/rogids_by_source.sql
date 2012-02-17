@@ -25,6 +25,18 @@ create temporary table tmp_rogids_shared_by_sources as
 
 \copy tmp_rogids_shared_by_sources to '<directory>/rogids_shared_by_sources'
 
+create temporary table tmp_rogids_unique_to_sources as
+    select R1.source, count(distinct R1.rogid) as total
+    from tmp_source_rogids as R1
+    left outer join tmp_source_rogids as R2
+        on R1.rogid = R2.rogid
+        and R1.source <> R2.source
+    where R2.rogid is null
+    group by R1.source
+    order by R1.source;
+
+\copy tmp_rogids_unique_to_sources to '<directory>/rogids_unique_to_sources'
+
 -- Make a grid that can be displayed using...
 -- column -s ',' -t rogids_shared_as_grid
 
@@ -53,7 +65,13 @@ create temporary table tmp_rogids_shared_as_grid as
             ) as X
         group by source1
         order by source1
-    );
+        )
+    union all
+
+    -- Make a row with unique identifier totals.
+
+    select array_to_string(array_cat(array[cast('-' as varchar)], array_accum(coalesce(cast(total as varchar), '-'))), ',')
+    from tmp_rogids_unique_to_sources;
 
 \copy tmp_rogids_shared_as_grid to '<directory>/rogids_shared_as_grid'
 

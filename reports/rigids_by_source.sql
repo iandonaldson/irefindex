@@ -25,6 +25,18 @@ create temporary table tmp_rigids_shared_by_sources as
 
 \copy tmp_rigids_shared_by_sources to '<directory>/rigids_shared_by_sources'
 
+create temporary table tmp_rigids_unique_to_sources as
+    select R1.source, count(distinct R1.rigid) as total
+    from tmp_source_rigids as R1
+    left outer join tmp_source_rigids as R2
+        on R1.rigid = R2.rigid
+        and R1.source <> R2.source
+    where R2.rigid is null
+    group by R1.source
+    order by R1.source;
+
+\copy tmp_rigids_unique_to_sources to '<directory>/rigids_unique_to_sources'
+
 -- Make a grid that can be displayed using...
 -- column -s ',' -t rigids_shared_as_grid
 
@@ -53,7 +65,14 @@ create temporary table tmp_rigids_shared_as_grid as
             ) as X
         group by source1
         order by source1
-    );
+
+        )
+    union all
+
+    -- Make a row with unique identifier totals.
+
+    select array_to_string(array_cat(array[cast('-' as varchar)], array_accum(coalesce(cast(total as varchar), '-'))), ',')
+    from tmp_rigids_unique_to_sources;
 
 \copy tmp_rigids_shared_as_grid to '<directory>/rigids_shared_as_grid'
 
