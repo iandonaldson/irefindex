@@ -38,10 +38,11 @@ def parse(infile, outfile):
         line = infile.readline()
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     from os.path import join, split
     import sys
 
-    progname = split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         i = 1

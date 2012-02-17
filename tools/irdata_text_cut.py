@@ -6,7 +6,7 @@ from the input file.
 """
 
 from irdata.data import RawImportFileReader, RawImportFile, reread, rewrite, index_for_int
-import irdata.cmd
+from irdata.cmd import get_progname
 import sys, cmdsyntax
 
 syntax_description = """
@@ -60,7 +60,7 @@ def main():
                 writer.append(details)
 
         except IOError, exc:
-            print >>sys.stderr, "%s: %s" % (irdata.cmd.get_progname(), exc)
+            print >>sys.stderr, "%s: %s" % (get_progname(), exc)
 
     finally:
         reader.close()

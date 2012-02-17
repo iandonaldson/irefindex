@@ -337,9 +337,10 @@ class PSIWriter(Writer):
         print >>self.files[file], "\t".join(data)
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     import sys
 
-    progname = os.path.split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         i = 1

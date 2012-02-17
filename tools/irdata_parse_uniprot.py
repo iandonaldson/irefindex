@@ -246,10 +246,11 @@ class Parser:
                 self.f_gene_names.write("%s\t%s\t%s\n" % (record["ID"], name, pos))
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     from os.path import extsep, join, split, splitext
     import sys, gzip
 
-    progname = split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         i = 1

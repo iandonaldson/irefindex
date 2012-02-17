@@ -97,10 +97,11 @@ class Parser:
         self.f_main.write("\t".join(record) + "\n")
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     from os.path import extsep, join, split, splitext
     import sys, gzip
 
-    progname = split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         i = 1

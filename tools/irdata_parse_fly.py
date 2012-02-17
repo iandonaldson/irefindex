@@ -126,10 +126,11 @@ class Parser:
         self.f_log.write("%s (%s): %d: %s: %s\n" % (self.progname, self.filetype, self.lineno, level, message))
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     from os.path import split
     import sys
 
-    progname = split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         filetype = sys.argv[1]

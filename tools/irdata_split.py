@@ -18,10 +18,11 @@ must be whole line records.
 """
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     from os.path import split, splitext
     import sys, gzip
 
-    progname = split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         one_based = sys.argv[1] == "-1"

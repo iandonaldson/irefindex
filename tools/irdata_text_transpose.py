@@ -28,9 +28,9 @@ The corresponding output will resemble this:
 <preceding-field>... ...
 """
 
+from irdata.cmd import get_progname
 from irdata.data import RawImportFileReader, RawImportFile, reread, rewrite, \
     index_for_int, int_or_none, partition
-import irdata.cmd
 import sys, cmdsyntax
 
 syntax_description = """
@@ -46,6 +46,7 @@ syntax_description = """
 # Main program.
 
 def main():
+    progname = get_progname()
 
     # Get the command line options.
 
@@ -102,7 +103,7 @@ def main():
                     writer.append(preceding + values + following)
 
         except IOError, exc:
-            print >>sys.stderr, "%s: %s" % (irdata.cmd.get_progname(), exc)
+            print >>sys.stderr, "%s: %s" % (progname, exc)
 
     finally:
         writer.close()

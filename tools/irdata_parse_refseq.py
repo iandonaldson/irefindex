@@ -186,10 +186,11 @@ class Parser:
                 self.f_nucleotides.write("%(REFSEQ)s\t%(ACCESSION)s\n" % record)
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     from os.path import extsep, join, split, splitext
     import sys, gzip
 
-    progname = split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         i = 1

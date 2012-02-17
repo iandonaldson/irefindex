@@ -313,9 +313,10 @@ def split_vocabulary_term(s):
         return (match.group("term"), match.group("description"))
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     import sys
 
-    progname = os.path.split(sys.argv[0])[-1]
+    progname = get_progname()
 
     try:
         directory = sys.argv[1]

@@ -5,7 +5,7 @@ Perform operations on a relational database system using templates.
 
 --------
 
-Copyright (C) 2009, 2010, 2011 Ian Donaldson <ian.donaldson@biotek.uio.no>
+Copyright (C) 2009, 2010, 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
 Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -42,9 +42,10 @@ def execute_command(cmd, database_name):
         os.remove(cmd_filename)
 
 if __name__ == "__main__":
+    from irdata.cmd import get_progname
     import sys, os
 
-    progname = os.path.split(sys.argv[0])[-1]
+    progname = get_progname()
 
     if len(sys.argv) < 3:
         print >>sys.stderr, "Usage: %s ( <database> | --output-command )" \

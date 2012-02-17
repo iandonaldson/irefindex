@@ -4,8 +4,8 @@
 Pad a text file to have a specific number of columns.
 """
 
+from irdata.cmd import get_progname
 from irdata.data import RawImportFileReader, RawImportFile, reread, rewrite
-import irdata.cmd
 import sys, cmdsyntax
 
 syntax_description = """
@@ -18,6 +18,7 @@ syntax_description = """
 # Main program.
 
 def main():
+    progname = get_progname()
 
     # Get the command line options.
 
@@ -39,7 +40,7 @@ def main():
     try:
         fields = int(args["fields"])
     except ValueError:
-        print >>sys.stderr, "%s: Need a number of fields/columns." % irdata.cmd.get_progname()
+        print >>sys.stderr, "%s: Need a number of fields/columns." % progname
         sys.exit(1)
 
     padding = args["padding"]
@@ -65,7 +66,7 @@ def main():
                 writer.append(details)
 
         except IOError, exc:
-            print >>sys.stderr, "%s: %s" % (irdata.cmd.get_progname(), exc)
+            print >>sys.stderr, "%s: %s" % (progname, exc)
 
     finally:
         reader.close()
