@@ -24,12 +24,12 @@ def parse(infile, outfile):
 
         elif state == "ID":
             if line.startswith("name: "):
-                output = [id, line[6:]]
+                output = [id, line[6:], 'preferred']
                 print >>outfile, "\t".join(output)
             else:
                 match = synonym_pattern.match(line)
                 if match:
-                    output = [id, match.group(1)]
+                    output = [id, match.group(1), 'synonym']
                     print >>outfile, "\t".join(output)
 
         elif not line.strip():

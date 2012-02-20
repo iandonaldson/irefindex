@@ -172,6 +172,7 @@ insert into xml_xref
     from bind_interactors as I
     inner join psicv_terms as T
         on I.participanttype = T.name
+        and T.nametype = 'preferred'
     union all
     select distinct 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(I.interactorid as varchar) as parentid, 'interactorType' as property,
@@ -179,7 +180,8 @@ insert into xml_xref
         null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
     from bind_complexes as I
     inner join psicv_terms as T
-        on I.participanttype = T.name;
+        on I.participanttype = T.name
+        and T.nametype = 'preferred';
 
 insert into xml_names
 
