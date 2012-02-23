@@ -13,14 +13,13 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <sequences file> <signatures file>" % split(sys.argv[0])[-1]
         sys.exit(1)
 
-    combine = "--combine-signatures" in sys.argv and [-2, -1] or None
-    digest = not combine and -1 or None
+    append = "--append" in sys.argv
     legacy = "--legacy" in sys.argv
 
     f = open(infile)
     out = open(outfile, "w")
     try:
-        process_file(f, out, combine, digest, legacy)
+        process_file(f, out, -1, ",", append, legacy)
     finally:
         out.close()
         f.close()

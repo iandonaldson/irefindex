@@ -49,14 +49,17 @@ def make_signature(sequence, legacy=0):
         sequence = strip_regexp.sub("", sequence.upper())
     return base64.b64encode(sha1(sequence).digest())[:-1]
 
-def process_file(f, out, combine=None, digest=None, legacy=0):
+def process_file(f, out, column, separator=",", append=0, legacy=0):
 
     """
+
     Process the file accessed via the object 'f', writing output to the 'out'
-    stream, combining signatures if the optional 'combine' parameter is set to a
-    sequence of column indexes indicating the columns providing data to be
-    combined, or making a signature if the optional 'digest' parameter is set to
-    a column index indicating the column providing data to be digested.
+    stream combining signatures or sequence data from the given 'column' where
+    each signature or data item is delimited by the given 'separator'.
+
+    If 'append' is set to a true value, the resulting signatures will be
+    appended to the columns. Otherwise, the selected columns will be replaced by
+    the results.
 
     Sequences or signatures will be converted to upper case, stripping
     non-alphanumeric characters, if the optional 'legacy' parameter is set to a
@@ -65,23 +68,17 @@ def process_file(f, out, combine=None, digest=None, legacy=0):
 
     for line in f.xreadlines():
         columns = line.rstrip("\n").split("\t")
+        inputs = columns[column].split(separator)
+        signatures = fix_signatures(inputs)
 
-        # Either combine existing signatures, making a new one...
-
-        if combine is not None:
-            signatures = fix_signatures([columns[i] for i in combine])
-            if signatures:
-                columns.append(combine_signatures(signatures, legacy))
+        if signatures:
+            result = combine_signatures(signatures, legacy)
+            if append:
+                columns.append(result)
             else:
-                columns.append("")
-
-        # Or make a signature from the last column...
-
-        elif digest is not None:
-            columns[-1] = make_signature(columns[digest], legacy)
-
+                columns[column] = result
         else:
-            raise ValueError, "Columns should be combined or a single column should be digested."
+            columns.append("")
 
         out.write("\t".join(columns) + "\n")
 
