@@ -29,7 +29,8 @@ create table xml_xref_all_interactors (
     reftype varchar not null,
     reftypelabel varchar, -- retained for filtering
     dblabel varchar not null,
-    refvalue varchar not null
+    refvalue varchar not null,
+    property varchar not null
 
     -- Constraints are added after import.
 );

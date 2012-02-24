@@ -11,15 +11,17 @@ insert into xml_xref_all_interactors
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
+             when dblabel = 'psimi' then 'psi-mi'
              else dblabel
         end as dblabel,
-        refvalue
+        refvalue,
+        property
     from xml_xref
 
     -- Restrict to interactors and specifically to primary and secondary references.
 
     where scope = 'interactor'
-        and property = 'interactor'
+        and property in ('interactor', 'interactorType')
         and reftype in ('primaryRef', 'secondaryRef');
 
 -- Make some reports more efficient to generate.
@@ -43,7 +45,7 @@ insert into xml_xref_interactors
 
     -- Exclude non-proteins.
 
-    -- left outer join xml_xref as R
+    -- left outer join xml_xref_all_interactors as R
     --    on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (R.source, R.filename, R.entry, R.parentid, R.scope)
     --    and R.property = 'interactorType'
     --    and R.dblabel = 'psi-mi'
@@ -55,14 +57,15 @@ insert into xml_xref_interactors
     -- NOTE: BIND provides accessions and GenBank identifiers, with the latter treated as
     -- NOTE: secondary references.
 
-    where (
-        X.reftype = 'primaryRef'
-        or X.reftype = 'secondaryRef' and (X.reftypelabel = 'identity' or X.source = 'MPACT')
-        or X.source in ('HPRD', 'BIND')
+    where property = 'interactor'
+        and (
+               X.reftype = 'primaryRef'
+            or X.reftype = 'secondaryRef' and (X.reftypelabel = 'identity' or X.source = 'MPACT')
+            or X.source in ('HPRD', 'BIND')
         )
         and X.dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
-        -- Only interactors that are described as proteins or have no type are considered.
+        -- Only interactors that are described as proteins or have no explicit type are considered.
 
         -- and (R.refvalue = 'MI:0326' or R.refvalue is null);
 
@@ -474,7 +477,7 @@ analyze tmp_refseq_genbank;
 
 create temporary table tmp_genpept_genbank_gi as
     select distinct X.dblabel, X.refvalue, 'genpept/genbank-gi' as sequencelink,
-        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
     inner join genpept_proteins as P
         on X.dblabel = 'genbank_protein_gi'
@@ -489,14 +492,14 @@ create temporary table tmp_genpept_genbank_gi as
 
 create temporary table tmp_genpept_genbank_accession as
     select distinct X.dblabel, X.refvalue, 'genpept/genbank-accession' as sequencelink,
-        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
     inner join genpept_proteins as P
         on X.dblabel = 'ddbj/embl/genbank'
         and X.refvalue = P.accession
     union all
     select distinct X.dblabel, X.refvalue, 'genpept/genbank-accession-bad-gi' as sequencelink,
-        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
     inner join genpept_proteins as P
         on X.dblabel = 'genbank_protein_gi'
@@ -507,7 +510,7 @@ analyze tmp_genpept_genbank_accession;
 
 create temporary table tmp_genpept_genbank_shortform as
     select distinct X.dblabel, X.refvalue, 'genpept/genbank-shortform' as sequencelink,
-        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
     inner join genpept_accessions as A
         on X.dblabel = 'ddbj/embl/genbank'
@@ -524,7 +527,7 @@ create temporary table tmp_genpept_genbank_shortform as
     where P2.refvalue is null
     union all
     select distinct X.dblabel, X.refvalue, 'genpept/genbank-shortform-bad-gi' as sequencelink,
-        cast(null as integer) as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
     inner join genpept_accessions as A
         on X.dblabel = 'genbank_protein_gi'
