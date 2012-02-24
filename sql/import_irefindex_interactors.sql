@@ -51,7 +51,7 @@ insert into xml_xref_interactors
     --    and R.dblabel = 'psi-mi'
 
     -- Select specific references.
-    -- NOTE: MPACT has secondary references that may be more usable that various
+    -- NOTE: MPACT has secondary references that may be more usable than various
     -- NOTE: primary references (having a UniProt accession of "unknown", for example).
     -- NOTE: HPRD provides its own identifiers for interactor primary references.
     -- NOTE: BIND provides accessions and GenBank identifiers, with the latter treated as
@@ -270,6 +270,45 @@ create temporary table tmp_refseq as
 create index tmp_refseq_refvalue on tmp_refseq(refvalue);
 analyze tmp_refseq;
 
+-- RefSeq accession matches discarding versioning.
+
+create temporary table tmp_refseq_discarding_version as
+
+    -- RefSeq accession matches for otherwise non-matching versions.
+    -- The latest version for the matching accession is chosen.
+
+    select distinct 'refseq' as dblabel, X.refvalue, 'refseq/version-discarded' as sequencelink,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from (
+
+        -- Get RefSeq entries with the latest version number.
+
+        select X.refvalue, max(P.vnumber) as vnumber
+        from xml_xref_interactors as X
+        inner join refseq_proteins as P
+            on substring(X.refvalue from 1 for position('.' in X.refvalue) - 1) = P.accession
+
+        -- Exclude version matches using the given reference.
+
+        left outer join refseq_proteins as P2
+            on X.refvalue = P2.version
+        where X.dblabel = 'refseq'
+            and position('.' in X.refvalue) <> 0
+            and P2.version is null
+        group by X.refvalue
+
+        ) as X
+
+    inner join refseq_proteins as P
+        on X.refvalue = P.accession
+        and X.vnumber = P.vnumber
+
+    -- Exclude previous matches.
+
+    left outer join tmp_refseq as P2
+        on X.refvalue = P2.refvalue
+    where P2.refvalue is null;
+
 -- RefSeq accession matches via nucleotide accessions.
 
 create temporary table tmp_refseq_nucleotide as
@@ -298,7 +337,10 @@ create temporary table tmp_refseq_nucleotide as
 
     left outer join tmp_refseq as P2
         on X.refvalue = P2.refvalue
-    where P2.refvalue is null;
+    left outer join tmp_refseq_discarding_version as P3
+        on X.refvalue = P3.refvalue
+    where P2.refvalue is null
+        and P3.refvalue is null;
 
 create index tmp_refseq_nucleotide_refvalue on tmp_refseq_nucleotide(refvalue);
 analyze tmp_refseq_nucleotide;
@@ -331,10 +373,13 @@ create temporary table tmp_refseq_nucleotide_shortform as
 
     left outer join tmp_refseq as P2
         on X.refvalue = P2.refvalue
-    left outer join tmp_refseq_nucleotide as P3
+    left outer join tmp_refseq_discarding_version as P3
         on X.refvalue = P3.refvalue
+    left outer join tmp_refseq_nucleotide as P4
+        on X.refvalue = P4.refvalue
     where P2.refvalue is null
-        and P3.refvalue is null;
+        and P3.refvalue is null
+        and P4.refvalue is null;
 
 create index tmp_refseq_nucleotide_shortform_refvalue on tmp_refseq_nucleotide_shortform(refvalue);
 analyze tmp_refseq_nucleotide_shortform;
@@ -355,14 +400,17 @@ create temporary table tmp_refseq_gene as
 
     left outer join tmp_refseq as P2
         on X.refvalue = P2.refvalue
-    left outer join tmp_refseq_nucleotide as P3
+    left outer join tmp_refseq_discarding_version as P3
         on X.refvalue = P3.refvalue
-    left outer join tmp_refseq_nucleotide_shortform as P4
+    left outer join tmp_refseq_nucleotide as P4
         on X.refvalue = P4.refvalue
+    left outer join tmp_refseq_nucleotide_shortform as P5
+        on X.refvalue = P5.refvalue
     where X.dblabel = 'entrezgene'
         and P2.refvalue is null
         and P3.refvalue is null
-        and P4.refvalue is null;
+        and P4.refvalue is null
+        and P5.refvalue is null;
 
 -- RefSeq accession matches via Entrez Gene history.
 
@@ -382,17 +430,20 @@ create temporary table tmp_refseq_gene_history as
 
     left outer join tmp_refseq as P2
         on X.refvalue = P2.refvalue
-    left outer join tmp_refseq_nucleotide as P3
+    left outer join tmp_refseq_discarding_version as P3
         on X.refvalue = P3.refvalue
-    left outer join tmp_refseq_nucleotide_shortform as P4
+    left outer join tmp_refseq_nucleotide as P4
         on X.refvalue = P4.refvalue
-    left outer join tmp_refseq_gene as P5
+    left outer join tmp_refseq_nucleotide_shortform as P5
         on X.refvalue = P5.refvalue
+    left outer join tmp_refseq_gene as P6
+        on X.refvalue = P6.refvalue
     where X.dblabel = 'entrezgene'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null
-        and P5.refvalue is null;
+        and P5.refvalue is null
+        and P6.refvalue is null;
 
 -- Partition UniProt matches via FlyBase accessions.
 
@@ -658,6 +709,8 @@ insert into xml_xref_sequences
     -- RefSeq matches.
 
     select * from tmp_refseq
+    union all
+    select * from tmp_refseq_discarding_version
     union all
     select * from tmp_refseq_nucleotide
     union all
