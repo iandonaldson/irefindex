@@ -20,7 +20,7 @@ create temporary table tmp_rigids_by_originaltaxid as
     group by A.originaltaxid, name
     order by count(distinct rigid) desc;
 
-\copy tmp_rogids_by_originaltaxid to '<directory>/rigids_by_originaltaxid'
+\copy tmp_rigids_by_originaltaxid to '<directory>/rigids_by_originaltaxid'
 
 -- Show the top 15 organisms in a form viewable using...
 --
@@ -33,7 +33,7 @@ create temporary table tmp_rigids_by_originaltaxid_top as
     from tmp_rigids_by_originaltaxid
     limit 15;
 
-\copy tmp_rogids_by_originaltaxid_top to '<directory>/rigids_by_originaltaxid_top'
+\copy tmp_rigids_by_originaltaxid_top to '<directory>/rigids_by_originaltaxid_top'
 
 -- Show rigids grouped by the selected taxonomy identifier.
 
@@ -55,7 +55,7 @@ create temporary table tmp_rigids_by_taxid as
     group by A.taxid, name
     order by count(distinct rigid) desc;
 
-\copy tmp_rogids_by_taxid to '<directory>/rigids_by_taxid'
+\copy tmp_rigids_by_taxid to '<directory>/rigids_by_taxid'
 
 -- Show the top 15 organisms in a form viewable using...
 --
@@ -68,6 +68,6 @@ create temporary table tmp_rigids_by_taxid_top as
     from tmp_rigids_by_taxid
     limit 15;
 
-\copy tmp_rogids_by_taxid_top to '<directory>/rigids_by_taxid_top'
+\copy tmp_rigids_by_taxid_top to '<directory>/rigids_by_taxid_top'
 
 rollback;
