@@ -14,6 +14,7 @@ create temporary table tmp_interaction_rogids as
         inner join irefindex_interactions_complete as C
             on (I.source, I.filename, I.entry, I.interactionid) =
                (C.source, C.filename, C.entry, C.interactionid)
+            and C.complete
         inner join irefindex_rogids as R
             on (I.source, I.filename, I.entry, I.interactorid) =
                (R.source, R.filename, R.entry, R.interactorid)
