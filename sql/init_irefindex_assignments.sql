@@ -64,5 +64,18 @@ create table irefindex_rogids (
     entry integer not null,
     interactorid varchar not null,
     rogid varchar not null,
+    method varchar not null,
     primary key(source, filename, entry, interactorid)
+);
+
+-- Complete interactions where all interactors could be assigned a ROG
+-- identifier.
+
+create table irefindex_interactions_complete (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactionid varchar not null,
+    complete boolean not null,
+    primary key(source, filename, entry, interactionid)
 );

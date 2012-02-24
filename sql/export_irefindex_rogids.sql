@@ -9,11 +9,14 @@ create temporary table tmp_interaction_rogids as
         -- Select all ROG identifiers, which can include the same ROG identifier
         -- for multiple participants.
 
-        select R.source, R.filename, R.entry, interactionid, rogid
+        select R.source, R.filename, R.entry, I.interactionid, rogid
         from xml_interactors as I
+        inner join irefindex_interactions_complete as C
+            on (I.source, I.filename, I.entry, I.interactionid) =
+               (C.source, C.filename, C.entry, C.interactionid)
         inner join irefindex_rogids as R
             on (I.source, I.filename, I.entry, I.interactorid) =
-                (R.source, R.filename, R.entry, R.interactorid)
+               (R.source, R.filename, R.entry, R.interactorid)
         ) as X
 
     group by source, filename, entry, interactionid;

@@ -49,6 +49,7 @@ create temporary table tmp_arbitrary_references as
             on (S.source, S.filename, S.entry, S.interactorid, S.reftype) =
                 (A.source, A.filename, A.entry, A.interactorid, A.reftype)
         where refsequences > 1
+            and refsequence is not null
         group by S.source, S.filename, S.entry, S.interactorid, S.reftype
 
         ) as X
@@ -214,12 +215,25 @@ analyze irefindex_unassigned;
 -- ROG identifiers.
 
 insert into irefindex_rogids
-    select source, filename, entry, interactorid, sequence || taxid as rogid
+    select source, filename, entry, interactorid, sequence || taxid as rogid, method
     from irefindex_assignments
     where sequence is not null
         and taxid is not null;
 
 create index irefindex_rogids_rogid on irefindex_rogids(rogid);
 analyze irefindex_rogids;
+
+-- Determine the complete interactions.
+
+insert into irefindex_interactions_complete
+    select I.source, I.filename, I.entry, I.interactionid,
+        count(I.interactorid) = count(R.rogid) as complete
+        from xml_interactors as I
+        left outer join irefindex_rogids as R
+            on (I.source, I.filename, I.entry, I.interactorid) =
+               (R.source, R.filename, R.entry, R.interactorid)
+        group by I.source, I.filename, I.entry, I.interactionid;
+
+analyze irefindex_interactions_complete;
 
 commit;
