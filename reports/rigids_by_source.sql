@@ -76,4 +76,14 @@ create temporary table tmp_rigids_shared_as_grid as
 
 \copy tmp_rigids_shared_as_grid to '<directory>/rigids_shared_as_grid'
 
+-- Report the distribution of complete and incomplete interactions.
+
+create temporary table tmp_interaction_completeness as
+    select source, complete, count(*)
+    from irefindex_interactions_complete
+    group by source, complete
+    order by source, complete;
+
+\copy tmp_interaction_completeness to '<directory>/rigids_by_completeness'
+
 rollback;

@@ -4,16 +4,10 @@ begin;
 
 create temporary table tmp_rigids_by_originaltaxid as
     select A.originaltaxid, name, count(distinct rigid) as rigids
-    from irefindex_rigids as R1
-    inner join xml_interactors as I
-        on (R1.source, R1.filename, R1.entry, R1.interactionid) =
-            (I.source, I.filename, I.entry, I.interactionid)
-    inner join irefindex_rogids as R2
-        on (I.source, I.filename, I.entry, I.interactorid) =
-            (R2.source, R2.filename, R2.entry, R2.interactorid)
+    from irefindex_interactions as R
     inner join irefindex_assignments as A
-        on (R2.source, R2.filename, R2.entry, R2.interactorid) =
-            (A.source, A.filename, A.entry, A.interactorid)
+        on (R.source, R.filename, R.entry, R.interactorid) =
+           (A.source, A.filename, A.entry, A.interactorid)
     inner join taxonomy_names as N
         on A.originaltaxid = N.taxid
         and nameclass = 'scientific name'
@@ -39,16 +33,10 @@ create temporary table tmp_rigids_by_originaltaxid_top as
 
 create temporary table tmp_rigids_by_taxid as
     select A.taxid, name, count(distinct rigid) as rigids
-    from irefindex_rigids as R1
-    inner join xml_interactors as I
-        on (R1.source, R1.filename, R1.entry, R1.interactionid) =
-            (I.source, I.filename, I.entry, I.interactionid)
-    inner join irefindex_rogids as R2
-        on (I.source, I.filename, I.entry, I.interactorid) =
-            (R2.source, R2.filename, R2.entry, R2.interactorid)
+    from irefindex_interactions as R
     inner join irefindex_assignments as A
-        on (R2.source, R2.filename, R2.entry, R2.interactorid) =
-            (A.source, A.filename, A.entry, A.interactorid)
+        on (R.source, R.filename, R.entry, R.interactorid) =
+           (A.source, A.filename, A.entry, A.interactorid)
     inner join taxonomy_names as N
         on A.taxid = N.taxid
         and nameclass = 'scientific name'
