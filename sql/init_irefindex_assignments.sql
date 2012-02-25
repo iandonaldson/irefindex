@@ -7,10 +7,14 @@ create table irefindex_ambiguity (
     interactorid varchar not null,
     reftype varchar not null,
     refsequences integer not null,
+    reftaxids integer not null,
     primary key(source, filename, entry, interactorid, reftype)
 );
 
 -- Assignments of sequences to interactors.
+-- There may be more than one record per interactor, but no more than one
+-- distinct sequence per interactor. The redundancy is provided by the
+-- sequencelink, dblabel and refvalue columns.
 
 create table irefindex_assignments (
     source varchar not null,
@@ -26,7 +30,7 @@ create table irefindex_assignments (
 
     -- Link to sequence database describing how the connection was made.
 
-    sequencelinks varchar[],
+    sequencelink varchar not null,
 
     -- Reference type responsible for providing the sequence.
 
@@ -34,12 +38,13 @@ create table irefindex_assignments (
 
     -- Identifier information.
 
-    identifiers varchar[][],
+    dblabel varchar,
+    refvalue varchar,
 
     -- The nature of the assignment.
 
     method varchar not null,
-    primary key(source, filename, entry, interactorid, sequence)
+    primary key(source, filename, entry, interactorid, sequence, sequencelink, dblabel, refvalue)
 );
 
 -- Unassigned interactors.

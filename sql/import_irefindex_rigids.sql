@@ -3,6 +3,8 @@ begin;
 \copy irefindex_rigids from '<directory>/rigids_for_interactions'
 analyze irefindex_rigids;
 
+-- A mapping from RIG identifiers to ROG identifiers for complete interactions.
+
 insert into irefindex_interactions
     select I.source, I.filename, I.entry, O.interactorid, X.participantid, I.interactionid, O.rogid, I.rigid
     from irefindex_rigids as I
