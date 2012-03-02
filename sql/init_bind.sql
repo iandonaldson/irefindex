@@ -6,7 +6,7 @@ create table bind_interactors (
     participantType varchar not null,
     database varchar not null,
     accession varchar not null,
-    gi integer not null,
+    gi varchar not null,
     taxid integer not null
     -- interactorid added later
 );

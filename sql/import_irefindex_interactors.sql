@@ -14,14 +14,13 @@ insert into xml_xref_all_interactors
              when dblabel = 'psimi' then 'psi-mi'
              else dblabel
         end as dblabel,
-        refvalue,
-        property
+        refvalue
     from xml_xref
 
     -- Restrict to interactors and specifically to primary and secondary references.
 
     where scope = 'interactor'
-        and property in ('interactor', 'interactorType')
+        and property = 'interactor'
         and reftype in ('primaryRef', 'secondaryRef');
 
 -- Make some reports more efficient to generate.
@@ -33,7 +32,7 @@ analyze xml_xref_all_interactors;
 -- using supported databases.
 
 insert into xml_xref_interactors
-    select X.source, X.filename, X.entry, interactorid, X.reftype, X.dblabel, X.refvalue, taxid, sequence
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, taxid, sequence
     from xml_xref_all_interactors as X
 
     -- Add organism and interaction database sequence information.
@@ -43,13 +42,6 @@ insert into xml_xref_interactors
     left outer join xml_sequences as S
         on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
 
-    -- Exclude non-proteins.
-
-    -- left outer join xml_xref_all_interactors as R
-    --    on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (R.source, R.filename, R.entry, R.parentid, R.scope)
-    --    and R.property = 'interactorType'
-    --    and R.dblabel = 'psi-mi'
-
     -- Select specific references.
     -- NOTE: MPACT has secondary references that may be more usable than various
     -- NOTE: primary references (having a UniProt accession of "unknown", for example).
@@ -57,20 +49,56 @@ insert into xml_xref_interactors
     -- NOTE: BIND provides accessions and GenBank identifiers, with the latter treated as
     -- NOTE: secondary references.
 
-    where property = 'interactor'
-        and (
+    where (
                X.reftype = 'primaryRef'
             or X.reftype = 'secondaryRef' and (X.reftypelabel = 'identity' or X.source = 'MPACT')
             or X.source in ('HPRD', 'BIND')
         )
         and X.dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
-        -- Only interactors that are described as proteins or have no explicit type are considered.
-
-        -- and (R.refvalue = 'MI:0326' or R.refvalue is null);
-
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 analyze xml_xref_interactors;
+
+-- Get interactor types.
+
+insert into xml_xref_all_interactor_types
+
+    -- Normalise database labels.
+
+    select distinct source, filename, entry, parentid as interactorid, reftype, reftypelabel,
+        case when dblabel = 'psimi' then 'psi-mi'
+             else dblabel
+        end as dblabel,
+        refvalue
+    from xml_xref
+
+    -- Restrict to interactors and specifically to primary and secondary references.
+
+    where scope = 'interactor'
+        and property = 'interactorType'
+        and reftype in ('primaryRef', 'secondaryRef');
+
+-- Get only the PSI-MI form of interactor types.
+
+insert into xml_xref_interactor_types
+    select source, filename, entry, interactorid, refvalue
+    from xml_xref_all_interactor_types
+    where dblabel = 'psi-mi';
+
+analyze xml_xref_interactor_types;
+
+-- Determine uniform interactions.
+
+insert into xml_interactions_uniform
+    select I.source, I.filename, I.entry, interactionid, min(refvalue) as refvalue
+        from xml_interactors as I
+        left outer join xml_xref_interactor_types as A
+            on (I.source, I.filename, I.entry, I.interactorid) =
+               (A.source, A.filename, A.entry, A.interactorid)
+        group by I.source, I.filename, I.entry, interactionid
+        having count(distinct refvalue) <= 1;
+
+analyze xml_interactions_uniform;
 
 -- Create a mapping of gene names to UniProt proteins.
 

@@ -29,8 +29,7 @@ create table xml_xref_all_interactors (
     reftype varchar not null,
     reftypelabel varchar, -- retained for filtering
     dblabel varchar not null,
-    refvalue varchar not null,
-    property varchar not null
+    refvalue varchar not null
 
     -- Constraints are added after import.
 );
@@ -56,6 +55,47 @@ create table xml_xref_interactors (
     sequence varchar
 
     -- Constraints are added after import.
+);
+
+-- Cross-references for interactor types.
+
+create table xml_xref_all_interactor_types (
+
+    -- From xml_xref:
+
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null,
+    reftype varchar not null,
+    reftypelabel varchar, -- retained for filtering
+    dblabel varchar not null,
+    refvalue varchar not null
+
+    -- Constraints are added after import.
+);
+
+create table xml_xref_interactor_types (
+
+    -- From xml_xref:
+
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null,
+    refvalue varchar not null,
+    primary key(source, filename, entry, interactorid)
+);
+
+-- Uniform interactions (where all interactors have the same type).
+
+create table xml_interactions_uniform (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactionid varchar not null,
+    refvalue varchar, -- the value given as the PSI-MI interactor type
+    primary key(source, filename, entry, interactionid)
 );
 
 -- A mapping from accessions to reference database sequences.

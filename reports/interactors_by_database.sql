@@ -9,7 +9,6 @@ create temporary table tmp_all_interactors_by_database as
             when reftypelabel = 'identity' then true
             else false end as isidentity
         from xml_xref_all_interactors
-        where property = 'interactorType'
         ) as X
     group by dblabel, reftype, isidentity
     order by dblabel, reftype, isidentity;

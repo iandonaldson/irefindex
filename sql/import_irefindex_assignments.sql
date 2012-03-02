@@ -85,7 +85,7 @@ analyze tmp_unambiguous_matching_sequence_references;
 create temporary table tmp_unambiguous_null_references as
     select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         I.sequence, taxid,
-        cast('null' as varchar) as sequencelink, I.reftype, I.dblabel, I.refvalue,
+        cast(null as varchar) as sequencelink, I.reftype, I.dblabel, I.refvalue,
         cast('interactor sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A

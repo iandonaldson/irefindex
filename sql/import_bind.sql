@@ -6,13 +6,28 @@ begin;
 \copy bind_references from '<directory>/references.txt'
 \copy bind_labels from '<directory>/labels.txt'
 
--- Remove non-protein interaction details.
+-- Remove interactions involving small molecules and unrecognised entities.
+-- Since removing only such interactors would risk interactions being
+-- underspecified and erroneously interpreted as being complete, should the
+-- other interactors be identified, the entire interaction is removed in each
+-- case.
+
 -- NOTE: There are some records in BIND that have ill-formed formatting.
 -- NOTE: For example, complex #257564.
 -- NOTE: Such records are discarded here.
 
-delete from bind_interactors where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex');
-delete from bind_complexes where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex');
+delete from bind_interactors
+    where bindid in (
+        select bindid
+        from bind_interactors
+        where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex')
+        );
+delete from bind_complexes
+    where bindid in (
+        select bindid
+        from bind_complexes
+        where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex')
+        );
 
 -- Fix database labels.
 
@@ -96,9 +111,10 @@ insert into xml_xref
 
     select 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
-        'secondaryRef' as reftype, cast(gi as varchar) as refvalue, 'genbank_protein_gi' as dblabel,
+        'secondaryRef' as reftype, gi as refvalue, 'genbank_protein_gi' as dblabel,
         null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
     from bind_interactors
+    where gi <> '0'
     union all
 
     -- Get the accession from the group of records representing a complex.
@@ -116,9 +132,10 @@ insert into xml_xref
 
     select distinct 'BIND' as source, filename, 0 as entry, 'interactor' as scope,
         cast(interactorid as varchar) as parentid, 'interactor' as property,
-        'secondaryRef' as reftype, cast(gi as varchar) as refvalue, 'genbank_protein_gi' as dblabel,
+        'secondaryRef' as reftype, gi as refvalue, 'genbank_protein_gi' as dblabel,
         null as dbcode, 'identity' as reftypelabel, 'MI:0356' as reftypecode
     from bind_complexes
+    where gi <> '0'
     union all
 
     -- Get the interaction identifier from the group of records representing an interaction.
