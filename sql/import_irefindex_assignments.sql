@@ -110,6 +110,8 @@ create temporary table tmp_arbitrary_references as
     from (
 
         -- Get the highest sorted sequence for each ambiguous reference.
+        -- Note that this requires an appropriate locale so that the appropriate
+        -- result is obtained from the max function.
 
         select S.source, S.filename, S.entry, S.interactorid, S.reftype,
             max(array[refsequence, cast(reftaxid as varchar)]) as refdetails

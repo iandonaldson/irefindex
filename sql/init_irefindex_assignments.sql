@@ -73,13 +73,13 @@ create table irefindex_rogids (
     filename varchar not null,
     entry integer not null,
     interactorid varchar not null,
-    rogid varchar not null,
+    rogid varchar not null, -- collate "C" would require PostgreSQL 9.1
     method varchar not null,
     primary key(source, filename, entry, interactorid)
 );
 
 -- Complete interactions where all interactors could be assigned a ROG
--- identifier.
+-- identifier if complete is true.
 
 create table irefindex_interactions_complete (
     source varchar not null,

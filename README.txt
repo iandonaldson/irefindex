@@ -1,3 +1,22 @@
+Creating the Database
+---------------------
+
+Due to limitations with PostgreSQL and the interaction between locales and the
+sorting/ordering of textual data, it is essential that the database be
+initialised in a "cluster" with a locale that employs the ordering defined for
+ASCII character values. Such a cluster can be defined as follows:
+
+  initdb -D /home/irefindex/data --no-locale
+
+A database can be created using the usual PostgreSQL tools:
+
+  createdb irdata
+
+If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
+be used by employing various explicit "collate" declarations in certain column
+declarations or in various SQL statements where ROG identifiers are being
+retrieved in a particular order.
+
 Notes on Formats
 ----------------
 

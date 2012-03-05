@@ -1,9 +1,9 @@
 begin;
 
--- Note that the ordering is done in the signature/digest processing.
+-- Note that the ordering requires an appropriate locale.
 
 create temporary table tmp_interaction_rogids as
-    select source, filename, entry, interactionid, array_to_string(array_accum(rogid), ',') as rogids
+    select source, filename, entry, interactionid, array_to_string(array_accum(rogid), '') as rogids
     from (
 
         -- Select all ROG identifiers, which can include the same ROG identifier
@@ -18,6 +18,8 @@ create temporary table tmp_interaction_rogids as
         inner join irefindex_rogids as R
             on (I.source, I.filename, I.entry, I.interactorid) =
                (R.source, R.filename, R.entry, R.interactorid)
+
+        order by rogid -- collate "C" for PostgreSQL 9.1
         ) as X
 
     group by source, filename, entry, interactionid;
