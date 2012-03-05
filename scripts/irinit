@@ -17,9 +17,9 @@ EOF
     exit 1
 fi
 
-if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init.sql"
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml.sql"
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_mitab.sql"
+if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init.sql" \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml.sql" \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_mitab.sql" \
     ) ; then
     echo "$PROGNAME: Could not initialise the database schema." 1>&2
     exit 1
