@@ -19,6 +19,7 @@ setup(
     # Install a modified irdata-config file in the current directory, if present.
     scripts = glob.glob(os.path.join("scripts", "*")) + \
               glob.glob(os.path.join("tools", "*.py")) + \
+              glob.glob(os.path.join("tools", "*.sh")) + \
               glob.glob("irdata-config"),
     data_files = [
         (os.path.join("share", "irdata", "sql"), glob.glob(os.path.join("sql", "*.sql"))),
