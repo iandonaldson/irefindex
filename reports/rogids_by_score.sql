@@ -9,17 +9,17 @@ create temporary table tmp_rogids_by_score as
             case when sequencelink = 'refseq/version-discarded' then 'V' else '' end,
             case when originaltaxid <> taxid then 'T' else '' end,
             case when sequencelink like 'entrezgene%' then 'G' else '' end,
-            '', -- D score seems superfluous (adjustment to database name)
-            '', -- M currently not tracked or generally implemented (typographical modification)
+            case when dblabelchanged then 'D' else '' end,
+            case when sequencelink like 'uniprotkb/sgd%' then 'M' else '' end, -- M currently not generally tracked (typographical modification)
             case when method <> 'unambiguous' then '+' else '' end,
             case when method = 'matching sequence' then 'O' else '' end,
             case when method = 'matching taxonomy' then 'X' else '' end,
             '', -- ?
             case when method = 'arbitrary' then 'L' else '' end,
-            '', -- E currently not tracked (missing interactor retrieved from eUtils)
+            case when missing then 'E' else '' end,
             '', -- Y score not yet supported (refers to obsolete assignment)
             '', -- N score not yet supported (refers to new assignment)
-            ''  -- Q currently not tracked ("see-also" reference type used)
+            case when reftypelabel = 'see-also' then 'Q' else '' end
             ], '') as score
     from irefindex_assignments as A;
 

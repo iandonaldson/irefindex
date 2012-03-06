@@ -89,6 +89,10 @@ if [ "$MAKE_REPORTS" ]; then
         echo "$PROGNAME: Could not report ROG identifier assignment information." 1>&2
         exit 1
     fi
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_score.sql" ; then
+        echo "$PROGNAME: Could not report ROG identifier scoring information." 1>&2
+        exit 1
+    fi
 fi
 
 # Export ROG information for RIG identifier calculation, make and import RIG identifiers.
@@ -114,6 +118,14 @@ if [ "$MAKE_REPORTS" ]; then
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_source.sql" ; then
         echo "$PROGNAME: Could not report RIG identifier assignment information." 1>&2
+        exit 1
+    fi
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_taxonomy.sql" ; then
+        echo "$PROGNAME: Could not report RIG identifier taxonomy statistics." 1>&2
+        exit 1
+    fi
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactions_by_source.sql" ; then
+        echo "$PROGNAME: Could not report interaction statistics." 1>&2
         exit 1
     fi
 fi

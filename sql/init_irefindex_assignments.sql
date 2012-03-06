@@ -35,11 +35,17 @@ create table irefindex_assignments (
     -- Reference type responsible for providing the sequence.
 
     reftype varchar not null,
+    reftypelabel varchar,
 
     -- Identifier information.
 
-    dblabel varchar,
-    refvalue varchar,
+    dblabel varchar not null,
+    refvalue varchar not null,
+
+    -- Labelling and availability information.
+
+    dblabelchanged boolean not null,
+    missing boolean not null,
 
     -- The nature of the assignment.
 

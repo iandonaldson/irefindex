@@ -29,7 +29,8 @@ create table xml_xref_all_interactors (
     reftype varchar not null,
     reftypelabel varchar, -- retained for filtering
     dblabel varchar not null,
-    refvalue varchar not null
+    refvalue varchar not null,
+    dblabelchanged boolean not null
 
     -- Constraints are added after import.
 );
@@ -43,8 +44,10 @@ create table xml_xref_interactors (
     entry integer not null,
     interactorid varchar not null,
     reftype varchar not null,
+    reftypelabel varchar, -- retained for scoring
     dblabel varchar not null,
     refvalue varchar not null,
+    dblabelchanged boolean not null,
 
     -- From xml_organisms:
 
@@ -115,7 +118,11 @@ create table xml_xref_sequences (
 
     reftaxid integer,
     refsequence varchar,
-    refdate varchar
+    refdate varchar,
+
+    -- Sequence availability information.
+
+    missing boolean not null default false
 
     -- Constraints are added after import.
 );
@@ -133,6 +140,15 @@ create table xml_xref_interactor_sequences (
     reftype varchar not null,
     dblabel varchar not null,
     refvalue varchar not null,
+    reftypelabel varchar,
+
+    -- From xml_xref_interactors:
+
+    dblabelchanged boolean not null,
+
+    -- From xml_xref_sequences:
+
+    missing boolean not null,
 
     -- From xml_organisms:
 

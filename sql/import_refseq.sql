@@ -19,7 +19,7 @@ insert into refseq_proteins
         case when position('.' in version) <> 0 then
             cast(substring(version from position('.' in version) + 1) as integer)
         else null end as vnumber,
-        gi, taxid, "sequence"
+        gi, taxid, "sequence", false as missing
     from tmp_refseq_proteins;
 
 create index refseq_proteins_accession on refseq_proteins(accession);

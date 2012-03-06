@@ -14,7 +14,12 @@ insert into xml_xref_all_interactors
              when dblabel = 'psimi' then 'psi-mi'
              else dblabel
         end as dblabel,
-        refvalue
+        refvalue,
+        (dblabel like 'uniprot%' and dblabel <> 'uniprotkb' or dblabel in ('SP', 'Swiss-Prot', 'TREMBL')
+            or ((dblabel like 'entrezgene%' or dblabel like 'entrez gene%') and dblabel <> 'entrezgene')
+            or dblabel like '%pdb'
+            or dblabel in ('protein genbank identifier', 'genbank indentifier')
+            or dblabel = 'psimi') as dblabelchanged
     from xml_xref
 
     -- Restrict to interactors and specifically to primary and secondary references.
@@ -32,7 +37,8 @@ analyze xml_xref_all_interactors;
 -- using supported databases.
 
 insert into xml_xref_interactors
-    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.dblabel, X.refvalue, taxid, sequence
+    select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.reftypelabel,
+        X.dblabel, X.refvalue, dblabelchanged, taxid, sequence
     from xml_xref_all_interactors as X
 
     -- Add organism and interaction database sequence information.
@@ -772,7 +778,8 @@ analyze xml_xref_sequences;
 -- Combine the interactor details with the identifier sequence details.
 
 insert into xml_xref_interactor_sequences
-    select source, filename, entry, interactorid, reftype, I.dblabel, I.refvalue,
+    select source, filename, entry, interactorid, reftype, reftypelabel,
+        I.dblabel, I.refvalue, dblabelchanged, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
     left outer join xml_xref_sequences as S

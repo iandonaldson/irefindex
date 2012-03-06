@@ -19,7 +19,8 @@ analyze irefindex_ambiguity;
 create temporary table tmp_unambiguous_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
-        sequencelink, I.reftype, I.dblabel, I.refvalue,
+        sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
+	dblabelchanged, missing,
         cast('unambiguous' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -37,7 +38,8 @@ analyze tmp_unambiguous_references;
 create temporary table tmp_unambiguous_matching_taxonomy_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
-        sequencelink, I.reftype, I.dblabel, I.refvalue,
+        sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
+	dblabelchanged, missing,
         cast('matching taxonomy' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -64,7 +66,8 @@ analyze tmp_unambiguous_matching_taxonomy_references;
 create temporary table tmp_unambiguous_matching_sequence_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
-        sequencelink, I.reftype, I.dblabel, I.refvalue,
+        sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
+	dblabelchanged, missing,
         cast('matching sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -85,7 +88,8 @@ analyze tmp_unambiguous_matching_sequence_references;
 create temporary table tmp_unambiguous_null_references as
     select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         I.sequence, taxid,
-        cast(null as varchar) as sequencelink, I.reftype, I.dblabel, I.refvalue,
+        cast(null as varchar) as sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
+	dblabelchanged, missing,
         cast('interactor sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -105,7 +109,8 @@ analyze tmp_unambiguous_null_references;
 create temporary table tmp_arbitrary_references as
     select distinct S.source, S.filename, S.entry, S.interactorid, S.taxid as originaltaxid,
         refdetails[1] as sequence, cast(refdetails[2] as integer) as taxid,
-        sequencelink, S.reftype, S.dblabel, S.refvalue,
+        sequencelink, S.reftype, S.reftypelabel, S.dblabel, S.refvalue,
+	dblabelchanged, missing,
         cast('arbitrary' as varchar) as method
     from (
 

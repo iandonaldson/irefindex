@@ -7,6 +7,7 @@ create table refseq_proteins (
     gi integer not null,
     taxid integer,
     "sequence" varchar not null,
+    missing boolean not null default false, -- indicates whether the protein was initially missing
     primary key(gi)
 );
 

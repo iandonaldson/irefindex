@@ -50,7 +50,7 @@ analyze tmp_refseq_nucleotide_accessions;
 -- Augment the existing tables.
 
 insert into refseq_proteins
-    select distinct T.*
+    select distinct T.*, true as missing
     from tmp_refseq_proteins as T
     left outer join refseq_proteins as P
         on T.gi = P.gi
@@ -239,7 +239,8 @@ create temporary table tmp_xml_xref_sequences (
     sequencelink varchar,
     reftaxid integer,
     refsequence varchar,
-    refdate varchar
+    refdate varchar,
+    missing boolean not null default true
 );
 
 insert into tmp_xml_xref_sequences
@@ -276,6 +277,7 @@ where (dblabel, refvalue) in (
 
 insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, I.dblabel, I.refvalue,
+        dblabelchanged, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
     inner join tmp_xml_xref_sequences as S

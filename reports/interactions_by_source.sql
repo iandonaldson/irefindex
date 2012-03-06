@@ -68,7 +68,7 @@ create temporary table tmp_interaction_coverage as
 -- Add headers.
 
 create temporary table tmp_interaction_coverage_by_source as
-    select 'Source' as source, 'Total records' as available_total, 'Protein-only interactors' as suitable_total,
+    select 'Source' as source, 'Total records' as available_total, 'Protein-related interactions' as suitable_total,
         'PPI assigned to RIGID' as assigned_total, '%' as assigned_coverage,
         'Unique RIGIDs' as unique_total, '%' as unique_coverage
     union all
