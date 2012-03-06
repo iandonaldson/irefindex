@@ -14,11 +14,12 @@ class Parser:
     NO_RECORD, CONTINUE, END = 0, 1, 2
     column_pattern = re.compile(r"(\s+)")
 
-    def __init__(self, f, f_out, f_log, filetype, progname):
+    def __init__(self, f, f_out, f_log, filetype, discard_ill_formed, progname):
         self.f = f
         self.f_out = f_out
         self.f_log = f_log
         self.filetype = filetype
+        self.discard_ill_formed = discard_ill_formed
         self.progname = progname
         self.columns = None
         self.lineno = None
@@ -64,6 +65,8 @@ class Parser:
 
         if overflows:
             self.write_log("SERIOUS", "Table cell overflow occurred.")
+            if self.discard_ill_formed:
+                return None, self.NO_RECORD
 
         if not continuation and specified < 2:
             return None, self.NO_RECORD
@@ -134,11 +137,12 @@ if __name__ == "__main__":
 
     try:
         filetype = sys.argv[1]
+        discard_ill_formed = "--discard-ill-formed" in sys.argv
     except IndexError:
-        print >>sys.stderr, "Usage: %s ( fly | yeast )" % progname
+        print >>sys.stderr, "Usage: %s ( fly | yeast ) [ --discard-ill-formed ]" % progname
         sys.exit(1)
 
-    parser = Parser(sys.stdin, sys.stdout, sys.stderr, filetype, progname)
+    parser = Parser(sys.stdin, sys.stdout, sys.stderr, filetype, discard_ill_formed, progname)
     parser.parse()
 
 # vim: tabstop=4 expandtab shiftwidth=4

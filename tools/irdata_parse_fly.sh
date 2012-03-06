@@ -42,5 +42,5 @@ END=`grep -ne '^----' "$FILENAME" | tail -n 2 | head -n 1 | cut -d ':' -f 1`
 
   head -n $((END - 1)) "$FILENAME" \
 | tail -n "+$START" \
-| "$TOOLS/irdata_parse_fly.py" "$FILETYPE" \
+| "$TOOLS/irdata_parse_fly.py" "$FILETYPE" --discard-ill-formed \
 > "$DATADIR/$OUTFILE"
