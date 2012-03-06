@@ -22,13 +22,4 @@ analyze xml_xref;
 
 analyze xml_organisms;
 
--- Add an interaction summary table.
-
-insert into xml_interactions
-    select interactionid, count(distinct interactorid) as participants
-    from xml_interactors
-    group by interactionid;
-
-analyze xml_interactions;
-
 commit;
