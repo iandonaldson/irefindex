@@ -1,3 +1,58 @@
+The irdata distribution is a collection of software for building iRefIndex
+database releases.
+
+Prerequisites
+-------------
+
+The following software is required to use this distribution:
+
+  * A POSIX-like shell and environment (for the high-level scripts)
+  * Python (tested with 2.5.4, for the tools)
+  * cmdsyntax (command option processing)
+
+Most Unix-based operating systems will provide the necessary commands for the
+high-level scripts, but these commands may be provided separately or
+explicitly on some platforms by packages such as GNU Coreutils and Findutils.
+Amongst the commands used are the following:
+
+  cat, cp, grep, gunzip, head, mv, rm, sort, tail, tee, xargs
+
+Configuring the Software
+------------------------
+
+A configuration script called irdata-config is located in the scripts
+directory of this distribution. It may be edited or copied to another location
+on the PATH of any user running the software.
+
+Using the Software
+------------------
+
+Once the prerequisites have been installed, the software can be run from the
+distribution directory. Alternatively, a system-wide installation can be
+performed or prepared using the setup.py script provided. Such an installation
+can then be used by making sure that the PATH can find the installed programs.
+
+Configuring an Installation of the Software
+-------------------------------------------
+
+If a system-wide installation is to reside in a directory hierarchy other than
+the conventional system root (that being /, with programs situated in
+/usr/bin, and so on), the configuration script should be copied from the
+scripts directory into the same directory as this file and modified:
+
+  cp scripts/irdata-config .
+
+The SYSPREFIX setting should then be changed to state the directory at the top
+of the desired hierarchy. The setup.py script can then be run:
+
+  python setup.py install --prefix=/home/irefindex/usr
+
+Note that SYSPREFIX will be /home/irefindex in this case: the setup.py script
+needs the additional "/usr" to know where to install programs and resources.
+
+Even if a system-wide installation ends up with inappropriate settings, such
+settings can be overridden as described in "Configuring the Software".
+
 Creating the Database
 ---------------------
 
@@ -15,7 +70,12 @@ A database can be created using the usual PostgreSQL tools:
 If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
 be used by employing various explicit "collate" declarations in certain column
 declarations or in various SQL statements where ROG identifiers are being
-retrieved in a particular order.
+retrieved in a particular order. This is not currently supported.
+
+Initialising the Database
+-------------------------
+
+
 
 Notes on Formats
 ----------------
