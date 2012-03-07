@@ -35,3 +35,18 @@ for SOURCE in $ALLSOURCES ; do
         fi
     fi
 done
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactors.sql" ; then
+    echo "$PROGNAME: Could not initialise the interactor information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_assignments.sql" ; then
+    echo "$PROGNAME: Could not initialise the assignment information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_rigids.sql" ; then
+    echo "$PROGNAME: Could not initialise the interaction information schema." 1>&2
+    exit 1
+fi
