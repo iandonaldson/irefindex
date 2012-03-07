@@ -138,9 +138,9 @@ create table xml_xref_interactor_sequences (
     entry integer not null,
     interactorid varchar not null,
     reftype varchar not null,
+    reftypelabel varchar,
     dblabel varchar not null,
     refvalue varchar not null,
-    reftypelabel varchar,
 
     -- From xml_xref_interactors:
 
@@ -148,7 +148,7 @@ create table xml_xref_interactor_sequences (
 
     -- From xml_xref_sequences:
 
-    missing boolean not null,
+    missing boolean,
 
     -- From xml_organisms:
 
