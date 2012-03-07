@@ -4,17 +4,29 @@
 
 from os.path import join
 
-def file_to_wiki(filename, wikitype, separator, blank_value, use_headings, out):
-    f = open(filename)
+def file_to_wiki(pathname, filename, wikitype, separator, blank_value, use_headings, column_types, out):
+    f = open(pathname)
     try:
         if wikitype == "MediaWiki":
             out.write('{| cellspacing="0" cellpadding="5"\n')
+        elif wikitype == "MoinMoinImproved":
+            out.write("{{{#!table%s\n" % (
+                use_headings and column_types and "%s%s%s" % (
+                    (" name=%s" % filename),
+                    use_headings and " headers=1" or "",
+                    column_types and (" columntypes='%s'" % column_types) or ""
+                    )
+                    or ""
+                ))
 
         first_line = 1
         for line in f.xreadlines():
 
-            if wikitype == "MediaWiki" and not first_line:
-                out.write("|-\n")
+            if not first_line:
+                if wikitype == "MediaWiki":
+                    out.write("|-\n")
+                elif wikitype == "MoinMoinImproved":
+                    out.write("==\n")
 
             extra_before = ""
             extra_after = ""
@@ -23,14 +35,17 @@ def file_to_wiki(filename, wikitype, separator, blank_value, use_headings, out):
                 if wikitype == "MediaWiki":
                     extra_before = """align="center" style="background:#f0f0f0;"|'''"""
                     extra_after = """'''"""
-                elif wikitype == "MoinMoin":
+                elif wikitype.startswith("MoinMoin"):
                     extra_before = """<style="text-align: center; background:#f0f0f0;"> '''"""
                     extra_after = """'''"""
 
             first_column = 1
             for column in line.rstrip().split(separator):
-                if wikitype == "MediaWiki" and first_column:
-                    out.write("| ")
+                if first_column:
+                    if wikitype == "MediaWiki":
+                        out.write("| ")
+                    elif wikitype == "MoinMoin":
+                        out.write("||")
                 else:
                     out.write("||")
 
@@ -45,27 +60,31 @@ def file_to_wiki(filename, wikitype, separator, blank_value, use_headings, out):
 
             if wikitype == "MediaWiki":
                 out.write("\n")
-            if wikitype == "MoinMoin":
+            elif wikitype == "MoinMoin":
                 out.write("||\n")
+            elif wikitype == "MoinMoinImproved":
+                out.write("\n")
 
             first_line = 0
 
         if wikitype == "MediaWiki":
             out.write("|}\n")
+        elif wikitype == "MoinMoinImproved":
+            out.write("}}}\n")
 
     finally:
         f.close()
 
 def files_to_wiki(file_descriptions, data_directory, category, wikitype, out):
-    for title, filename, separator, blank_value, use_headings in file_descriptions:
+    for title, filename, separator, blank_value, use_headings, column_types in file_descriptions:
         out.write("== %s ==\n" % title)
         out.write("\n")
-        file_to_wiki(join(data_directory, filename), wikitype, separator, blank_value, use_headings, out)
+        file_to_wiki(join(data_directory, filename), filename, wikitype, separator, blank_value, use_headings, column_types, out)
         out.write("\n")
 
     if wikitype == "MediaWiki":
         out.write("[[Category:%s]]\n" % category)
-    elif wikitype == "MoinMoin":
+    elif wikitype.startswith("MoinMoin"):
         out.write("----\n")
         out.write("Category%s\n" % category.capitalize()) # NOTE: Have to conform with MoinMoin category name restrictions.
 
@@ -96,13 +115,14 @@ if __name__ == "__main__":
         out = sys.stdout
 
     file_descriptions = [
-        ("Interactions available from major taxonomies",                "rigids_by_originaltaxid_top",          "\t",   "",     True),
-        ("Interactions available from major taxonomies (corrected)",    "rigids_by_taxid_top",                  "\t",   "",     True),
-        ("Interactions",                                                "rigids_shared_as_grid",                ",",    "-",    False),
-        ("Interactors",                                                 "rogids_shared_as_grid",                ",",    "-",    False),
-        ("Summary of mapping interaction records to RIGs (Table 5)",    "interaction_coverage_by_source",       "\t",   "",     True),
-        ("Assignment of protein interactors to ROGs (Table 3)",         "rogid_coverage_by_source",             "\t",   "",     True),
-        ("ROG summary",                                                 "rogids_by_score_and_source_as_grid",   ",",    "-",    True),
+        # Title                                                         File                                    Separator   Blank   Headings    Column types
+        ("Interactions available from major taxonomies",                "rigids_by_originaltaxid_top",          "\t",       "",     True,       "0n,2nd"),
+        ("Interactions available from major taxonomies (corrected)",    "rigids_by_taxid_top",                  "\t",       "",     True,       "0n,2nd"),
+        ("Interactions",                                                "rigids_shared_as_grid",                ",",        "-",    False,      None),
+        ("Interactors",                                                 "rogids_shared_as_grid",                ",",        "-",    False,      None),
+        ("Summary of mapping interaction records to RIGs (Table 5)",    "interaction_coverage_by_source",       "\t",       "",     True,       "1nd,2nd,3nd,4nd,5nd,6nd"),
+        ("Assignment of protein interactors to ROGs (Table 3)",         "rogid_coverage_by_source",             "\t",       "",     True,       "1nd,2nd,3nd,4nd,5nd,6nd,7nd,8nd"),
+        ("ROG summary",                                                 "rogids_by_score_and_source_as_grid",   ",",        "-",    True,       None),
         ]
 
     try:
