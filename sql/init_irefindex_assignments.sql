@@ -45,7 +45,7 @@ create table irefindex_assignments (
     -- Labelling and availability information.
 
     dblabelchanged boolean not null,
-    missing boolean not null,
+    missing boolean,
 
     -- The nature of the assignment.
 
