@@ -31,42 +31,29 @@ delete from bind_complexes
 
 -- Fix database labels.
 
-update bind_interactors set database = 'refseq'
+update bind_interactors set database = 'refseq-for-GenBank'
     where database = 'GenBank'
         and accession ~ '^[A-Z]P_[0-9]*([.][0-9]*)?$';
 
-update bind_complexes set database = 'refseq'
+update bind_complexes set database = 'refseq-for-GenBank'
     where database = 'GenBank'
         and accession ~ '^[A-Z]P_[0-9]*([.][0-9]*)?$';
 
-update bind_interactors set database = 'pdb'
+update bind_interactors set database = 'pdb-for-GenBank'
     where database = 'GenBank'
         and accession ~ E'^[A-Z0-9]{4}\\|[A-Z0-9]$';
 
-update bind_complexes set database = 'pdb'
+update bind_complexes set database = 'pdb-for-GenBank'
     where database = 'GenBank'
         and accession ~ E'^[A-Z0-9]{4}\\|[A-Z0-9]$';
 
-update bind_interactors set database = 'uniprotkb'
+update bind_interactors set database = 'uniprotkb-for-GenBank'
     where database = 'GenBank'
         and accession ~ '^[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]$|^[OPQ][0-9][A-Z0-9]{3}[0-9]$';
 
-update bind_complexes set database = 'uniprotkb'
+update bind_complexes set database = 'uniprotkb-for-GenBank'
     where database = 'GenBank'
         and accession ~ '^[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]$|^[OPQ][0-9][A-Z0-9]{3}[0-9]$';
-
--- Add an implicit interactor identifier.
-
-create temporary sequence bind_interactors_interactorid;
-
-alter table bind_interactors add column interactorid integer;
-alter table bind_complexes add column interactorid integer;
-
-update bind_interactors set interactorid = nextval('bind_interactors_interactorid');
-update bind_complexes set interactorid = nextval('bind_interactors_interactorid');
-
-alter table bind_interactors alter column interactorid set not null;
-alter table bind_complexes alter column interactorid set not null;
 
 -- Add indexes.
 

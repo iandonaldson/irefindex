@@ -7,8 +7,8 @@ create table bind_interactors (
     database varchar not null,
     accession varchar not null,
     gi varchar not null,
-    taxid integer not null
-    -- interactorid added later
+    taxid integer not null,
+    interactorid integer not null
 );
 
 create table bind_complexes (
@@ -21,8 +21,8 @@ create table bind_complexes (
     taxid integer not null,
     shortLabel varchar not null,
     position integer not null,
-    alias varchar not null
-    -- interactorid added later
+    alias varchar not null,
+    interactorid integer not null
 );
 
 create table bind_references (

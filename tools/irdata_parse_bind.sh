@@ -36,15 +36,21 @@ for FILENAME in $FILENAMES; do
     if [ "$FILETYPE" = 'ints.txt' ]; then
 
         # First interactor (add position 0).
+        # Also add the line number as the interactor identifier.
 
           cut -f 1,2,3,4,5,6,7 "$FILENAME" \
         | sed -e "s/^/$SED_FILENAME\t0\t/" \
+        | sed -n -e 'p;=' \
+        | sed -e 'N;s/\n/\t/' \
         > "$DATADIR/interactors.txt"
 
         # Second interactor (add position 1).
+        # Also add the line number as the interactor identifier.
 
           cut -f 1,2,8,9,10,11,12 "$FILENAME" \
         | sed -e "s/^/$SED_FILENAME\t1\t/" \
+        | sed -n -e 'p;=' \
+        | sed 'N;s/\n/\t/' \
         >> "$DATADIR/interactors.txt"
 
     elif [ "$FILETYPE" = 'refs.txt' ]; then
@@ -60,7 +66,13 @@ for FILENAME in $FILENAMES; do
 
     elif [ "$FILETYPE" = 'complex2subunits.txt' ]; then
 
-          "$TOOLS/irdata_text_transpose.py" -f 8 -w '|' -s 0 "$FILENAME" \
+        # Also add the line number as the interactor identifier.
+        # Then transpose each line to make a collection of lines with a
+        # different alias on each one.
+
+          sed -n -e 'p;=' "$FILENAME" \
+        | sed -e 'N;s/\n/\t/' \
+        | "$TOOLS/irdata_text_transpose.py" -f 8 -t 8 -w '|' -s 0 - \
         | sed -e "s/^/$SED_FILENAME\t/" \
         > "$DATADIR/complexes.txt"
 
