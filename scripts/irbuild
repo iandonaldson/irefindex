@@ -113,7 +113,7 @@ if [ "$BUILD" ]; then
 
     # Export ROG information for RIG identifier calculation, make and import RIG identifiers.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" "$DATA" ; then
         echo "$PROGNAME: Could not export ROG identifiers for assigned sequences." 1>&2
         exit 1
     fi
@@ -123,7 +123,7 @@ if [ "$BUILD" ]; then
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" "$DATA" ; then
         echo "$PROGNAME: Could not import the generated RIG identifiers." 1>&2
         exit 1
     fi
