@@ -8,17 +8,21 @@ else
     . 'irdata-config'
 fi
 
-if [ "$1" = '--help' ] || [ "$1" != '--build' ]; then
+if [ "$1" = '--help' ] || [ ! "$1" ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME --build [ --no-download ] [ --reports ]
+Usage: $PROGNAME [ --build [ --no-download ] ] [ --reports ]
 
 Build interactor and assignment information from the imported source data.
 EOF
     exit 1
 fi
 
-BUILD=$1
-shift 1
+if [ "$1" = '--build' ]; then
+    BUILD=$1
+    shift 1
+else
+    BUILD=
+fi
 
 if [ "$1" = '--no-download' ]; then
     MISSING_OPTIONS='--import'
@@ -30,109 +34,132 @@ fi
 if [ "$1" = '--reports' ]; then
     MAKE_REPORTS=$1
     shift 1
+else
+    MAKE_REPORTS=
 fi
 
-# Convert MITAB-based data to an XML-compatible representation.
+if [ "$BUILD" ]; then
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" ; then
-    echo "$PROGNAME: Could not convert MITAB data to the common data representation." 1>&2
-    exit 1
-fi
+    # Convert MITAB-based data to an XML-compatible representation.
 
-# Finalise the XML-based data.
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" ; then
+        echo "$PROGNAME: Could not convert MITAB data to the common data representation." 1>&2
+        exit 1
+    fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_constraints.sql" ; then
-    echo "$PROGNAME: Constraints could not be applied to the common data representation." 1>&2
-    exit 1
-fi
+    # Finalise the XML-based data.
 
-# Identify the interactors.
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_constraints.sql" ; then
+        echo "$PROGNAME: Constraints could not be applied to the common data representation." 1>&2
+        exit 1
+    fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactors.sql" ; then
-    echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
-    exit 1
-fi
+    # Identify the interactors.
 
-# Add missing interactor information.
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactors.sql" ; then
+        echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+        exit 1
+    fi
 
-if ! "$SCRIPTS/irmissing" $MISSING_OPTIONS ; then
-    echo "$PROGNAME: Did not retrieve missing/unknown sequences." 1>&2
-    exit 1
+    # Add missing interactor information.
+
+    if ! "$SCRIPTS/irmissing" $MISSING_OPTIONS ; then
+        echo "$PROGNAME: Did not retrieve missing/unknown sequences." 1>&2
+        exit 1
+    fi
 fi
 
 if [ "$MAKE_REPORTS" ]; then
 
     # Make an interactor report, if requested.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactors_by_source.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactors_by_source.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report source interactor information." 1>&2
         exit 1
     fi
 fi
 
-# Assign definitive sequence information to interactors.
+if [ "$BUILD" ]; then
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_assignments.sql" ; then
-    echo "$PROGNAME: Could not build assignment information from the imported data." 1>&2
-    exit 1
+    # Assign definitive sequence information to interactors.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_assignments.sql" ; then
+        echo "$PROGNAME: Could not build assignment information from the imported data." 1>&2
+        exit 1
+    fi
 fi
 
 if [ "$MAKE_REPORTS" ]; then
 
     # Make assigned interactor reports, if requested.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/assignments_by_source.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/assignments_by_source.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report sequence assignment information." 1>&2
         exit 1
     fi
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_source.sql" ; then
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_source.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report ROG identifier assignment information." 1>&2
         exit 1
     fi
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_score.sql" ; then
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_score.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report ROG identifier scoring information." 1>&2
         exit 1
     fi
 fi
 
-# Export ROG information for RIG identifier calculation, make and import RIG identifiers.
+if [ "$BUILD" ]; then
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" ; then
-    echo "$PROGNAME: Could not export ROG identifiers for assigned sequences." 1>&2
-    exit 1
-fi
+    # Export ROG information for RIG identifier calculation, make and import RIG identifiers.
 
-if ! "$TOOLS/irdata_process_signatures.py" "$DATA/rogids_for_interactions" "$DATA/rigids_for_interactions" ; then
-    echo "$PROGNAME: Could not generate RIG identifiers for the exported ROG identifiers." 1>&2
-    exit 1
-fi
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" ; then
+        echo "$PROGNAME: Could not export ROG identifiers for assigned sequences." 1>&2
+        exit 1
+    fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" ; then
-    echo "$PROGNAME: Could not import the generated RIG identifiers." 1>&2
-    exit 1
+    if ! "$TOOLS/irdata_process_signatures.py" "$DATA/rogids_for_interactions" "$DATA/rigids_for_interactions" ; then
+        echo "$PROGNAME: Could not generate RIG identifiers for the exported ROG identifiers." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" ; then
+        echo "$PROGNAME: Could not import the generated RIG identifiers." 1>&2
+        exit 1
+    fi
 fi
 
 if [ "$MAKE_REPORTS" ]; then
 
     # Make an interactions report, if requested.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_source.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_source.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report RIG identifier assignment information." 1>&2
         exit 1
     fi
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_taxonomy.sql" ; then
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_taxonomy.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report RIG identifier taxonomy statistics." 1>&2
         exit 1
     fi
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactions_by_source.sql" ; then
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactions_by_source.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report interaction statistics." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_reports2wiki.py" "$DATA" "$DATA/Statistics.wiki" "$WIKIFORMAT" ; then
+        echo "$PROGNAME: Could not generate statistics Wiki page." 1>&2
         exit 1
     fi
 fi
 
-# Make convenient representations for other entity types.
+if [ "$BUILD" ]; then
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactions.sql" ; then
-    echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
-    exit 1
+    # Make convenient representations for other entity types.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactions.sql" ; then
+        echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+        exit 1
+    fi
 fi

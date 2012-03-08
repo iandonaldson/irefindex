@@ -7,6 +7,7 @@ SYSPREFIX=                                  # system-wide installation root
 EMAIL=                                      # e-mail address for anonymous FTP logins
 DATABASE=irdata                             # database name
 DATA=${DATA:-}                              # user defined data directory location
+WIKIFORMAT=MediaWiki                        # format for generated Wiki pages
 
 
 

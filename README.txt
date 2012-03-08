@@ -53,6 +53,20 @@ needs the additional "/usr" to know where to install programs and resources.
 Even if a system-wide installation ends up with inappropriate settings, such
 settings can be overridden as described in "Configuring the Software".
 
+Reserving a Location for Data
+-----------------------------
+
+Before any operations can be performed using the software installation,
+various data and resource locations must be initialised. This can be done as
+follows:
+
+  irdata-config --make-system-dirs
+
+If the software is being run from the distribution directory, the following
+command must be run:
+
+  mkdir data
+
 Creating the Database
 ---------------------
 
@@ -75,7 +89,38 @@ retrieved in a particular order. This is not currently supported.
 Initialising the Database
 -------------------------
 
+Once the database system has been started, the database used by this software
+can be initialised using the following command:
 
+  irinit --init
+
+Downloading Source Data
+-----------------------
+
+Source data is downloaded using the following command:
+
+  irdownload --all
+
+Importing Source Data
+---------------------
+
+Source data is imported into the database using the following command:
+
+  irimport --all
+
+Finishing the Build
+-------------------
+
+Once the source data resides in the database, it is processed by a sequence of
+operations that can be invoked as follows:
+
+  irbuild --build
+
+If reports are to be generated, this can be done by specifying the --reports
+option when building or by running the command with only that option
+specified:
+
+  irbuild --reports
 
 Notes on Formats
 ----------------
