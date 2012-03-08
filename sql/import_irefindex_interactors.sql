@@ -12,6 +12,12 @@ insert into xml_xref_all_interactors
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
              when dblabel = 'psimi' then 'psi-mi'
+
+             -- BIND-specific modified labels
+
+             when dblabel = 'refseq-for-GenBank' then 'refseq'
+             when dblabel = 'pdb-for-GenBank' then 'pdb'
+             when dblabel = 'uniprotkb-for-GenBank' then 'uniprotkb'
              else dblabel
         end as dblabel,
         refvalue,
@@ -19,7 +25,12 @@ insert into xml_xref_all_interactors
             or ((dblabel like 'entrezgene%' or dblabel like 'entrez gene%') and dblabel <> 'entrezgene')
             or dblabel like '%pdb'
             or dblabel in ('protein genbank identifier', 'genbank indentifier')
-            or dblabel = 'psimi') as dblabelchanged
+            or dblabel = 'psimi'
+
+            -- BIND-specific modified labels
+
+            or dblabel in ('refseq-for-GenBank', 'pdb-for-GenBank', 'uniprotkb-for-GenBank')
+        ) as dblabelchanged
     from xml_xref
 
     -- Restrict to interactors and specifically to primary and secondary references.
