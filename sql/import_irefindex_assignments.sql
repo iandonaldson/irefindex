@@ -258,6 +258,19 @@ insert into irefindex_rogids
 create index irefindex_rogids_rogid on irefindex_rogids(rogid);
 analyze irefindex_rogids;
 
+-- Database identifiers corresponding to ROG identifiers.
+-- Since reference database and interaction database identifiers comprise the
+-- content of the assignments table, it is used instead of the identifier
+-- sequences table for a definitive mapping of known ROG identifiers to database
+-- identifiers.
+
+insert into irefindex_rogid_identifiers
+    select distinct rogid, dblabel, refvalue
+    from irefindex_rogids as R
+    inner join irefindex_assignments as A
+        on (R.source, R.filename, R.entry, R.interactorid) =
+           (A.source, A.filename, A.entry, A.interactorid);
+
 -- Determine the complete interactions.
 
 insert into irefindex_interactions_complete

@@ -84,6 +84,16 @@ create table irefindex_rogids (
     primary key(source, filename, entry, interactorid)
 );
 
+-- A mapping from ROG identifiers to all database identifiers referring to that
+-- object.
+
+create table irefindex_rogid_identifiers (
+    rogid varchar not null, -- collate "C" would require PostgreSQL 9.1
+    dblabel varchar not null,
+    refvalue varchar not null,
+    primary key(rogid, dblabel, refvalue)
+);
+
 -- Complete interactions where all interactors could be assigned a ROG
 -- identifier if complete is true.
 
