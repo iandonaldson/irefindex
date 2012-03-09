@@ -55,6 +55,16 @@ update bind_complexes set database = 'uniprotkb-for-GenBank'
     where database = 'GenBank'
         and accession ~ '^[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]$|^[OPQ][0-9][A-Z0-9]{3}[0-9]$';
 
+-- Add an implicit interactor identifier.
+
+create temporary sequence bind_interactors_interactorid;
+
+alter table bind_interactors add column interactorid integer;
+
+update bind_interactors set interactorid = nextval('bind_interactors_interactorid');
+
+alter table bind_interactors alter column interactorid set not null;
+
 -- Add indexes.
 
 create index bind_interactors_index on bind_interactors(bindid);

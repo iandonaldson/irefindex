@@ -36,21 +36,17 @@ for FILENAME in $FILENAMES; do
     if [ "$FILETYPE" = 'ints.txt' ]; then
 
         # First interactor (add position 0).
-        # Also add the line number as the interactor identifier.
 
           cut -f 1,2,3,4,5,6,7 "$FILENAME" \
+        | uniq \
         | sed -e "s/^/$SED_FILENAME\t0\t/" \
-        | sed -n -e 'p;=' \
-        | sed -e 'N;s/\n/\t/' \
         > "$DATADIR/interactors.txt"
 
         # Second interactor (add position 1).
-        # Also add the line number as the interactor identifier.
 
           cut -f 1,2,8,9,10,11,12 "$FILENAME" \
+        | uniq \
         | sed -e "s/^/$SED_FILENAME\t1\t/" \
-        | sed -n -e 'p;=' \
-        | sed 'N;s/\n/\t/' \
         >> "$DATADIR/interactors.txt"
 
     elif [ "$FILETYPE" = 'refs.txt' ]; then
@@ -66,7 +62,7 @@ for FILENAME in $FILENAMES; do
 
     elif [ "$FILETYPE" = 'complex2subunits.txt' ]; then
 
-        # Also add the line number as the interactor identifier.
+        # Add the line number as the interactor identifier.
         # Then transpose each line to make a collection of lines with a
         # different alias on each one.
 
