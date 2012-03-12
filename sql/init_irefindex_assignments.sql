@@ -71,6 +71,19 @@ create table irefindex_unassigned (
     primary key(source, filename, entry, interactorid)
 );
 
+-- Assignment scores.
+-- There may be many scores per assignment since different paths to sequences
+-- may have been taken using the available identifiers.
+
+create table irefindex_assignment_scores (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null,
+    score varchar not null,
+    primary key(source, filename, entry, interactorid, score)
+);
+
 -- Assignments of ROG identifiers to interactors based on the above sequence
 -- assignment.
 
@@ -80,6 +93,7 @@ create table irefindex_rogids (
     entry integer not null,
     interactorid varchar not null,
     rogid varchar not null, -- collate "C" would require PostgreSQL 9.1
+    taxid integer not null,
     method varchar not null,
     primary key(source, filename, entry, interactorid)
 );

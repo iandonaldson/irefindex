@@ -30,7 +30,8 @@ create table xml_xref_all_interactors (
     reftypelabel varchar, -- retained for filtering
     dblabel varchar not null,
     refvalue varchar not null,
-    dblabelchanged boolean not null
+    originaldblabel varchar not null,
+    originalrefvalue varchar not null
 
     -- Constraints are added after import.
 );
@@ -47,7 +48,8 @@ create table xml_xref_interactors (
     reftypelabel varchar, -- retained for scoring
     dblabel varchar not null,
     refvalue varchar not null,
-    dblabelchanged boolean not null,
+    originaldblabel varchar not null,
+    originalrefvalue varchar not null,
 
     -- From xml_organisms:
 
@@ -61,22 +63,6 @@ create table xml_xref_interactors (
 );
 
 -- Cross-references for interactor types.
-
-create table xml_xref_all_interactor_types (
-
-    -- From xml_xref:
-
-    source varchar not null,
-    filename varchar not null,
-    entry integer not null,
-    interactorid varchar not null,
-    reftype varchar not null,
-    reftypelabel varchar, -- retained for filtering
-    dblabel varchar not null,
-    refvalue varchar not null
-
-    -- Constraints are added after import.
-);
 
 create table xml_xref_interactor_types (
 

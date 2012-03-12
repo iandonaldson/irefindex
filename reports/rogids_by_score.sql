@@ -1,31 +1,8 @@
 begin;
 
-create temporary table tmp_rogids_by_score as
-    select source, filename, entry, interactorid,
-        array_to_string(array[
-            case when reftype = 'primaryRef' then 'P' else '' end,
-            case when reftype = 'secondaryRef' then 'S' else '' end,
-            case when sequencelink in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected') then 'U' else '' end,
-            case when sequencelink = 'refseq/version-discarded' then 'V' else '' end,
-            case when originaltaxid <> taxid then 'T' else '' end,
-            case when sequencelink like 'entrezgene%' then 'G' else '' end,
-            case when dblabelchanged then 'D' else '' end,
-            case when sequencelink like 'uniprotkb/sgd%' then 'M' else '' end, -- M currently not generally tracked (typographical modification)
-            case when method <> 'unambiguous' then '+' else '' end,
-            case when method = 'matching sequence' then 'O' else '' end,
-            case when method = 'matching taxonomy' then 'X' else '' end,
-            '', -- ?
-            case when method = 'arbitrary' then 'L' else '' end,
-            case when missing then 'E' else '' end,
-            '', -- Y score not yet supported (refers to obsolete assignment)
-            '', -- N score not yet supported (refers to new assignment)
-            case when reftypelabel = 'see-also' then 'Q' else '' end
-            ], '') as score
-    from irefindex_assignments as A;
-
 create temporary table tmp_rogids_by_score_and_source as
     select score, source, count(distinct array[filename, cast(entry as varchar), interactorid]) as total
-    from tmp_rogids_by_score
+    from irefindex_assignment_scores
     group by score, source
     order by score, source;
 

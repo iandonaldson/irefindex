@@ -29,32 +29,6 @@ delete from bind_complexes
         where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex')
         );
 
--- Fix database labels.
-
-update bind_interactors set database = 'refseq-for-GenBank'
-    where database = 'GenBank'
-        and accession ~ '^[A-Z]P_[0-9]*([.][0-9]*)?$';
-
-update bind_complexes set database = 'refseq-for-GenBank'
-    where database = 'GenBank'
-        and accession ~ '^[A-Z]P_[0-9]*([.][0-9]*)?$';
-
-update bind_interactors set database = 'pdb-for-GenBank'
-    where database = 'GenBank'
-        and accession ~ E'^[A-Z0-9]{4}\\|[A-Z0-9]$';
-
-update bind_complexes set database = 'pdb-for-GenBank'
-    where database = 'GenBank'
-        and accession ~ E'^[A-Z0-9]{4}\\|[A-Z0-9]$';
-
-update bind_interactors set database = 'uniprotkb-for-GenBank'
-    where database = 'GenBank'
-        and accession ~ '^[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]$|^[OPQ][0-9][A-Z0-9]{3}[0-9]$';
-
-update bind_complexes set database = 'uniprotkb-for-GenBank'
-    where database = 'GenBank'
-        and accession ~ '^[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]$|^[OPQ][0-9][A-Z0-9]{3}[0-9]$';
-
 -- Add an implicit interactor identifier.
 
 create temporary sequence bind_interactors_interactorid;

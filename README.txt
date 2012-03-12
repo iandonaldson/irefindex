@@ -156,4 +156,4 @@ list but does not reference those interactors.
 HPRD occasionally misuses reference attributes such as in the following
 example (from data/HPRD/PSIMI_XML/08855_psimi.xml):
 
-<secondaryRef db="uniprot" dbAc="MI:0486" id="Q0VAR9,Q96CW7"/>
+  <secondaryRef db="uniprot" dbAc="MI:0486" id="Q0VAR9,Q96CW7"/>

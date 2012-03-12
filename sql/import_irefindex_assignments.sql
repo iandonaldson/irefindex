@@ -20,7 +20,7 @@ create temporary table tmp_unambiguous_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
         sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-	dblabelchanged, missing,
+        dblabelchanged, missing,
         cast('unambiguous' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -39,7 +39,7 @@ create temporary table tmp_unambiguous_matching_taxonomy_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
         sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-	dblabelchanged, missing,
+        dblabelchanged, missing,
         cast('matching taxonomy' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -67,7 +67,7 @@ create temporary table tmp_unambiguous_matching_sequence_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
         sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-	dblabelchanged, missing,
+        dblabelchanged, missing,
         cast('matching sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -89,7 +89,7 @@ create temporary table tmp_unambiguous_null_references as
     select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         I.sequence, taxid,
         cast(null as varchar) as sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-	dblabelchanged, missing,
+        dblabelchanged, missing,
         cast('interactor sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -110,7 +110,7 @@ create temporary table tmp_arbitrary_references as
     select distinct S.source, S.filename, S.entry, S.interactorid, S.taxid as originaltaxid,
         refdetails[1] as sequence, cast(refdetails[2] as integer) as taxid,
         sequencelink, S.reftype, S.reftypelabel, S.dblabel, S.refvalue,
-	dblabelchanged, missing,
+        dblabelchanged, missing,
         cast('arbitrary' as varchar) as method
     from (
 
@@ -245,12 +245,43 @@ insert into irefindex_unassigned
 
 analyze irefindex_unassigned;
 
+-- Scoring of assignments.
+
+insert into irefindex_assignment_scores
+    select distinct source, filename, entry, interactorid,
+        array_to_string(array[
+            case when reftype = 'primaryRef' then 'P' else '' end,
+            case when reftype = 'secondaryRef' then 'S' else '' end,
+            case when sequencelink in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected') then 'U' else '' end,
+            case when sequencelink = 'refseq/version-discarded' then 'V' else '' end,
+            case when originaltaxid <> taxid then 'T' else '' end,
+            case when sequencelink like 'entrezgene%' then 'G' else '' end,
+            case when dblabelchanged then 'D' else '' end,
+            case when sequencelink like 'uniprotkb/sgd%' then 'M' else '' end, -- M currently not generally tracked (typographical modification)
+            case when method <> 'unambiguous' then '+' else '' end,
+            case when method = 'matching sequence' then 'O' else '' end,
+            case when method = 'matching taxonomy' then 'X' else '' end,
+            '', -- ?
+            case when method = 'arbitrary' then 'L' else '' end,
+            case when dblabel = 'genbank_protein_gi' then 'I' else '' end,
+            case when missing then 'E' else '' end,
+            '', -- Y score not yet supported (refers to obsolete assignment)
+            '', -- N score not yet supported (refers to new assignment)
+            case when reftypelabel = 'see-also' then 'Q' else '' end
+            ], '') as score
+    from irefindex_assignments as A;
+
+analyze irefindex_assignment_scores;
+
 -- ROG identifiers.
 -- Since more than one link to a sequence database may exist, the records must
--- be made distinct.
+-- be made distinct. The taxid is exposed here for convenience since it can be
+-- useful to be able to map interactors to taxids directly without having to
+-- extract them from ROG identifiers.
 
 insert into irefindex_rogids
-    select distinct source, filename, entry, interactorid, sequence || taxid as rogid, method
+    select distinct source, filename, entry, interactorid, sequence || taxid as rogid,
+        taxid, method
     from irefindex_assignments
     where sequence is not null
         and taxid is not null;

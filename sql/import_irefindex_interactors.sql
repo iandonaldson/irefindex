@@ -3,34 +3,38 @@ begin;
 -- Get interactor cross-references of interest.
 
 insert into xml_xref_all_interactors
-
-    -- Normalise database labels.
-
     select distinct source, filename, entry, parentid as interactorid, reftype, reftypelabel,
+
+        -- Normalise database labels.
+
         case when dblabel like 'uniprot%' or dblabel in ('SP', 'Swiss-Prot', 'TREMBL') then 'uniprotkb'
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
-             when dblabel = 'psimi' then 'psi-mi'
+             when dblabel in ('MI', 'psimi') then 'psi-mi'
 
-             -- BIND-specific modified labels
+             -- BIND-specific labels.
+             -- NOTE: Various accessions can be regarded as GenBank accessions
+             -- NOTE: since they can be found in GenBank, but the data involved
+             -- NOTE: really originates from other sources.
 
-             when dblabel = 'refseq-for-GenBank' then 'refseq'
-             when dblabel = 'pdb-for-GenBank' then 'pdb'
-             when dblabel = 'uniprotkb-for-GenBank' then 'uniprotkb'
+             when source = 'BIND' and dblabel = 'GenBank' then
+                  case when refvalue ~ '^[A-Z]P_[0-9]*([.][0-9]*)?$' then 'refseq'
+                       when refvalue ~ E'^[A-Z0-9]{4}\\|[A-Z0-9]$' then 'pdb'
+                       when refvalue ~ '^[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]$|^[OPQ][0-9][A-Z0-9]{3}[0-9]$' then 'uniprotkb'
+                       else dblabel
+                  end
+
              else dblabel
+
         end as dblabel,
         refvalue,
-        (dblabel like 'uniprot%' and dblabel <> 'uniprotkb' or dblabel in ('SP', 'Swiss-Prot', 'TREMBL')
-            or ((dblabel like 'entrezgene%' or dblabel like 'entrez gene%') and dblabel <> 'entrezgene')
-            or dblabel like '%pdb'
-            or dblabel in ('protein genbank identifier', 'genbank indentifier')
-            or dblabel = 'psimi'
 
-            -- BIND-specific modified labels
+        -- Original identifiers.
 
-            or dblabel in ('refseq-for-GenBank', 'pdb-for-GenBank', 'uniprotkb-for-GenBank')
-        ) as dblabelchanged
+        dblabel as originaldblabel,
+        refvalue as originalrefvalue
+
     from xml_xref
 
     -- Restrict to interactors and specifically to primary and secondary references.
@@ -49,13 +53,15 @@ analyze xml_xref_all_interactors;
 
 insert into xml_xref_interactors
     select X.source, X.filename, X.entry, X.interactorid, X.reftype, X.reftypelabel,
-        X.dblabel, X.refvalue, dblabelchanged, taxid, sequence
+        X.dblabel, X.refvalue, originaldblabel, originalrefvalue,
+        taxid, sequence
     from xml_xref_all_interactors as X
 
     -- Add organism and interaction database sequence information.
 
     left outer join xml_organisms as O
-        on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (O.source, O.filename, O.entry, O.parentid, O.scope)
+        on (X.source, X.filename, X.entry, X.interactorid) = (O.source, O.filename, O.entry, O.parentid)
+        and O.scope in ('interactor', 'participant')
     left outer join xml_sequences as S
         on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
 
@@ -77,30 +83,21 @@ create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblab
 analyze xml_xref_interactors;
 
 -- Get interactor types.
+-- Only the PSI-MI form of interactor types is of interest.
 
-insert into xml_xref_all_interactor_types
+insert into xml_xref_interactor_types
 
     -- Normalise database labels.
 
-    select distinct source, filename, entry, parentid as interactorid, reftype, reftypelabel,
-        case when dblabel = 'psimi' then 'psi-mi'
-             else dblabel
-        end as dblabel,
-        refvalue
+    select distinct source, filename, entry, parentid as interactorid, refvalue
     from xml_xref
 
     -- Restrict to interactors and specifically to primary and secondary references.
 
     where scope = 'interactor'
         and property = 'interactorType'
-        and reftype in ('primaryRef', 'secondaryRef');
-
--- Get only the PSI-MI form of interactor types.
-
-insert into xml_xref_interactor_types
-    select source, filename, entry, interactorid, refvalue
-    from xml_xref_all_interactor_types
-    where dblabel = 'psi-mi';
+        and reftype in ('primaryRef', 'secondaryRef')
+        and dblabel in ('psi-mi', 'MI', 'psimi');
 
 analyze xml_xref_interactor_types;
 
@@ -790,7 +787,7 @@ analyze xml_xref_sequences;
 
 insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, reftypelabel,
-        I.dblabel, I.refvalue, dblabelchanged, missing,
+        I.dblabel, I.refvalue, I.dblabel <> originaldblabel as dblabelchanged, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
     left outer join xml_xref_sequences as S

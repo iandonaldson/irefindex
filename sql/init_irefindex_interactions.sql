@@ -1,6 +1,6 @@
 -- Cross-references for interactions.
 
-create table xml_xref_all_interactions (
+create table xml_xref_interactions (
 
     -- From xml_xref:
 
@@ -9,7 +9,6 @@ create table xml_xref_all_interactions (
     entry integer not null,
     interactionid varchar not null,
     reftype varchar not null,
-    reftypelabel varchar, -- retained for filtering
     dblabel varchar,
     refvalue varchar not null
 
