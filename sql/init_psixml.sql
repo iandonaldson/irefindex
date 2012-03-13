@@ -43,12 +43,26 @@ create table xml_xref (
     reftypecode varchar
 );
 
+-- The organisms table can contain host organisms for experiments, as well as
+-- organisms for interactors.
+
 create table xml_organisms (
     source varchar not null,
     filename varchar not null,
     entry integer not null,
     scope varchar not null,
     parentid varchar not null, -- integer for PSI MI XML 2.5
+    taxid integer not null
+);
+
+-- The host organisms table is specifically for participants in interactions.
+
+create table xml_hostorganisms (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    participantid varchar not null, -- integer for PSI MI XML 2.5
+    interactionid varchar not null, -- integer for PSI MI XML 2.5
     taxid integer not null
 );
 

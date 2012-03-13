@@ -224,6 +224,14 @@ class PSIParser(EmptyElementParser):
                 implicit = self.is_implicit(parent, property) and "implicit" or "explicit"
                 self.writer.append((element, entry, parent, self.path_to_attrs["interactor"]["id"], implicit, attrs["ncbiTaxId"]))
 
+        # Host organisms, defining the participation of an interactor in an interaction.
+        # For host organisms applying to other entities, see the generic processing below.
+
+        elif element == "hostOrganism":
+            # Within a hostOrganismList parent.
+            if property == "participant":
+                self.writer.append((element, entry, self.path_to_attrs["participant"]["id"], self.path_to_attrs["interaction"]["id"], attrs["ncbiTaxId"]))
+
         # Sequence data.
         # Use the "legacy" mode to upper-case and strip white-space from interactors.
         # Note that this should never be used for interaction signatures/digests.
@@ -300,7 +308,7 @@ class PSIWriter(Writer):
     filenames = (
         "experiment", "interactor",     # mappings
         "names", "xref", "organisms",   # properties
-        "sequences"                     # properties
+        "hostorganisms", "sequences"    # properties
         )
 
     data_type_files = {
@@ -308,7 +316,8 @@ class PSIWriter(Writer):
         "experimentDescription" : "experiment",
         "interactorRef"         : "interactor",
         "interactor"            : "interactor",
-        "hostOrganismList"      : "organisms",
+        "hostOrganism"          : "hostorganisms",  # for participants
+        "hostOrganismList"      : "organisms",      # for other entities
         "organism"              : "organisms",
         "sequence"              : "sequences",
         "names"                 : "names",
