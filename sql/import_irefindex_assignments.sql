@@ -245,31 +245,66 @@ insert into irefindex_unassigned
 
 analyze irefindex_unassigned;
 
+-- Preferred assignments.
+-- The above assignments includes potentially multiple paths to the same
+-- sequence for each interactor. By nominating preferred sequence links, a
+-- single path can be chosen.
+
+create temporary table tmp_sequencelinks as
+    select distinct sequencelink, priority
+    from (
+        select sequencelink, case when sequencelink like '%entrezgene%' then 'B' else 'A' end as priority
+        from xml_xref_sequences
+        ) as X;
+
+insert into irefindex_assignments_preferred
+    select A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue
+    from (
+
+        -- Use the priority ordering defined above to select a minimum (best)
+        -- priority, selecting an arbitrary identifier where multiple paths to
+        -- the sequence have the same priority.
+
+        select source, filename, entry, interactorid, min(array[priority, A.sequencelink, dblabel, refvalue]) as preferred
+        from irefindex_assignments as A
+        inner join tmp_sequencelinks as S
+            on A.sequencelink = S.sequencelink
+        group by source, filename, entry, interactorid
+        ) as P
+        inner join irefindex_assignments as A
+        on (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue) =
+           (P.source, P.filename, P.entry, P.interactorid, preferred[2], preferred[3], preferred[4]);
+
+analyze irefindex_assignments_preferred;
+
 -- Scoring of assignments.
 
 insert into irefindex_assignment_scores
-    select distinct source, filename, entry, interactorid,
+    select distinct A.source, A.filename, A.entry, A.interactorid,
         array_to_string(array[
             case when reftype = 'primaryRef' then 'P' else '' end,
             case when reftype = 'secondaryRef' then 'S' else '' end,
-            case when sequencelink in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected') then 'U' else '' end,
-            case when sequencelink = 'refseq/version-discarded' then 'V' else '' end,
+            case when A.sequencelink in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected') then 'U' else '' end,
+            case when A.sequencelink = 'refseq/version-discarded' then 'V' else '' end,
             case when originaltaxid <> taxid then 'T' else '' end,
-            case when sequencelink like 'entrezgene%' then 'G' else '' end,
+            case when A.sequencelink like 'entrezgene%' then 'G' else '' end,
             case when dblabelchanged then 'D' else '' end,
-            case when sequencelink like 'uniprotkb/sgd%' then 'M' else '' end, -- M currently not generally tracked (typographical modification)
+            case when A.sequencelink like 'uniprotkb/sgd%' then 'M' else '' end, -- M currently not generally tracked (typographical modification)
             case when method <> 'unambiguous' then '+' else '' end,
             case when method = 'matching sequence' then 'O' else '' end,
             case when method = 'matching taxonomy' then 'X' else '' end,
             '', -- ?
             case when method = 'arbitrary' then 'L' else '' end,
-            case when dblabel = 'genbank_protein_gi' then 'I' else '' end,
+            case when A.dblabel = 'genbank_protein_gi' then 'I' else '' end,
             case when missing then 'E' else '' end,
             '', -- Y score not yet supported (refers to obsolete assignment)
             '', -- N score not yet supported (refers to new assignment)
             case when reftypelabel = 'see-also' then 'Q' else '' end
             ], '') as score
-    from irefindex_assignments as A;
+    from irefindex_assignments_preferred as P
+    inner join irefindex_assignments as A
+        on (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue) =
+           (P.source, P.filename, P.entry, P.interactorid, P.sequencelink, P.dblabel, P.refvalue);
 
 analyze irefindex_assignment_scores;
 

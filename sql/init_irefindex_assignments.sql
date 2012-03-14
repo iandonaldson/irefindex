@@ -14,7 +14,7 @@ create table irefindex_ambiguity (
 -- Assignments of sequences to interactors.
 -- There may be more than one record per interactor, but no more than one
 -- distinct sequence per interactor. The redundancy is provided by the
--- originaltaxid, sequencelink, dblabel and refvalue columns.
+-- sequencelink, dblabel and refvalue columns.
 
 create table irefindex_assignments (
     source varchar not null,
@@ -55,7 +55,7 @@ create table irefindex_assignments (
     -- When populating this table, distinct selections should ensure that null
     -- values do not cause unnecessary record duplication.
 
-    unique(source, filename, entry, interactorid, sequence, originaltaxid, sequencelink, dblabel, refvalue)
+    unique(source, filename, entry, interactorid, sequence, sequencelink, dblabel, refvalue)
 );
 
 -- Unassigned interactors.
@@ -71,9 +71,27 @@ create table irefindex_unassigned (
     primary key(source, filename, entry, interactorid)
 );
 
+-- Preferred assignments.
+-- There may be many assignment records per interactor since different paths to
+-- sequences may have been taken using the available identifiers. The preferred
+-- table retains only one path per interactor, choosing a particular identifier
+-- (and thus interpretation).
+
+create table irefindex_assignments_preferred (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null,
+
+    -- Specific assignment details.
+
+    sequencelink varchar not null,
+    dblabel varchar not null,
+    refvalue varchar not null,
+    primary key(source, filename, entry, interactorid)
+);
+
 -- Assignment scores.
--- There may be many scores per assignment since different paths to sequences
--- may have been taken using the available identifiers.
 
 create table irefindex_assignment_scores (
     source varchar not null,
