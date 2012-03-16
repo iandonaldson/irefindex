@@ -130,7 +130,8 @@ create table xml_xref_interactor_sequences (
 
     -- From xml_xref_interactors:
 
-    dblabelchanged boolean not null,
+    originaldblabel varchar not null,
+    originalrefvalue varchar not null,
 
     -- From xml_xref_sequences:
 

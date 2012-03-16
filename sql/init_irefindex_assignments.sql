@@ -41,10 +41,11 @@ create table irefindex_assignments (
 
     dblabel varchar not null,
     refvalue varchar not null,
+    originaldblabel varchar not null,
+    originalrefvalue varchar not null,
 
     -- Labelling and availability information.
 
-    dblabelchanged boolean not null,
     missing boolean,
 
     -- The nature of the assignment.

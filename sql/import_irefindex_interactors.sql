@@ -80,6 +80,7 @@ insert into xml_xref_interactors
         and X.dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
+create index xml_xref_interactors_index on xml_xref_interactors(source, filename, entry, interactorid);
 analyze xml_xref_interactors;
 
 -- Get interactor types.
@@ -787,7 +788,7 @@ analyze xml_xref_sequences;
 
 insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, reftypelabel,
-        I.dblabel, I.refvalue, I.dblabel <> originaldblabel as dblabelchanged, missing,
+        I.dblabel, I.refvalue, I.originaldblabel, I.originalrefvalue, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
     left outer join xml_xref_sequences as S
