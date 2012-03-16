@@ -11,7 +11,7 @@ insert into xml_xref_all_interactors
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
-             when dblabel in ('MI', 'psimi') then 'psi-mi'
+             when dblabel in ('MI', 'psimi', 'PSI-MI') then 'psi-mi'
 
              -- BIND-specific labels.
              -- NOTE: Various accessions can be regarded as GenBank accessions
@@ -98,7 +98,7 @@ insert into xml_xref_interactor_types
     where scope = 'interactor'
         and property = 'interactorType'
         and reftype in ('primaryRef', 'secondaryRef')
-        and dblabel in ('psi-mi', 'MI', 'psimi');
+        and dblabel in ('psi-mi', 'MI', 'PSI-MI', 'psimi');
 
 analyze xml_xref_interactor_types;
 

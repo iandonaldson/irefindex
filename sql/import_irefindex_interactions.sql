@@ -16,7 +16,7 @@ insert into xml_xref_interactions
              when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
-             when dblabel in ('MI', 'psimi') then 'psi-mi'
+             when dblabel in ('MI', 'psimi', 'PSI-MI') then 'psi-mi'
              else dblabel
         end as dblabel,
 
@@ -55,10 +55,10 @@ insert into xml_xref_interaction_types
 
     -- Restrict to interactors and specifically to primary and secondary references.
 
-    where scope = 'interactor'
-        and property = 'interactorType'
+    where scope = 'interaction'
+        and property = 'interactionType'
         and reftype in ('primaryRef', 'secondaryRef')
-        and dblabel in ('psi-mi', 'MI', 'psimi');
+        and dblabel in ('psi-mi', 'MI', 'PSI-MI', 'psimi');
 
 analyze xml_xref_interaction_types;
 
