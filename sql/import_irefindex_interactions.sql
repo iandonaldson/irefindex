@@ -8,7 +8,7 @@ begin;
 -- NOTE: experiment information that could be usable.
 
 insert into xml_xref_interactions
-    select distinct source, filename, entry, parentid as interactionid, reftype,
+    select distinct source, filename, entry, parentid as interactionid,
 
         -- Normalise database labels.
 
@@ -34,9 +34,6 @@ insert into xml_xref_interactions
         and property = 'interaction'
         and reftype = 'primaryRef';
 
--- Make some reports more efficient to generate.
-
-create index xml_xref_interactions_index on xml_xref_interactions (source);
 analyze xml_xref_interactions;
 
 -- Get interaction types.
