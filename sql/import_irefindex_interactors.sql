@@ -61,7 +61,7 @@ insert into xml_xref_interactors
 
     left outer join xml_organisms as O
         on (X.source, X.filename, X.entry, X.interactorid) = (O.source, O.filename, O.entry, O.parentid)
-        and O.scope in ('interactor', 'participant')
+        and O.scope = 'interactor'
     left outer join xml_sequences as S
         on (X.source, X.filename, X.entry, X.interactorid, 'interactor') = (S.source, S.filename, S.entry, S.parentid, S.scope)
 
