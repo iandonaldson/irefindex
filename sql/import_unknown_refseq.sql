@@ -54,7 +54,7 @@ insert into refseq_proteins
         case when position('.' in T.version) <> 0 then
             cast(substring(T.version from position('.' in T.version) + 1) as integer)
         else null end as vnumber,
-        T.gi, T.taxid, true as missing
+        T.gi, T.taxid, T.sequence, true as missing
     from tmp_refseq_proteins as T
     left outer join refseq_proteins as P
         on T.gi = P.gi
@@ -282,7 +282,7 @@ where (dblabel, refvalue) in (
 insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, reftypelabel,
         I.dblabel, I.refvalue,
-        dblabelchanged, missing,
+        originaldblabel, originalrefvalue, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence, refdate
     from xml_xref_interactors as I
     inner join tmp_xml_xref_sequences as S
