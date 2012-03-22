@@ -5,3 +5,4 @@ drop table xml_xref_interactor_types;
 drop table xml_interactions_uniform;
 drop table xml_xref_sequences;
 drop table xml_xref_interactor_sequences;
+drop table xml_xref_rogid_identifiers;

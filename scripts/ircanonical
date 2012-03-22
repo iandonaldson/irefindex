@@ -1,0 +1,41 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ] || [ "$1" != '--build' ] ; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME --build
+
+Initialise the canonical interactor schema and define the canonical groups of
+interactors.
+EOF
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical.sql" ; then
+    echo "$PROGNAME: Could not initialise the canonical schema." 1>&2
+    exit 1
+fi
+
+# Combine groups of genes until no more updates can be made.
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_iteration.sql" "$DATA" ; then
+    echo "$PROGNAME: Could not update the canonical schema." 1>&2
+    exit 1
+fi
+
+while [ `cat "$DATA/canonical_updates"` != '0' ]; do
+    echo "$PROGNAME: Updating the canonical schema..." 1>&2
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_iteration.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not update the canonical schema." 1>&2
+        exit 1
+    fi
+
+done

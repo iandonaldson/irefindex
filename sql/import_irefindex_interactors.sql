@@ -797,4 +797,14 @@ insert into xml_xref_interactor_sequences
 create index xml_xref_interactor_sequences_index on xml_xref_interactor_sequences(source, filename, entry, interactorid);
 analyze xml_xref_interactor_sequences;
 
+-- For early canonicalisation of interactors, tentative ROG identifiers are
+-- mapped to database identifiers.
+
+insert into xml_xref_rogid_identifiers
+    select distinct refsequence || reftaxid as rogid, dblabel, refvalue
+    from xml_xref_sequences
+    where reftaxid is not null;
+
+analyze xml_xref_rogid_identifiers;
+
 commit;

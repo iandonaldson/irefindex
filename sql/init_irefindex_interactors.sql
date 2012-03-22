@@ -157,3 +157,13 @@ create table xml_xref_interactor_sequences (
 
     -- Constraints are added after import.
 );
+
+-- Tentative mapping of ROG identifiers to database identifiers for canonical
+-- interactor selection.
+
+create table xml_xref_rogid_identifiers (
+    rogid varchar not null,
+    dblabel varchar not null,
+    refvalue varchar not null,
+    primary key(rogid, dblabel, refvalue)
+);

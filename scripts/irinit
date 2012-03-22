@@ -41,6 +41,11 @@ if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interac
     exit 1
 fi
 
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_canonical.sql" ; then
+    echo "$PROGNAME: Could not initialise the canonical interactor information schema." 1>&2
+    exit 1
+fi
+
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_assignments.sql" ; then
     echo "$PROGNAME: Could not initialise the assignment information schema." 1>&2
     exit 1
