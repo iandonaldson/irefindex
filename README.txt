@@ -157,3 +157,8 @@ HPRD occasionally misuses reference attributes such as in the following
 example (from data/HPRD/PSIMI_XML/08855_psimi.xml):
 
   <secondaryRef db="uniprot" dbAc="MI:0486" id="Q0VAR9,Q96CW7"/>
+
+MPIDB sources employ a MITAB variant which exposes experimental details in a
+non-standard way. This can result in interactions being assigned multiple
+interaction types, which is typically not done by XML-based sources even
+though the schema does permit it.

@@ -43,7 +43,7 @@ insert into xml_xref_interaction_types
 
     -- Normalise database labels.
 
-    select distinct source, filename, entry, parentid as interactorid,
+    select distinct source, filename, entry, parentid as interactionid,
 
         -- Fix certain psi-mi references.
 

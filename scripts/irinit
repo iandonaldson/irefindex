@@ -60,3 +60,13 @@ if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interac
     echo "$PROGNAME: Could not initialise the additional interaction information schema." 1>&2
     exit 1
 fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_experiments.sql" ; then
+    echo "$PROGNAME: Could not initialise the additional experiment information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_participants.sql" ; then
+    echo "$PROGNAME: Could not initialise the additional participant information schema." 1>&2
+    exit 1
+fi

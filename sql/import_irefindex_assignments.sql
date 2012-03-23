@@ -325,10 +325,9 @@ create index irefindex_rogids_rogid on irefindex_rogids(rogid);
 analyze irefindex_rogids;
 
 -- Database identifiers corresponding to ROG identifiers.
--- Since reference database and interaction database identifiers comprise the
--- content of the assignments table, it is used instead of the identifier
--- sequences table for a definitive mapping of known ROG identifiers to database
--- identifiers.
+-- Since the assignments table includes reference database and interaction
+-- database identifiers, it is used instead of the identifier sequences table
+-- for a definitive mapping of known ROG identifiers to database identifiers.
 
 insert into irefindex_rogid_identifiers
     select distinct rogid, dblabel, refvalue

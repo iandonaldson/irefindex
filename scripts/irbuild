@@ -10,7 +10,7 @@ fi
 
 if [ "$1" = '--help' ] || [ ! "$1" ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --build [ --no-download ] ] [ --reports ]
+Usage: $PROGNAME [ --build [ --no-download ] ] [ --reports ] [ --output ]
 
 Build interactor and assignment information from the imported source data.
 EOF
@@ -36,6 +36,13 @@ if [ "$1" = '--reports' ]; then
     shift 1
 else
     MAKE_REPORTS=
+fi
+
+if [ "$1" = '--output' ]; then
+    MAKE_OUTPUT=$1
+    shift 1
+else
+    MAKE_OUTPUT=
 fi
 
 if [ "$BUILD" ]; then
@@ -167,6 +174,26 @@ if [ "$BUILD" ]; then
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactions.sql" ; then
         echo "$PROGNAME: Could not build interaction information from the imported data." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_experiments.sql" ; then
+        echo "$PROGNAME: Could not build experiment information from the imported data." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_participants.sql" ; then
+        echo "$PROGNAME: Could not build participant information from the imported data." 1>&2
+        exit 1
+    fi
+fi
+
+if [ "$MAKE_OUTPUT" ]; then
+
+    # Make output files.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" ; then
+        echo "$PROGNAME: Could not generate MITAB data." 1>&2
         exit 1
     fi
 fi

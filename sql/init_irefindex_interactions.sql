@@ -10,11 +10,14 @@ create table xml_xref_interactions (
     primary key(source, filename, entry, interactionid)
 );
 
+-- NOTE: There is usually only one type per interaction, but MPIDB appears to
+-- NOTE: provide one per experiment applying to an interaction.
+
 create table xml_xref_interaction_types (
     source varchar not null,
     filename varchar not null,
     entry integer not null,
     interactionid varchar not null,
     refvalue varchar not null,
-    primary key(source, filename, entry, interactionid)
+    primary key(source, filename, entry, interactionid, refvalue)
 );
