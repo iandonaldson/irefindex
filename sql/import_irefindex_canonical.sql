@@ -1,6 +1,6 @@
 begin;
 
-insert into gene2rog
+insert into irefindex_gene2rog
 
     -- Direct correspondence between genes and ROGs.
 
@@ -62,16 +62,16 @@ insert into gene2rog
         and R2.dblabel = 'uniprotkb'
     where R2.refvalue is null;
 
-analyze gene2rog;
+analyze irefindex_gene2rog;
 
 -- Make an initial gene-to-gene mapping via shared ROG identifiers.
 
-insert into gene2related
+insert into irefindex_gene2related
     select distinct A.geneid, B.geneid as related
-    from gene2rog as A
-    inner join gene2rog as B
+    from irefindex_gene2rog as A
+    inner join irefindex_gene2rog as B
         on A.rogid = B.rogid;
 
-analyze gene2related;
+analyze irefindex_gene2related;
 
 commit;

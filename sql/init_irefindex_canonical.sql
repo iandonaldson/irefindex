@@ -1,6 +1,6 @@
 -- A mapping from genes to ROG identifiers.
 
-create table gene2rog (
+create table irefindex_gene2rog (
     geneid integer not null,
     rogid varchar not null,
     primary key(geneid, rogid)
@@ -8,7 +8,7 @@ create table gene2rog (
 
 -- A mapping from genes to other genes related to the same proteins.
 
-create table gene2related (
+create table irefindex_gene2related (
     geneid integer not null,
     related integer not null,
     primary key(geneid, related)
