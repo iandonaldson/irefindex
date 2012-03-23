@@ -76,17 +76,6 @@ create table xml_xref_interactor_types (
     primary key(source, filename, entry, interactorid)
 );
 
--- Uniform interactions (where all interactors have the same type).
-
-create table xml_interactions_uniform (
-    source varchar not null,
-    filename varchar not null,
-    entry integer not null,
-    interactionid varchar not null,
-    refvalue varchar, -- the value given as the PSI-MI interactor type
-    primary key(source, filename, entry, interactionid)
-);
-
 -- A mapping from accessions to reference database sequences.
 
 create table xml_xref_sequences (

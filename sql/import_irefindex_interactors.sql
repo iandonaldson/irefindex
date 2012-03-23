@@ -102,19 +102,6 @@ insert into xml_xref_interactor_types
 
 analyze xml_xref_interactor_types;
 
--- Determine uniform interactions.
-
-insert into xml_interactions_uniform
-    select I.source, I.filename, I.entry, interactionid, min(refvalue) as refvalue
-        from xml_interactors as I
-        left outer join xml_xref_interactor_types as A
-            on (I.source, I.filename, I.entry, I.interactorid) =
-               (A.source, A.filename, A.entry, A.interactorid)
-        group by I.source, I.filename, I.entry, interactionid
-        having count(distinct refvalue) <= 1;
-
-analyze xml_interactions_uniform;
-
 -- Create a mapping of gene names to UniProt proteins.
 
 insert into irefindex_gene2uniprot
