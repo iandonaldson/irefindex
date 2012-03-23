@@ -1,6 +1,6 @@
 -- A mapping from genes to UniProt proteins.
 
-create table gene2uniprot (
+create table irefindex_gene2uniprot (
 
     -- From gene_info:
 

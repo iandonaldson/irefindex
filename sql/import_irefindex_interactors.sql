@@ -117,7 +117,7 @@ analyze xml_interactions_uniform;
 
 -- Create a mapping of gene names to UniProt proteins.
 
-insert into gene2uniprot
+insert into irefindex_gene2uniprot
     select geneid, P.accession, P.sequencedate, P.taxid, P.sequence
     from gene_info as G
     inner join uniprot_gene_names as N
@@ -126,7 +126,7 @@ insert into gene2uniprot
         on N.uniprotid = P.uniprotid
         and P.taxid = G.taxid;
 
-analyze gene2uniprot;
+analyze irefindex_gene2uniprot;
 
 -- Partition UniProt accession matches since there can be an overlap when
 -- different methods are employed.
@@ -222,7 +222,7 @@ create temporary table tmp_uniprot_gene as
     select distinct X.dblabel, X.refvalue, 'uniprotkb/entrezgene-symbol' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from xml_xref_interactors as X
-    inner join gene2uniprot as P
+    inner join irefindex_gene2uniprot as P
         on X.refvalue = cast(P.geneid as varchar)
 
     -- Exclude previous matches.
@@ -250,7 +250,7 @@ create temporary table tmp_uniprot_gene_history as
     inner join gene_history as H
         on X.refvalue ~ '^[[:digit:]]*$'
         and cast(X.refvalue as integer) = H.oldgeneid
-    inner join gene2uniprot as P
+    inner join irefindex_gene2uniprot as P
         on H.geneid = P.geneid
 
     -- Exclude previous matches.
