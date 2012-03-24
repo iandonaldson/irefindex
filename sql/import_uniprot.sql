@@ -60,6 +60,8 @@ update uniprot_proteins as P
         )
     where taxid is null;
 
+analyze uniprot_proteins;
+
 -- Add the isoform mapping.
 
 insert into uniprot_isoforms

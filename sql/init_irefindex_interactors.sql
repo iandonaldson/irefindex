@@ -16,6 +16,23 @@ create table irefindex_gene2uniprot (
     primary key(geneid, accession)
 );
 
+-- A mapping from genes to RefSeq proteins.
+
+create table irefindex_gene2refseq (
+
+    -- From gene_info:
+
+    geneid integer not null,
+
+    -- From refseq_proteins:
+
+    accession varchar not null,
+    taxid integer,
+    "sequence" varchar not null,
+
+    primary key(geneid, accession)
+);
+
 -- Cross-references for interactors.
 
 create table xml_xref_all_interactors (
@@ -145,14 +162,4 @@ create table xml_xref_interactor_sequences (
     refdate varchar
 
     -- Constraints are added after import.
-);
-
--- Tentative mapping of ROG identifiers to database identifiers for canonical
--- interactor selection.
-
-create table xml_xref_rogid_identifiers (
-    rogid varchar not null,
-    dblabel varchar not null,
-    refvalue varchar not null,
-    primary key(rogid, dblabel, refvalue)
 );

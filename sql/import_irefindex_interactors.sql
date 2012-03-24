@@ -102,7 +102,8 @@ insert into xml_xref_interactor_types
 
 analyze xml_xref_interactor_types;
 
--- Create a mapping of gene names to UniProt proteins.
+-- Create a mapping of gene names to UniProt and RefSeq proteins.
+-- This is useful for mapping interactors and for canonicalisation.
 
 insert into irefindex_gene2uniprot
     select geneid, P.accession, P.sequencedate, P.taxid, P.sequence
@@ -114,6 +115,21 @@ insert into irefindex_gene2uniprot
         and P.taxid = G.taxid;
 
 analyze irefindex_gene2uniprot;
+
+insert into irefindex_gene2refseq
+    select geneid, P.accession, P.taxid, P.sequence
+    from gene2refseq as G
+    inner join refseq_proteins as P
+        on G.accession = P.version
+    union all
+    select oldgeneid, P.accession, P.taxid, P.sequence
+    from gene_history as H
+    inner join gene2refseq as G
+        on H.geneid = G.geneid
+    inner join refseq_proteins as P
+        on G.accession = P.version;
+
+analyze irefindex_gene2refseq;
 
 -- Partition UniProt accession matches since there can be an overlap when
 -- different methods are employed.
@@ -420,11 +436,9 @@ create temporary table tmp_refseq_gene as
     select distinct X.dblabel, X.refvalue, 'refseq/entrezgene' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
-    inner join gene2refseq as G
+    inner join irefindex_gene2refseq as P
         on X.refvalue ~ '^[[:digit:]]*$'
-        and cast(X.refvalue as integer) = G.geneid
-    inner join refseq_proteins as P
-        on G.accession = P.version
+        and cast(X.refvalue as integer) = P.geneid
 
     -- Exclude previous matches.
 
@@ -448,13 +462,9 @@ create temporary table tmp_refseq_gene_history as
     select distinct X.dblabel, X.refvalue, 'refseq/entrezgene-history' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from xml_xref_interactors as X
-    inner join gene_history as H
+    inner join irefindex_gene2refseq as P
         on X.refvalue ~ '^[[:digit:]]*$'
-        and cast(X.refvalue as integer) = H.oldgeneid
-    inner join gene2refseq as G
-        on H.geneid = G.geneid
-    inner join refseq_proteins as P
-        on G.accession = P.version
+        and cast(X.refvalue as integer) = P.geneid
 
     -- Exclude previous matches.
 
@@ -783,15 +793,5 @@ insert into xml_xref_interactor_sequences
 
 create index xml_xref_interactor_sequences_index on xml_xref_interactor_sequences(source, filename, entry, interactorid);
 analyze xml_xref_interactor_sequences;
-
--- For early canonicalisation of interactors, tentative ROG identifiers are
--- mapped to database identifiers.
-
-insert into xml_xref_rogid_identifiers
-    select distinct refsequence || reftaxid as rogid, dblabel, refvalue
-    from xml_xref_sequences
-    where reftaxid is not null;
-
-analyze xml_xref_rogid_identifiers;
 
 commit;
