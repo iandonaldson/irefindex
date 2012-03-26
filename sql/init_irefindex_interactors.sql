@@ -12,6 +12,7 @@ create table irefindex_gene2uniprot (
     sequencedate varchar,
     taxid integer,
     "sequence" varchar not null,
+    length integer not null,
 
     primary key(geneid, accession)
 );
@@ -29,6 +30,7 @@ create table irefindex_gene2refseq (
     accession varchar not null,
     taxid integer,
     "sequence" varchar not null,
+    length integer not null,
 
     primary key(geneid, accession)
 );
