@@ -23,3 +23,35 @@ create table irefindex_gene2related_active (
     related integer not null,
     primary key(geneid, related)
 );
+
+-- A mapping from redundant gene group (RGG) identifiers to genes.
+
+create table irefindex_rgg_genes (
+    rggid integer not null,
+    geneid integer not null,
+    primary key(rggid, geneid)
+);
+
+-- ROG identifiers for RGGs.
+
+create table irefindex_rgg_rogids (
+    rggid integer not null,
+    rogid varchar not null,
+    primary key(rggid, rogid)
+);
+
+-- Canonical ROG identifiers for RGGs.
+
+create table irefindex_rgg_rogids_canonical (
+    rggid integer not null,
+    rogid varchar not null,
+    primary key(rggid)
+);
+
+-- Canonical ROG identifiers for ROGs.
+
+create table irefindex_rogids_canonical (
+    rogid varchar not null,
+    crogid varchar not null,
+    primary key(rogid)
+);

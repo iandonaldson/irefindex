@@ -39,3 +39,8 @@ while [ `cat "$DATA/canonical_updates"` != '0' ]; do
     fi
 
 done
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_final.sql" ; then
+    echo "$PROGNAME: Could not define the canonical representative interactors." 1>&2
+    exit 1
+fi
