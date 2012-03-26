@@ -106,7 +106,7 @@ analyze xml_xref_interactor_types;
 -- This is useful for mapping interactors and for canonicalisation.
 
 insert into irefindex_gene2uniprot
-    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence
+    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
     from gene_info as G
     inner join uniprot_gene_names as N
         on G.symbol = N.genename
@@ -117,12 +117,12 @@ insert into irefindex_gene2uniprot
 analyze irefindex_gene2uniprot;
 
 insert into irefindex_gene2refseq
-    select geneid, P.accession, P.taxid, P.sequence
+    select geneid, P.accession, P.taxid, P.sequence, P.length
     from gene2refseq as G
     inner join refseq_proteins as P
         on G.accession = P.version
     union all
-    select oldgeneid, P.accession, P.taxid, P.sequence
+    select oldgeneid, P.accession, P.taxid, P.sequence, P.length
     from gene_history as H
     inner join gene2refseq as G
         on H.geneid = G.geneid
