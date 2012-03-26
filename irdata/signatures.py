@@ -49,7 +49,7 @@ def make_signature(sequence, legacy=0):
         sequence = strip_regexp.sub("", sequence.upper())
     return base64.b64encode(sha1(sequence).digest())[:-1]
 
-def process_file(f, out, column, separator=",", append=0, legacy=0):
+def process_file(f, out, column, separator=",", append=0, append_length=0, legacy=0):
 
     """
 
@@ -60,6 +60,9 @@ def process_file(f, out, column, separator=",", append=0, legacy=0):
     If 'append' is set to a true value, the resulting signatures will be
     appended to the columns. Otherwise, the selected columns will be replaced by
     the results.
+
+    If 'append_length' is set to a true value, the signature lengths will be
+    appended to the columns.
 
     Sequences or signatures will be converted to upper case, stripping
     non-alphanumeric characters, if the optional 'legacy' parameter is set to a
@@ -77,6 +80,8 @@ def process_file(f, out, column, separator=",", append=0, legacy=0):
                 columns.append(result)
             else:
                 columns[column] = result
+            if append_length:
+                columns.append(str(sum(map(len, signatures))))
         else:
             columns.append("")
 

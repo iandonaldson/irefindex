@@ -29,6 +29,7 @@ create temporary table tmp_uniprot_proteins (
     sequencedate varchar,
     taxid integer,
     sequence varchar not null,
+    length integer not null,
     primary key(accession)
 );
 
@@ -41,7 +42,7 @@ analyze tmp_uniprot_proteins;
 -- Merge with the imported proteins.
 
 insert into uniprot_proteins
-    select A.uniprotid, A.accession, A.sequencedate, A.taxid, A.sequence
+    select A.uniprotid, A.accession, A.sequencedate, A.taxid, A.sequence, A.length
     from tmp_uniprot_proteins as A
     left outer join uniprot_proteins as B
         on A.accession = B.accession

@@ -7,7 +7,8 @@ create temporary table tmp_refseq_proteins (
     version varchar,
     gi integer not null,
     taxid integer,
-    "sequence" varchar not null
+    "sequence" varchar not null,
+    length integer not null
 );
 
 create temporary table tmp_refseq_identifiers (
@@ -54,7 +55,7 @@ insert into refseq_proteins
         case when position('.' in T.version) <> 0 then
             cast(substring(T.version from position('.' in T.version) + 1) as integer)
         else null end as vnumber,
-        T.gi, T.taxid, T.sequence, true as missing
+        T.gi, T.taxid, T.sequence, T.length, true as missing
     from tmp_refseq_proteins as T
     left outer join refseq_proteins as P
         on T.gi = P.gi

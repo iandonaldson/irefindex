@@ -9,6 +9,7 @@ create table uniprot_proteins (
     sequencedate varchar,           -- not supplied by FASTA
     taxid integer,                  -- not supplied by FASTA
     "sequence" varchar not null,
+    length integer not null,
     primary key(accession)
 );
 

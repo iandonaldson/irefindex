@@ -7,7 +7,8 @@ create temporary table tmp_refseq_proteins (
     version varchar,
     gi integer not null,
     taxid integer,
-    "sequence" varchar not null
+    "sequence" varchar not null,
+    length integer not null
 );
 
 \copy tmp_refseq_proteins from '<directory>/refseq_proteins.txt.seq'
@@ -19,7 +20,7 @@ insert into refseq_proteins
         case when position('.' in version) <> 0 then
             cast(substring(version from position('.' in version) + 1) as integer)
         else null end as vnumber,
-        gi, taxid, "sequence", false as missing
+        gi, taxid, "sequence", length, false as missing
     from tmp_refseq_proteins;
 
 create index refseq_proteins_accession on refseq_proteins(accession);
