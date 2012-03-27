@@ -127,6 +127,7 @@ create temporary table tmp_participants as
     from xml_xref_participants
     left outer join psicv_terms
         on refvalue = code
+        and nametype = 'preferred'
     group by source, filename, entry, participantid, property;
 
 alter table tmp_participants add primary key(source, filename, entry, participantid, property);
@@ -140,6 +141,7 @@ create temporary table tmp_methods as
     from xml_xref_experiment_methods
     left outer join psicv_terms
         on refvalue = code
+        and nametype = 'preferred'
     group by source, filename, entry, experimentid, property;
 
 alter table tmp_methods add primary key(source, filename, entry, experimentid, property);
@@ -188,7 +190,8 @@ create temporary table tmp_named_interactions as
     left outer join xml_xref_interactions as nameI
         on (I.source, I.filename, I.entry, I.interactionid) = (nameI.source, nameI.filename, nameI.entry, nameI.interactionid)
     left outer join psicv_terms as sourceI
-        on lower(I.source) = sourceI.name;
+        on lower(I.source) = sourceI.name
+        and sourceI.nametype = 'preferred';
 
 analyze tmp_named_interactions;
 
@@ -364,8 +367,11 @@ analyze tmp_mitab_interactions;
 -- Combine with ROG-related information to produce MITAB-appropriate records.
 
 create temporary table tmp_mitab_all as
+
+    -- Header section.
+
     select
-        cast('uidA' as varchar) as uidA,
+        cast('#uidA' as varchar) as uidA,
         cast('uidB' as varchar) as uidB,
         cast('altA' as varchar) as altA,
         cast('altB' as varchar) as altB,
@@ -421,6 +427,8 @@ create temporary table tmp_mitab_all as
         cast('numParticipants' as varchar) as numParticipants
     union all
 
+    -- Data section.
+
     select
 
         -- uidA (identifier, preferably uniprotkb accession, refseq, complex as 'complex:...')
@@ -437,7 +445,7 @@ create temporary table tmp_mitab_all as
         case when edgetype = 'C' then 'rogid:' || I.rigid
              else array_to_string(
                 array_cat(
-                    rognameA.names,
+                    rognameA.names[1:3],
                     array['rogid:' || I.uidA]
                     ), '|')
         end as altA,
@@ -446,7 +454,7 @@ create temporary table tmp_mitab_all as
 
         array_to_string(
             array_cat(
-                rognameB.names,
+                rognameB.names[1:3],
                 array['rogid:' || I.uidB]
                 ), '|') as altB,
 
@@ -455,14 +463,14 @@ create temporary table tmp_mitab_all as
         -- NOTE: Need canonical identifiers.
 
         case when edgetype = 'C' or aliasA.aliases is null or array_length(aliasA.aliases, 1) = 0 then '-'
-             else array_to_string(aliasA.aliases, '|')
+             else array_to_string(aliasA.aliases[1:4], '|')
         end as aliasA,
 
         -- aliasB (aliases for B, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
         -- NOTE: Need canonical identifiers.
 
         case when aliasB.aliases is null or array_length(aliasB.aliases, 1) = 0 then '-'
-             else array_to_string(aliasB.aliases, '|')
+             else array_to_string(aliasB.aliases[1:4], '|')
         end as aliasB,
 
         -- method (interaction detection method as "MI:code(name)")
@@ -590,7 +598,7 @@ create temporary table tmp_mitab_all as
 
         -- negative (always "false")
 
-        false as negative,
+        cast('false' as varchar) as negative,
 
         -- originalReferenceA (original primary or secondary reference for A, the rigid of any complex as 'complex:...')
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
@@ -674,7 +682,7 @@ create temporary table tmp_mitab_all as
 
         -- numParticipants (the number of participants)
 
-        I.numParticipants
+        cast(I.numParticipants as varchar) as numParticipants
 
     from tmp_mitab_interactions as I
     left outer join tmp_identifiers as rognameA
