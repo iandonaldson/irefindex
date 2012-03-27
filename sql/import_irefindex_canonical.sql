@@ -4,10 +4,10 @@ begin;
 
 insert into irefindex_gene2rog
     select geneid, sequence || taxid as rogid
-    from irefindex_gene2refseq as G
+    from irefindex_gene2refseq
     union
     select geneid, sequence || taxid as rogid
-    from irefindex_gene2uniprot as G;
+    from irefindex_gene2uniprot;
 
 alter table irefindex_gene2rog add primary key(geneid, rogid);
 analyze irefindex_gene2rog;

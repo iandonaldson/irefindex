@@ -55,3 +55,11 @@ create table irefindex_rogids_canonical (
     crogid varchar not null,
     primary key(rogid)
 );
+
+-- Canonical RIG identifiers for RIGs.
+
+create table irefindex_rigids_canonical (
+    rigid varchar not null,
+    crigid varchar not null,
+    primary key(rigid)
+);

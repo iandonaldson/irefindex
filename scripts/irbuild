@@ -141,6 +141,23 @@ if [ "$BUILD" ]; then
         echo "$PROGNAME: Could not import the generated RIG identifiers." 1>&2
         exit 1
     fi
+
+    # Make canonical interaction information.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids_canonical.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not export canonical ROG identifiers." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_process_signatures.py" "$DATA/rogids_for_interactions_canonical" "$DATA/rigids_for_interactions_canonical" ; then
+        echo "$PROGNAME: Could not generate canonical RIG identifiers for the exported canonical ROG identifiers." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids_canonical.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not import the generated canonical RIG identifiers." 1>&2
+        exit 1
+    fi
 fi
 
 if [ "$MAKE_REPORTS" ]; then

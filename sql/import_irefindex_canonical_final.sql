@@ -57,4 +57,6 @@ insert into irefindex_rogids_canonical
 
 analyze irefindex_rogids_canonical;
 
+-- Canonical RIG identifiers are produced once RIG identifiers are available.
+
 commit;

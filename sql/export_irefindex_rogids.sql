@@ -19,7 +19,7 @@ create temporary table tmp_interaction_rogids as
             on (I.source, I.filename, I.entry, I.interactorid) =
                (R.source, R.filename, R.entry, R.interactorid)
 
-        order by rogid -- collate "C" for PostgreSQL 9.1
+        order by source, filename, entry, interactionid, rogid -- collate "C" for PostgreSQL 9.1
         ) as X
 
     group by source, filename, entry, interactionid;

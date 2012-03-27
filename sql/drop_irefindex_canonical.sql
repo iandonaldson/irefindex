@@ -5,3 +5,4 @@ drop table irefindex_rgg_genes;
 drop table irefindex_rgg_rogids;
 drop table irefindex_rgg_rogids_canonical;
 drop table irefindex_rogids_canonical;
+drop table irefindex_rigids_canonical;
