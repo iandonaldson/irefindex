@@ -48,11 +48,16 @@ insert into irefindex_rgg_rogids_canonical
 analyze irefindex_rgg_rogids_canonical;
 
 -- Make a mapping from ROG identifiers to canonical ROG identifiers.
+-- Since the mapping from RGGs to canonical ROGs may not provide a canonical
+-- UniProt or RefSeq representative, a ROG identifier is mapped to itself here
+-- in such cases in order to provide a complete mapping.
 
 insert into irefindex_rogids_canonical
-    select distinct R.rogid, C.rogid
-    from irefindex_rgg_rogids as R
-    inner join irefindex_rgg_rogids_canonical as C
+    select distinct I.rogid, coalesce(C.rogid, I.rogid)
+    from irefindex_rogids as I
+    left outer join irefindex_rgg_rogids as R
+        on I.rogid = R.rogid
+    left outer join irefindex_rgg_rogids_canonical as C
         on R.rggid = C.rggid;
 
 analyze irefindex_rogids_canonical;
