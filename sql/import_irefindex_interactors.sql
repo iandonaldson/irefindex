@@ -112,6 +112,15 @@ insert into irefindex_gene2uniprot
         on G.symbol = N.genename
     inner join uniprot_proteins as P
         on N.uniprotid = P.uniprotid
+        and P.taxid = G.taxid
+    union
+    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
+    from gene_info as G
+    inner join uniprot_identifiers as I
+        on G.geneid = cast(I.refvalue as integer)
+        and I.dblabel = 'GeneID'
+    inner join uniprot_proteins as P
+        on I.uniprotid = P.uniprotid
         and P.taxid = G.taxid;
 
 analyze irefindex_gene2uniprot;
