@@ -49,6 +49,7 @@ create table irefindex_rgg_rogids_canonical (
 );
 
 -- Canonical ROG identifiers for ROGs.
+-- This complete mapping is populated in the assignment activity.
 
 create table irefindex_rogids_canonical (
     rogid varchar not null,

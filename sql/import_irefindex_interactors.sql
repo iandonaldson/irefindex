@@ -120,8 +120,8 @@ insert into irefindex_gene2uniprot
         on G.geneid = cast(I.refvalue as integer)
         and I.dblabel = 'GeneID'
     inner join uniprot_proteins as P
-        on I.uniprotid = P.uniprotid
-        and P.taxid = G.taxid;
+        on I.uniprotid = P.uniprotid;
+        -- P.taxid = G.taxid could be used to override any gene association in the UniProt record
 
 analyze irefindex_gene2uniprot;
 
