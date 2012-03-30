@@ -38,3 +38,12 @@ create table xml_xref_experiment_methods (
     refvalue varchar not null,
     primary key(source, filename, entry, experimentid, property, refvalue)
 );
+
+create table xml_names_experiment_authors (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    experimentid varchar not null,
+    name varchar not null,
+    primary key(source, filename, entry, experimentid, name)
+);

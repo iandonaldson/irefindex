@@ -47,4 +47,17 @@ insert into xml_xref_experiment_methods
 
 analyze xml_xref_experiment_methods;
 
+-- Author information originates in the short labels, but is not consistently recorded.
+-- NOTE: A list of usable sources is included here.
+
+insert into xml_names_experiment_authors
+    select source, filename, entry, parentid as experimentid, name
+    from xml_names
+    where scope = 'experimentDescription'
+        and property = 'experimentDescription'
+        and nametype = 'shortLabel'
+        and source in ('BIOGRID', 'INTACT', 'MINT');
+
+analyze xml_names_experiment_authors;
+
 commit;

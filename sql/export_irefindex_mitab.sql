@@ -150,7 +150,7 @@ analyze tmp_methods;
 -- Accumulate PubMed identifiers.
 
 create temporary table tmp_pubmed as
-    select source, filename, entry, experimentid, array_accum(distinct refvalue) as refvalues
+    select source, filename, entry, experimentid, array_accum(distinct 'pubmed:' || refvalue) as refvalues
     from xml_xref_experiment_pubmed
     group by source, filename, entry, experimentid;
 
@@ -212,6 +212,11 @@ create temporary table tmp_interaction_experiments as
              else array_to_string(methodE.refvalues, '|')
         end as method,
 
+        -- authors (as "name-[year[-number]]")
+        -- NOTE: Not converting the form of the authors.
+
+        coalesce(authorE.name, '-') as authors,
+
         -- pmids (as "pubmed:...")
 
         case when pubmedE.refvalues is null or array_length(pubmedE.refvalues, 1) = 0 then '-'
@@ -239,7 +244,12 @@ create temporary table tmp_interaction_experiments as
     -- PubMed identifiers.
 
     left outer join tmp_pubmed as pubmedE
-        on (I.source, I.filename, I.entry, E.experimentid) = (pubmedE.source, pubmedE.filename, pubmedE.entry, pubmedE.experimentid);
+        on (I.source, I.filename, I.entry, E.experimentid) = (pubmedE.source, pubmedE.filename, pubmedE.entry, pubmedE.experimentid)
+
+    -- Authors.
+
+    left outer join xml_names_experiment_authors as authorE
+        on (I.source, I.filename, I.entry, E.experimentid) = (authorE.source, authorE.filename, authorE.entry, authorE.experimentid);
 
 analyze tmp_interaction_experiments;
 
@@ -462,17 +472,24 @@ create temporary table tmp_mitab_all as
 
         -- aliasA (aliases for A, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
         -- NOTE: Complexes use the 'crogid:', 'icrogid:' prefixes.
-        -- NOTE: Need canonical identifiers.
 
-        case when edgetype = 'C' or aliasA.aliases is null or array_length(aliasA.aliases, 1) = 0 then '-'
-             else array_to_string(aliasA.aliases[1:4], '|')
+        case when edgetype = 'C' then 'crogid:' || crigid.crigid
+             when aliasA.aliases is null or array_length(aliasA.aliases, 1) = 0 then '-'
+             else array_to_string(
+                array_cat(
+                    aliasA.aliases[1:4],
+                    array['crogid:' || crogidA.crogid]
+                    ), '|')
         end as aliasA,
 
         -- aliasB (aliases for B, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
-        -- NOTE: Need canonical identifiers.
 
         case when aliasB.aliases is null or array_length(aliasB.aliases, 1) = 0 then '-'
-             else array_to_string(aliasB.aliases[1:4], '|')
+             else array_to_string(
+                array_cat(
+                    aliasB.aliases[1:4],
+                    array['crogid:' || crogidB.crogid]
+                    ), '|')
         end as aliasB,
 
         -- method (interaction detection method as "MI:code(name)")
@@ -480,9 +497,8 @@ create temporary table tmp_mitab_all as
         method,
 
         -- authors (as "name-[year[-number]]")
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as authors,
+        authors,
 
         -- pmids (as "pubmed:...")
 
