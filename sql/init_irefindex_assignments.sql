@@ -30,7 +30,7 @@ create table irefindex_assignments (
 
     -- Link to sequence database describing how the connection was made.
 
-    sequencelink varchar,
+    sequencelink varchar not null,
 
     -- Reference type responsible for providing the sequence.
 
@@ -137,4 +137,12 @@ create table irefindex_interactions_complete (
     interactionid varchar not null,
     complete boolean not null,
     primary key(source, filename, entry, interactionid)
+);
+
+-- Canonical ROG identifiers for ROGs.
+
+create table irefindex_rogids_canonical (
+    rogid varchar not null,
+    crogid varchar not null,
+    primary key(rogid)
 );

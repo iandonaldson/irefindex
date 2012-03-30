@@ -272,13 +272,15 @@ create temporary table tmp_interactor_experiments as
 
         -- taxA (as "taxid:...")
 
-        case when edgetype = 'C' then '-'
+        case when edgetype = 'C' or nameA.taxid is null then '-'
              else 'taxid:' || nameA.taxid || '(' || coalesce(taxnamesA.name, '-') || ')'
         end as taxA,
 
         -- taxB (as "taxid:...")
 
-        'taxid:' || nameB.taxid || '(' || coalesce(taxnamesB.name, '-') || ')' as taxB,
+        case when nameB.taxid is null then '-'
+             else 'taxid:' || nameB.taxid || '(' || coalesce(taxnamesB.name, '-') || ')'
+        end as taxB,
 
         -- mappingScoreA (operation characters describing the original-to-final transformation, "-" for complexes)
 
@@ -644,17 +646,19 @@ create temporary table tmp_mitab_all as
         -- crogidA (the canonical rogid for A, not prefixed)
         -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as crogidA,
+        case when edgetype = 'C' then crigid.crigid
+             else crogidA.crogid
+        end as crogidA,
 
         -- crogidB (the canonical rogid for B, not prefixed)
         -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as crogidB,
+        crogidB.crogid as crogidB,
 
         -- crigid (the canonical rigid for the interaction, not prefixed)
         -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as crigid,
+        crigid.crigid as crigid,
 
         -- icrogidA (the integer identifier for the canonical rogid for A)
         -- NOTE: TO BE ADDED.
@@ -699,7 +703,17 @@ create temporary table tmp_mitab_all as
         on I.uidA = aliasA.rogid
         and I.edgetype <> 'C'
     left outer join tmp_aliases as aliasB
-        on I.uidB = aliasB.rogid;
+        on I.uidB = aliasB.rogid
+
+    -- Incorporate canonical information.
+
+    left outer join irefindex_rogids_canonical as crogidA
+        on I.uidA = crogidA.rogid
+        and I.edgetype <> 'C'
+    inner join irefindex_rogids_canonical as crogidB
+        on I.uidB = crogidB.rogid
+    inner join irefindex_rigids_canonical as crigid
+        on I.rigid = crigid.rigid;
 
 \copy tmp_mitab_all to '<directory>/mitab_all'
 

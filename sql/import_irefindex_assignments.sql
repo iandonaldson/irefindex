@@ -88,7 +88,7 @@ analyze tmp_unambiguous_matching_sequence_references;
 create temporary table tmp_unambiguous_null_references as
     select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         I.sequence, taxid,
-        cast(null as varchar) as sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
+        cast('null' as varchar) as sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
         originaldblabel, originalrefvalue, missing,
         cast('interactor sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
@@ -254,7 +254,7 @@ create temporary table tmp_sequencelinks as
     select distinct sequencelink, priority
     from (
         select sequencelink, case when sequencelink like '%entrezgene%' then 'B' else 'A' end as priority
-        from xml_xref_sequences
+        from irefindex_assignments
         ) as X;
 
 insert into irefindex_assignments_preferred
