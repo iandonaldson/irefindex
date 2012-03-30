@@ -87,6 +87,8 @@ class PSIParser(EmptyElementParser):
         EmptyElementParser.__init__(self)
         self.writer = writer
 
+    def reset():
+
         # For transient identifiers.
 
         self.identifiers = {
@@ -290,6 +292,7 @@ class PSIParser(EmptyElementParser):
             self.writer.append((parent, entry, scope, self.path_to_attrs[scope]["id"], implicit) + tuple(values))
 
     def parse(self, filename):
+        self.reset()
         self.writer.start(filename)
         EmptyElementParser.parse(self, filename)
 
