@@ -1,0 +1,67 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ] || [ ! "$1" ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME --pgsql <database> | --mysql <option>...
+
+Export integer identifiers from a previous release of iRefIndex.
+EOF
+    exit 1
+fi
+
+if [ "$1" = '--pgsql' ]; then
+    PGSQL=$1
+    DATABASE=$2
+
+    if [ ! "$DATABASE" ]; then
+        echo "$PROGNAME: A specific database must be specified." 1>&2
+        exit 1
+    fi
+
+elif [ "$1" = '--mysql' ]; then
+    MYSQL=$1
+    shift 1
+    OPTIONS=$*
+
+else
+    echo "$PROGNAME: A database system option must be specified." 1>&2
+    exit 1
+fi
+
+if [ "$PGSQL" ]; then
+
+    # Export identifiers from a PostgreSQL database.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_integer_rigids.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not export integer RIG identifiers from the previous database." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_integer_rogids.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not export integer ROG identifiers from the previous database." 1>&2
+        exit 1
+    fi
+
+elif [ "$MYSQL" ]; then
+
+    # Export identifiers from a MySQL database.
+
+    if ! mysql $OPTIONS < "$SQL/mysql/export_irefindex_integer_rigids.sql" > "$DATA/rig2rigid" ; then
+        echo "$PROGNAME: Could not export integer RIG identifiers from the previous database." 1>&2
+        exit 1
+    fi
+
+    if ! mysql $OPTIONS < "$SQL/mysql/export_irefindex_integer_rogids.sql" > "$DATA/rog2rogid" ; then
+        echo "$PROGNAME: Could not export integer ROG identifiers from the previous database." 1>&2
+        exit 1
+    fi
+
+fi
