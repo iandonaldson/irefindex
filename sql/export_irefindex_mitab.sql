@@ -109,7 +109,7 @@ create temporary table tmp_aliases as
             on dblabel = 'uniprotkb'
             and refvalue = accession
         union all
-        select rogid, dblabel, cast(geneid as varchar) as refvalue
+        select rogid, dblabel, symbol as refvalue
         from irefindex_rogid_identifiers
         inner join gene_info
             on dblabel = 'entrezgene'
@@ -221,7 +221,17 @@ create temporary table tmp_interaction_experiments as
 
         case when pubmedE.refvalues is null or array_length(pubmedE.refvalues, 1) = 0 then '-'
              else array_to_string(pubmedE.refvalues, '|')
-        end as pmids
+        end as pmids,
+
+        -- interactionType (interaction type as "MI:code(name)")
+
+        coalesce(typeI.refvalue, 'MI:0000') || '(' || coalesce(typenameI.name, '-') || ')' as interactionType,
+
+        -- imexid
+
+        case when imexI.refvalue is null then '-'
+             else 'imex:' || imexI.refvalue
+        end as imexid
 
     from tmp_named_interactions as I
     inner join xml_experiments as E
@@ -241,6 +251,14 @@ create temporary table tmp_interaction_experiments as
         on (I.source, I.filename, I.entry, E.experimentid) = (methodE.source, methodE.filename, methodE.entry, methodE.experimentid)
         and methodE.property = 'interactionDetectionMethod'
 
+    -- Interaction type.
+
+    left outer join xml_xref_interaction_types as typeI
+        on (I.source, I.filename, I.entry, I.interactionid) = (typeI.source, typeI.filename, typeI.entry, typeI.interactionid)
+    left outer join psicv_terms as typenameI
+        on typeI.refvalue = typenameI.code
+        and typenameI.nametype = 'preferred'
+
     -- PubMed identifiers.
 
     left outer join tmp_pubmed as pubmedE
@@ -249,7 +267,13 @@ create temporary table tmp_interaction_experiments as
     -- Authors.
 
     left outer join xml_names_experiment_authors as authorE
-        on (I.source, I.filename, I.entry, E.experimentid) = (authorE.source, authorE.filename, authorE.entry, authorE.experimentid);
+        on (I.source, I.filename, I.entry, E.experimentid) = (authorE.source, authorE.filename, authorE.entry, authorE.experimentid)
+
+    -- IMEX identifier.
+
+    left outer join xml_xref_interactions as imexI
+        on (I.source, I.filename, I.entry, I.interactionid) = (imexI.source, imexI.filename, imexI.entry, imexI.interactionid)
+        and imexI.dblabel = 'imex';
 
 analyze tmp_interaction_experiments;
 
@@ -513,9 +537,8 @@ create temporary table tmp_mitab_all as
         taxB,
 
         -- interactionType (interaction type as "MI:code(name)")
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as interactionType,
+        interactionType,
 
         -- sourcedb (as "MI:code(name)" using "MI:0000(name)" for non-CV sources)
 
@@ -660,19 +683,16 @@ create temporary table tmp_mitab_all as
         cast('-' as varchar) as irigid,
 
         -- crogidA (the canonical rogid for A, not prefixed)
-        -- NOTE: TO BE ADDED.
 
         case when edgetype = 'C' then crigid.crigid
              else crogidA.crogid
         end as crogidA,
 
         -- crogidB (the canonical rogid for B, not prefixed)
-        -- NOTE: TO BE ADDED.
 
         crogidB.crogid as crogidB,
 
         -- crigid (the canonical rigid for the interaction, not prefixed)
-        -- NOTE: TO BE ADDED.
 
         crigid.crigid as crigid,
 
@@ -692,9 +712,8 @@ create temporary table tmp_mitab_all as
         cast('-' as varchar) as icrigid,
 
         -- imexid (as "imex:..." or "-" if not available)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as imexid,
+        imexid,
 
         -- edgetype (as "X", "Y" or "C")
 
