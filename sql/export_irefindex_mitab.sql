@@ -225,7 +225,10 @@ create temporary table tmp_interaction_experiments as
 
         -- interactionType (interaction type as "MI:code(name)")
 
-        coalesce(typeI.refvalue, 'MI:0000') || '(' || coalesce(typenameI.name, '-') || ')' as interactionType,
+        case when typeI.refvalue is null then '-'
+             when typenameI.name is null then 'MI:0000(' || typeI.refvalue || ')'
+             else typeI.refvalue || '(' || typenameI.name || ')'
+        end as interactionType,
 
         -- imexid
 
