@@ -56,6 +56,11 @@ if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_rigids.
     exit 1
 fi
 
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_integer_identifiers.sql" ; then
+    echo "$PROGNAME: Could not initialise the integer identifier mappings schema." 1>&2
+    exit 1
+fi
+
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactions.sql" ; then
     echo "$PROGNAME: Could not initialise the additional interaction information schema." 1>&2
     exit 1
