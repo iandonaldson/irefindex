@@ -17,4 +17,20 @@ insert into irefindex_interactions
 
 analyze irefindex_interactions;
 
+-- A mapping from RIG identifiers to ROG identifiers without reference to
+-- specific interactions.
+
+insert into irefindex_distinct_interactions
+    select rigid, rogid
+    from (
+        select min(array[source, filename, cast(entry as varchar), interactionid]) as first
+        from irefindex_interactions
+        group by rigid
+        ) as X
+    inner join irefindex_interactions as I
+        on X.first = array[I.source, I.filename, cast(I.entry as varchar), I.interactionid];
+
+create index irefindex_distinct_interactions_rigid on irefindex_distinct_interactions(rigid);
+analyze irefindex_distinct_interactions;
+
 commit;
