@@ -42,8 +42,10 @@ insert into irefindex_rig2rigid
         from irefindex_rigids as N
         left outer join tmp_rig2rigid as O
             on N.rigid = O.rigid
+        where O.rigid is null
         ) as X;
 
+create index irefindex_rig2rigid_rigid on irefindex_rig2rigid(rigid);
 analyze irefindex_rig2rigid;
 
 -- Combine the previous release's ROG identifiers with this release's new
@@ -65,8 +67,10 @@ insert into irefindex_rog2rogid
         from irefindex_rogids as N
         left outer join tmp_rog2rogid as O
             on N.rogid = O.rogid
+        where O.rogid is null
         ) as X;
 
+create index irefindex_rog2rogid_rogid on irefindex_rog2rogid(rogid);
 analyze irefindex_rog2rogid;
 
 commit;
