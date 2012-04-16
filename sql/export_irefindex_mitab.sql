@@ -485,7 +485,13 @@ create temporary table tmp_mitab_all as
              else array_to_string(
                 array_cat(
                     rognameA.names[1:3],
-                    array['rogid:' || I.uidA]
+                    array[
+                        'rogid:' || I.uidA,
+                        'irogid:' || cast(
+                            case when edgetype = 'C' then irig.rig
+                                 else irogA.rog
+                            end as varchar)
+                        ]
                     ), '|')
         end as altA,
 
@@ -494,30 +500,43 @@ create temporary table tmp_mitab_all as
         array_to_string(
             array_cat(
                 rognameB.names[1:3],
-                array['rogid:' || I.uidB]
+                array[
+                    'rogid:' || I.uidB,
+                    'irogid:' || cast(irogB.rog as varchar)
+                    ]
                 ), '|') as altB,
 
         -- aliasA (aliases for A, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
         -- NOTE: Complexes use the 'crogid:', 'icrogid:' prefixes.
 
         case when edgetype = 'C' then 'crogid:' || crigid.crigid
-             when aliasA.aliases is null or array_length(aliasA.aliases, 1) = 0 then '-'
              else array_to_string(
                 array_cat(
-                    aliasA.aliases[1:4],
-                    array['crogid:' || crogidA.crogid]
+                    case when aliasA.aliases is null or array_length(aliasA.aliases, 1) = 0 then cast(array[] as varchar[])
+                         else aliasA.aliases[1:4]
+                    end,
+                    array[
+                        'crogid:' || crogidA.crogid,
+                        'icrogid:' || cast(
+                            case when edgetype = 'C' then icrig.rig
+                                 else icrogA.rog
+                            end as varchar)
+                        ]
                     ), '|')
         end as aliasA,
 
         -- aliasB (aliases for B, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
 
-        case when aliasB.aliases is null or array_length(aliasB.aliases, 1) = 0 then '-'
-             else array_to_string(
-                array_cat(
-                    aliasB.aliases[1:4],
-                    array['crogid:' || crogidB.crogid]
-                    ), '|')
-        end as aliasB,
+        array_to_string(
+            array_cat(
+                case when aliasB.aliases is null or array_length(aliasB.aliases, 1) = 0 then cast(array[] as varchar[])
+                     else aliasB.aliases[1:4]
+                end,
+                array[
+                    'crogid:' || crogidB.crogid,
+                    'icrogid:' || icrogB.rog
+                    ]
+                ), '|') as aliasB,
 
         -- method (interaction detection method as "MI:code(name)")
 
@@ -671,19 +690,18 @@ create temporary table tmp_mitab_all as
         mappingScoreB,
 
         -- irogidA (the integer identifier for the rogid for A)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as irogidA,
+        cast(case when edgetype = 'C' then irig.rig
+                  else irogA.rog
+             end as varchar) as irogidA,
 
         -- irogidB (the integer identifier for the rogid for B)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as irogidB,
+        cast(irogB.rog as varchar) as irogidB,
 
         -- irigid (the integer identifier for the rigid for the interaction)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as irigid,
+        cast(irig.rig as varchar) as irigid,
 
         -- crogidA (the canonical rogid for A, not prefixed)
 
@@ -700,19 +718,18 @@ create temporary table tmp_mitab_all as
         crigid.crigid as crigid,
 
         -- icrogidA (the integer identifier for the canonical rogid for A)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as icrogidA,
+        cast(case when edgetype = 'C' then icrig.rig
+                  else icrogA.rog
+             end as varchar) as icrogidA,
 
         -- icrogidB (the integer identifier for the canonical rogid for B)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as icrogidB,
+        cast(icrogB.rog as varchar) as icrogidB,
 
         -- icrigid (the integer identifier for the canonical rigid for the interaction)
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as icrigid,
+        cast(icrig.rig as varchar) as icrigid,
 
         -- imexid (as "imex:..." or "-" if not available)
 
@@ -751,7 +768,29 @@ create temporary table tmp_mitab_all as
     inner join irefindex_rogids_canonical as crogidB
         on I.uidB = crogidB.rogid
     inner join irefindex_rigids_canonical as crigid
-        on I.rigid = crigid.rigid;
+        on I.rigid = crigid.rigid
+
+    -- Incorporate integer identifiers.
+
+    left outer join irefindex_rog2rogid as irogA
+        on I.uidA = irogA.rogid
+        and I.edgetype <> 'C'
+    inner join irefindex_rog2rogid as irogB
+        on I.uidB = irogB.rogid
+    inner join irefindex_rig2rigid as irig
+        on I.rigid = irig.rigid
+
+    -- Incorporate integer identifiers for canonical identifiers.
+    -- These identifiers are a subset of the general integer numbering schemes
+    -- for interactions and interactors.
+
+    left outer join irefindex_rog2rogid as icrogA
+        on crogidA.crogid = icrogA.rogid
+        and I.edgetype <> 'C'
+    inner join irefindex_rog2rogid as icrogB
+        on crogidB.crogid = icrogB.rogid
+    inner join irefindex_rig2rigid as icrig
+        on crigid.crigid = icrig.rigid;
 
 \copy tmp_mitab_all to '<directory>/mitab_all'
 
