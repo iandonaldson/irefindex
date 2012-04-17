@@ -282,24 +282,26 @@ analyze irefindex_assignments_preferred;
 insert into irefindex_assignment_scores
     select distinct A.source, A.filename, A.entry, A.interactorid,
         array_to_string(array[
-            case when reftype = 'primaryRef' then 'P' else '' end,
-            case when reftype = 'secondaryRef' then 'S' else '' end,
-            case when A.sequencelink in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected') then 'U' else '' end,
-            case when A.sequencelink = 'refseq/version-discarded' then 'V' else '' end,
-            case when originaltaxid <> taxid then 'T' else '' end,
-            case when A.sequencelink like 'entrezgene%' then 'G' else '' end,
-            case when originaldblabel <> A.dblabel then 'D' else '' end,
-            case when A.sequencelink like 'uniprotkb/sgd%' then 'M' else '' end, -- M currently not generally tracked (typographical modification)
-            case when method <> 'unambiguous' then '+' else '' end,
-            case when method = 'matching sequence' then 'O' else '' end,
-            case when method = 'matching taxonomy' then 'X' else '' end,
+            case when reftype               = 'primaryRef'                                                              then 'P' else '' end,
+            case when reftype               = 'secondaryRef'                                                            then 'S' else '' end,
+            case when A.sequencelink        in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected')    then 'U' else '' end,
+            case when A.sequencelink        = 'refseq/version-discarded'                                                then 'V' else '' end,
+            case when originaltaxid         <> taxid                                                                    then 'T' else '' end,
+            case when A.sequencelink        like 'entrezgene%'                                                          then 'G' else '' end,
+            case when originaldblabel       <> A.dblabel                                                                then 'D' else '' end,
+            -- NOTE: M currently not generally tracked (typographical modification).
+            case when A.sequencelink        like 'uniprotkb/sgd%'                                                       then 'M' else '' end,
+            case when method                <> 'unambiguous'                                                            then '+' else '' end,
+            case when method                = 'matching sequence'                                                       then 'O' else '' end,
+            case when method                = 'matching taxonomy'                                                       then 'X' else '' end,
             '', -- ?
-            case when method = 'arbitrary' then 'L' else '' end,
-            case when A.dblabel = 'genbank_protein_gi' then 'I' else '' end,
-            case when missing then 'E' else '' end,
+            case when method                = 'arbitrary'                                                               then 'L' else '' end,
+            case when A.dblabel             = 'genbank_protein_gi'                                                      then 'I' else '' end,
+            case when missing                                                                                           then 'E' else '' end,
             '', -- Y score not yet supported (refers to obsolete assignment)
-            '', -- N score not yet supported (refers to new assignment)
-            case when reftypelabel = 'see-also' then 'Q' else '' end
+            -- NOTE: N refers to "new assignment", but this appears to be specific to interaction record sequences.
+            case when method                = 'interactor sequence'                                                     then 'N' else '' end,
+            case when reftypelabel          = 'see-also'                                                                then 'Q' else '' end
             ], '') as score
     from irefindex_assignments_preferred as P
     inner join irefindex_assignments as A
