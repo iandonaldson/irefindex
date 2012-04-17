@@ -36,7 +36,9 @@ analyze xml_xref_experiment_organisms;
 insert into xml_xref_experiment_pubmed
     select distinct source, filename, entry, experimentid, refvalue
     from xml_xref_all_experiments
-    where property = 'bibref' and dblabel = 'pubmed';
+    where property = 'bibref' and dblabel = 'pubmed'
+        and refvalue ~ E'^[[:digit:]]\+$'
+        and refvalue <> '0';
 
 analyze xml_xref_experiment_pubmed;
 
