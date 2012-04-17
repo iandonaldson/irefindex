@@ -108,6 +108,35 @@ Source data is imported into the database using the following command:
 
   irimport --all
 
+Obtaining Integer Identifiers from Previous Releases
+----------------------------------------------------
+
+Although iRefIndex employs unique identifiers in the form of RIG and ROG
+identifiers, it also maintains sequential numbering for interactions and
+interactors in order to more easily support applications whose notion of
+identifiers are limited to integers. Since correspondences between identifier
+types will have been defined by previous iRefIndex releases, such resources
+should be extracted from their release databases and then imported into the
+current release database in order to refer to known entities in a fashion
+consistent with previous releases.
+
+Integer identifiers are obtained from a previous release using the following
+command:
+
+  irprevious --pgsql <database>
+
+In the above form, with <database> substituted with an actual database name,
+the identifiers will be exported from a PostgreSQL database system.
+
+For MySQL-based releases of iRefIndex, the following command is required:
+
+  irprevious --mysql -h <host> -u <username> -p -A -D <database>
+
+In this form, each of the placeholders must be substituted with the relevant
+values. In addition, other options may be employed after the --mysql argument
+in addition to or in place of those shown in order to connect to the database
+system.
+
 Finishing the Build
 -------------------
 
