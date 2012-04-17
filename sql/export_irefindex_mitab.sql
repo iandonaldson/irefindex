@@ -509,7 +509,7 @@ create temporary table tmp_mitab_all as
         -- aliasA (aliases for A, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
         -- NOTE: Complexes use the 'crogid:', 'icrogid:' prefixes.
 
-        case when edgetype = 'C' then 'crogid:' || crigid.crigid
+        case when edgetype = 'C' then 'crogid:' || crigid.crigid || '|icrogid:' || cast(icrig.rig as varchar)
              else array_to_string(
                 array_cat(
                     case when aliasA.aliases is null or array_length(aliasA.aliases, 1) = 0 then cast(array[] as varchar[])
@@ -517,10 +517,7 @@ create temporary table tmp_mitab_all as
                     end,
                     array[
                         'crogid:' || crogidA.crogid,
-                        'icrogid:' || cast(
-                            case when edgetype = 'C' then icrig.rig
-                                 else icrogA.rog
-                            end as varchar)
+                        'icrogid:' || cast(icrogA.rog as varchar)
                         ]
                     ), '|')
         end as aliasA,
