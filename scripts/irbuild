@@ -45,6 +45,8 @@ else
     MAKE_OUTPUT=
 fi
 
+# Consolidation of imported resources and interactor identification.
+
 if [ "$BUILD" ]; then
 
     # Convert MITAB-based data to an XML-compatible representation.
@@ -86,6 +88,8 @@ if [ "$MAKE_REPORTS" ]; then
     fi
 fi
 
+# Canonicalisation and interactor assignment.
+
 if [ "$BUILD" ]; then
 
     # Make canonical interactor information.
@@ -122,6 +126,8 @@ if [ "$MAKE_REPORTS" ]; then
         exit 1
     fi
 fi
+
+# Interaction definition.
 
 if [ "$BUILD" ]; then
 
@@ -185,6 +191,8 @@ if [ "$MAKE_REPORTS" ]; then
     fi
 fi
 
+# Preparation of output resources.
+
 if [ "$BUILD" ]; then
 
     # Make convenient representations for other entity types.
@@ -201,6 +209,11 @@ if [ "$BUILD" ]; then
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_participants.sql" ; then
         echo "$PROGNAME: Could not build participant information from the imported data." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_confidence.sql" ; then
+        echo "$PROGNAME: Could not generate confidence score information." 1>&2
         exit 1
     fi
 

@@ -75,3 +75,8 @@ if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_partici
     echo "$PROGNAME: Could not initialise the additional participant information schema." 1>&2
     exit 1
 fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_confidence.sql" ; then
+    echo "$PROGNAME: Could not initialise the confidence score schema." 1>&2
+    exit 1
+fi
