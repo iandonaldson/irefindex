@@ -171,27 +171,57 @@ create temporary table tmp_assignments as
 alter table tmp_assignments add primary key(source, filename, entry, interactorid);
 analyze tmp_assignments;
 
+-- Accumulate confidence score information.
+
+create temporary table tmp_confidence as
+    select I.rigid, array_accum(distinct confI.scoretype || ':' || cast(confI.score as varchar)) as confidence
+    from tmp_interactions as I
+    left outer join irefindex_confidence as confI
+        on I.rigid = confI.rigid
+    group by I.rigid;
+
+alter table tmp_confidence add primary key(rigid);
+analyze tmp_confidence;
+
 -- Collect all interaction-related information.
 
 create temporary table tmp_named_interactions as
     select I.*,
 
-        -- interactionIdentifier (includes rigid, irigid, and edgetype as "X", "Y" or "C")
+        -- interactionIdentifier (includes rigid, irigid, and edgetype as "X", "Y" or "C",
+        -- with "source:-" if no database-specific identifier is provided)
 
-        case when nameI.dblabel is null then ''
-             else nameI.dblabel || ':' || nameI.refvalue || '|'
-        end || 'rigid:' || I.rigid || '|edgetype:' || I.edgetype as interactionIdentifier,
+        case when nameI.dblabel is null then coalesce(sourceI.name, lower(I.source)) || ':-'
+             else nameI.dblabel || ':' || nameI.refvalue
+        end || '|rigid:' || I.rigid || '|edgetype:' || I.edgetype as interactionIdentifier,
 
         -- sourcedb (as "MI:code(name)" using "MI:0000(name)" for non-CV sources)
 
-        coalesce(sourceI.code, 'MI:0000') || '(' || coalesce(sourceI.name, lower(I.source)) || ')' as sourcedb
+        coalesce(sourceI.code, 'MI:0000') || '(' || coalesce(sourceI.name, lower(I.source)) || ')' as sourcedb,
+
+        -- confidence
+
+        case when confI.confidence is null then '-'
+             else array_to_string(confI.confidence, '|')
+        end as confidence
 
     from tmp_interactions as I
+
+    -- Interaction identifier information.
+
     left outer join xml_xref_interactions as nameI
         on (I.source, I.filename, I.entry, I.interactionid) = (nameI.source, nameI.filename, nameI.entry, nameI.interactionid)
+
+    -- Source database information.
+
     left outer join psicv_terms as sourceI
         on lower(I.source) = sourceI.name
-        and sourceI.nametype = 'preferred';
+        and sourceI.nametype = 'preferred'
+
+    -- Confidence score information.
+
+    inner join tmp_confidence as confI
+        on I.rigid = confI.rigid;
 
 analyze tmp_named_interactions;
 
@@ -563,14 +593,14 @@ create temporary table tmp_mitab_all as
 
         sourcedb,
 
-        -- interactionIdentifier (includes rigid, irigid, and edgetype as "X", "Y" or "C")
+        -- interactionIdentifier (includes rigid, irigid, and edgetype as "X", "Y" or "C",
+        -- with "source:-" if no database-specific identifier is provided)
 
         interactionIdentifier,
 
         -- confidence
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as confidence,
+        confidence,
 
         -- expansion
 
