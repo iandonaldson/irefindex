@@ -188,7 +188,7 @@ create temporary table tmp_refseq_gene as
         on X.refvalue = P3.refvalue
     left outer join tmp_refseq_nucleotide_shortform as P4
         on X.refvalue = P4.refvalue
-    where X.dblabel = 'entrezgene'
+    where X.dblabel = 'entrezgene/locuslink'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null;
@@ -230,7 +230,7 @@ create temporary table tmp_refseq_gene_history as
         on X.refvalue = P4.refvalue
     left outer join tmp_refseq_gene as P5
         on X.refvalue = P5.refvalue
-    where X.dblabel = 'entrezgene'
+    where X.dblabel = 'entrezgene/locuslink'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null

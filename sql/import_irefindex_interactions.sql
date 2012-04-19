@@ -13,7 +13,7 @@ insert into xml_xref_interactions
         -- Normalise database labels.
 
         case when dblabel like 'uniprot%' or dblabel in ('SP', 'Swiss-Prot', 'TREMBL') then 'uniprotkb'
-             when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
+             when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene/locuslink'
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
              when dblabel in ('MI', 'psimi', 'PSI-MI') then 'psi-mi'

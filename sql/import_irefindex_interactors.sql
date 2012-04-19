@@ -8,7 +8,7 @@ insert into xml_xref_all_interactors
         -- Normalise database labels.
 
         case when dblabel like 'uniprot%' or dblabel in ('SP', 'Swiss-Prot', 'TREMBL') then 'uniprotkb'
-             when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene'
+             when dblabel like 'entrezgene%' or dblabel like 'entrez gene%' then 'entrezgene/locuslink'
              when dblabel like '%pdb' then 'pdb'
              when dblabel in ('protein genbank identifier', 'genbank indentifier') then 'genbank_protein_gi'
              when dblabel in ('MI', 'psimi', 'PSI-MI') then 'psi-mi'
@@ -77,7 +77,7 @@ insert into xml_xref_interactors
             or X.reftype = 'secondaryRef' and (X.reftypelabel = 'identity' or X.source = 'MPACT')
             or X.source in ('HPRD', 'BIND')
         )
-        and X.dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
+        and X.dblabel in ('cygd', 'ddbj/embl/genbank', 'entrezgene/locuslink', 'flybase', 'ipi', 'pdb', 'genbank_protein_gi', 'refseq', 'sgd', 'uniprotkb');
 
 create index xml_xref_interactors_dblabel_refvalue on xml_xref_interactors(dblabel, refvalue);
 create index xml_xref_interactors_index on xml_xref_interactors(source, filename, entry, interactorid);
@@ -247,7 +247,7 @@ create temporary table tmp_uniprot_gene as
         on X.refvalue = P4.refvalue
     left outer join tmp_uniprot_isoform_non_primary as P5
         on X.refvalue = P5.refvalue
-    where X.dblabel = 'entrezgene'
+    where X.dblabel = 'entrezgene/locuslink'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null
@@ -277,7 +277,7 @@ create temporary table tmp_uniprot_gene_history as
         on X.refvalue = P5.refvalue
     left outer join tmp_uniprot_gene as P6
         on X.refvalue = P6.refvalue
-    where X.dblabel = 'entrezgene'
+    where X.dblabel = 'entrezgene/locuslink'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null
@@ -459,7 +459,7 @@ create temporary table tmp_refseq_gene as
         on X.refvalue = P4.refvalue
     left outer join tmp_refseq_nucleotide_shortform as P5
         on X.refvalue = P5.refvalue
-    where X.dblabel = 'entrezgene'
+    where X.dblabel = 'entrezgene/locuslink'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null
@@ -487,7 +487,7 @@ create temporary table tmp_refseq_gene_history as
         on X.refvalue = P5.refvalue
     left outer join tmp_refseq_gene as P6
         on X.refvalue = P6.refvalue
-    where X.dblabel = 'entrezgene'
+    where X.dblabel = 'entrezgene/locuslink'
         and P2.refvalue is null
         and P3.refvalue is null
         and P4.refvalue is null

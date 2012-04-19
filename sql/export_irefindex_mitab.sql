@@ -72,9 +72,11 @@ create temporary table tmp_interactions as
 analyze tmp_interactions;
 
 -- Define all source database identifiers for each ROG identifier.
+-- Any | characters will be replaced since the identifiers will be used in
+-- pipe-separated lists.
 
 create temporary table tmp_identifiers as
-    select rogid, array_accum(distinct dblabel || ':' || refvalue) as names
+    select rogid, array_accum(distinct dblabel || ':' || replace(refvalue, '|', '_')) as names
     from irefindex_rogid_identifiers
     group by rogid;
 
@@ -99,9 +101,11 @@ create temporary table tmp_preferred as
 analyze tmp_preferred;
 
 -- Define aliases for each ROG identifier.
+-- Any | characters will be replaced since the identifiers will be used in
+-- pipe-separated lists.
 
 create temporary table tmp_aliases as
-    select rogid, array_accum(distinct dblabel || ':' || refvalue) as aliases
+    select rogid, array_accum(distinct dblabel || ':' || replace(refvalue, '|', '_')) as aliases
     from (
         select rogid, dblabel, uniprotid as refvalue
         from irefindex_rogid_identifiers
@@ -112,7 +116,7 @@ create temporary table tmp_aliases as
         select rogid, dblabel, symbol as refvalue
         from irefindex_rogid_identifiers
         inner join gene_info
-            on dblabel = 'entrezgene'
+            on dblabel = 'entrezgene/locuslink'
             and cast(refvalue as integer) = geneid
         ) as X
     group by rogid;
@@ -663,14 +667,12 @@ create temporary table tmp_mitab_all as
         cast('-' as varchar) as parametersInteraction,
 
         -- creationDate (the iRefIndex release date as "YYYY/MM/DD")
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as creationDate,
+        cast(current_date as varchar) as creationDate,
 
         -- updateDate (the iRefIndex release date as "YYYY/MM/DD")
-        -- NOTE: TO BE ADDED.
 
-        cast('-' as varchar) as updateDate,
+        cast(current_date as varchar) as updateDate,
 
         -- checksumA (the rogid for interactor A as "rogid:...")
         -- NOTE: The prefix is somewhat inappropriate for complexes.
