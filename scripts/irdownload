@@ -10,7 +10,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --check ] ( --all | <source>... )
+Usage: $PROGNAME [ --check ] [ -v | --verbose ] ( --all | <source>... )
 
 Download data from the different sources, or if the --check option is specified
 check whether a download needs to be performed. Note that this check is only
@@ -30,6 +30,11 @@ if [ "$1" = '--check' ]; then
     shift 1
 fi
 
+if [[ "$1" = '-v' || "$1" = '--verbose' ]]; then
+    VERBOSE=$1
+    shift 1
+fi
+
 SOURCES=$*
 
 if [ "$SOURCES" = '--all' ]; then
@@ -42,6 +47,7 @@ fi
 # Download data.
 
 for SOURCE in $SOURCES; do
+    eval DOWNLOAD_SCRIPT='$'"$SOURCE"_DOWNLOAD_SCRIPT
     eval RELEASE_URL='$'"$SOURCE"_RELEASE_URL
     eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES
     eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
@@ -57,43 +63,57 @@ for SOURCE in $SOURCES; do
         fi
     fi
 
-    for DOWNLOAD in $DOWNLOAD_FILES; do
-        DOWNLOADED="$DATADIR/$DOWNLOAD"
-        URL="${RELEASE_URL}$DOWNLOAD"
+    # Some resources require extra work because they do not just publish files,
+    # even though they could easily do so.
 
-        # Treat the URL as a path and see what the downloaded filename would be.
+    if [ "$DOWNLOAD_SCRIPT" ]; then
+        "$DOWNLOAD_SCRIPT" $CHECK_ONLY $VERBOSE "$DATADIR"
 
-        URLFILE=`basename "$URL"`
+    # Most resources just publish files.
 
-        # Here, DOWNLOAD may be a pattern, thus making DOWNLOADED also a pattern.
+    else
+        for DOWNLOAD in $DOWNLOAD_FILES; do
+            DOWNLOADED="$DATADIR/$DOWNLOAD"
+            URL="${RELEASE_URL}$DOWNLOAD"
 
-        if [ "$CHECK_ONLY" ]; then
-            if [ ! -e "$DOWNLOADED" ]; then
-                echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
-            else
-                echo "$DOWNLOADED"
-            fi
-        else
-            echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
-            if ! wget --retr-symlinks -N -P "$DATADIR" "$URL" ; then
-                echo "$PROGNAME: Did not download file: $DOWNLOAD" 1>&2
-                continue
+            if [ "$VERBOSE" ]; then
+                echo "$PROGNAME: URL: $URL" 1>&2
             fi
 
-            # If the downloaded filename is different from the actual filename,
-            # ensure that a symbolic link is made.
+            # Treat the URL as a path and see what the downloaded filename would be.
 
-            # Here, if DOWNLOAD is a pattern, URLFILE will probably also be the
-            # same pattern.
+            URLFILE=`basename "$URL"`
 
-            if [ "$DOWNLOAD" != "$URLFILE" ]; then
+            # Here, DOWNLOAD may be a pattern, thus making DOWNLOADED also a pattern.
+
+            if [ "$CHECK_ONLY" ]; then
                 if [ ! -e "$DOWNLOADED" ]; then
-                    ln -s "$URLFILE" "$DOWNLOADED"
+                    echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
+                else
                     echo "$DOWNLOADED"
                 fi
             else
-                echo "$DOWNLOADED"
+                echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
+                if ! wget --retr-symlinks -N -P "$DATADIR" "$URL" ; then
+                    echo "$PROGNAME: Did not download file: $DOWNLOAD" 1>&2
+                    continue
+                fi
+
+                # If the downloaded filename is different from the actual filename,
+                # ensure that a symbolic link is made.
+
+                # Here, if DOWNLOAD is a pattern, URLFILE will probably also be the
+                # same pattern.
+
+                if [ "$DOWNLOAD" != "$URLFILE" ]; then
+                    if [ ! -e "$DOWNLOADED" ]; then
+                        ln -s "$URLFILE" "$DOWNLOADED"
+                        echo "$DOWNLOADED"
+                    fi
+                else
+                    echo "$DOWNLOADED"
+                fi
             fi
-        fi
-    done
+        done
+    fi
 done

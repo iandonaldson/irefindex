@@ -1,0 +1,3 @@
+FILENAME	to_string	//table/tr/td[starts-with(text(), 'FILES')]/../following-sibling::tr/td//text()[starts-with(string(), 'HPRD_PSIMI')]/ancestor::tr[position() = 1]/td[1]
+VERSION	to_string	//table/tr/td[starts-with(text(), 'FILES')]/../following-sibling::tr/td//text()[starts-with(string(), 'HPRD_PSIMI')]/ancestor::tr[position() = 1]/td[4]
+DATE	to_string	//table/tr/td[starts-with(text(), 'FILES')]/../following-sibling::tr/td//text()[starts-with(string(), 'HPRD_PSIMI')]/ancestor::tr[position() = 1]/td[5]

@@ -147,6 +147,7 @@ BIND_SCHEMA='bind'
 ############################################################
 # BIND Translation
 
+BIND_TRANSLATION_VERSION='v1'
 BIND_TRANSLATION_DOWNLOAD_FILES="BINDTranslation_v1_xml_AllSpecies.tar.gz"
 BIND_TRANSLATION_MIRROR='http://download.baderlab.org'
 
@@ -157,10 +158,11 @@ BIND_TRANSLATION_XML_FILE_PATTERN='*.xml'
 ############################################################
 # BioGRID
 
-BIOGRID_DOWNLOAD_FILES="BIOGRID-ALL-3.1.81.psi25.zip"
+BIOGRID_VERSION='3.1.81'
+BIOGRID_DOWNLOAD_FILES="BIOGRID-ALL-$BIOGRID_VERSION.psi25.zip"
 BIOGRID_MIRROR='http://thebiogrid.org'
 
-BIOGRID_RELEASE_URL="$BIOGRID_MIRROR/downloads/archives/Release%20Archive/BIOGRID-3.1.81/"
+BIOGRID_RELEASE_URL="$BIOGRID_MIRROR/downloads/archives/Release%20Archive/BIOGRID-$BIOGRID_VERSION/"
 BIOGRID_DIR_NAME="BioGRID"
 BIOGRID_XML_FILE_PATTERN='*.xml'
 
@@ -177,10 +179,19 @@ CORUM_XML_FILE_PATTERN='*.xml'
 ############################################################
 # DIP
 
-DIP_DOWNLOAD_FILES="dip20111027.mif25.gz"
-DIP_MIRROR="ftp://$DIP_USERNAME:$DIP_PASSWORD@dip.doe-mbi.ucla.edu"
+#DIP_DOWNLOAD_FILES="dip20111027.mif25.gz"
+DIP_DOWNLOAD_SCRIPT='irdata_fetch_dip.sh'
+DIP_HOST='dip.doe-mbi.ucla.edu'
+DIP_MIRROR="http://$DIP_HOST"
 
-DIP_RELEASE_URL="$DIP_MIRROR/2011/mif25/"
+# NOTE: This resource uses obstructive technical measures to make automation
+# NOTE: awkward. Thus, the release URL is only used to access further details
+# NOTE: of the downloads by the irdata_fetch_dip.sh script.
+
+DIP_LOGIN_URL="$DIP_MIRROR/dip/Login.cgi"
+DIP_USER_AGENT="Mozilla/5.0 (X11; Linux i686; rv:10.0.3) Gecko/20120305 Firefox/10.0.3"
+
+DIP_RELEASE_URL="$DIP_MIRROR/dip/Download.cgi?SM=3"
 DIP_DIR_NAME="DIP"
 DIP_XML_FILE_PATTERN='*.mif25'
 
@@ -211,6 +222,7 @@ GENPEPT_SCHEMA='genpept'
 ############################################################
 # HPRD
 
+HPRD_VERSION='Release 9'
 HPRD_DOWNLOAD_FILES="HPRD_PSIMI_041310"
 HPRD_MIRROR='http://www.hprd.org'
 
