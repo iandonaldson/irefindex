@@ -1,0 +1,37 @@
+#!/bin/sh
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME ( <source>... | --all )
+
+Display a manifest of source data releases.
+EOF
+    exit 1
+fi
+
+if [ ! "$1" ]; then
+    echo "$PROGNAME: Please specify source names or --all." 1>&2
+    exit 1
+elif [ "$1" = '--all' ]; then
+    SOURCES="$ALLSOURCES"
+else
+    SOURCES=$*
+fi
+
+for SOURCE in $SOURCES ; do
+    eval URL='$'"$SOURCE"_MANIFEST_URL
+    source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
+    DETAILS="$MANIFESTS/irdata_manifest_$source.txt"
+
+    if [ "$URL" ]; then
+        "$TOOLS/irdata_manifest.py" "$URL" < "$DETAILS"
+    fi
+done

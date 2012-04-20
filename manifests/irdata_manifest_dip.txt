@@ -1,0 +1,3 @@
+DOWNLOAD	identity	string(//table/tr/th[starts-with(text(), 'file')]/../following-sibling::tr[1]/td[3]//a[starts-with(@href, 'ftp://')]/@href)
+FILENAME	first_word	normalize-space(//table/tr/th[starts-with(text(), 'file')]/../following-sibling::tr[1]/td[2])
+DATE	identity	string(//table/tr/th[starts-with(text(), 'file')]/../following-sibling::tr[1]/td[1])

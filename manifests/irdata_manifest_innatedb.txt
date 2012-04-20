@@ -1,0 +1,2 @@
+RELEASE	identity	string((//table//td[starts-with(text(), 'InnateDB Curated Interactions')]/..)[1]/td)
+DOWNLOAD	identity	string((//table//td[starts-with(text(), 'InnateDB Curated Interactions')]/..)[1]/td[2]//a/@href)

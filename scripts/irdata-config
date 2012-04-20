@@ -75,6 +75,17 @@ else
     exit 1
 fi
 
+SYSMANIFESTS="$SYSPREFIX/usr/share/irdata/manifests"
+
+if [ -e "$SCRIPTS/../manifests" ]; then
+    MANIFESTS=`normpath "$SCRIPTS/../manifests"`
+elif [ -e "$SYSMANIFESTS" ]; then
+    MANIFESTS="$SYSMANIFESTS"
+else
+    echo "Cannot locate the irdata manifests directory." 1>&2
+    exit 1
+fi
+
 # Data directory.
 
 SYSDATA="$SYSPREFIX/var/lib/irdata/data"
@@ -125,16 +136,37 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 # Each section contains potentially editable definitions
 # followed by calculated definitions that should probably
 # not be changed.
-
-# NOTE: To be completed for acquisition by other means: OPHID
-# NOTE: To be completed and added below for parsing: SEGUID
-# NOTE: Since BIND and GenPept use PSI-MI and Taxonomy data in import, the
-# NOTE: latter are listed before the former in the other sources list.
+#
+# Definitions with the following endings are typically
+# editable when new versions of the resources are made
+# available:
+#
+# VERSION DOWNLOAD_FILES
+#
+# Any changes in download locations need to be made to the
+# definitions with the following endings:
+#
+# MIRROR RELEASE_URL
+#
+# Additional information about downloads is obtained using
+# the manifest mechanism, and any changes to information
+# describing downloads may affect definitions with the
+# following endings:
+#
+# MANIFEST_URL
+#
+# Since BIND and GenPept use PSI-MI and Taxonomy data in
+# import, the latter are listed before the former in the
+# other sources list. Otherwise, these lists have been kept
+# in an alphabetical order.
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
 OTHERSOURCES="PSI_MI TAXONOMY BIND FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
+
+# NOTE: To be completed for acquisition by other means: OPHID
+# NOTE: To be completed and added below for parsing: SEGUID
 
 ############################################################
 # BIND
@@ -148,7 +180,7 @@ BIND_SCHEMA='bind'
 # BIND Translation
 
 BIND_TRANSLATION_VERSION='v1'
-BIND_TRANSLATION_DOWNLOAD_FILES="BINDTranslation_v1_xml_AllSpecies.tar.gz"
+BIND_TRANSLATION_DOWNLOAD_FILES="BINDTranslation_${BIND_TRANSLATION_VERSION}_xml_AllSpecies.tar.gz"
 BIND_TRANSLATION_MIRROR='http://download.baderlab.org'
 
 BIND_TRANSLATION_RELEASE_URL="$BIND_TRANSLATION_MIRROR/BINDTranslation/release1_0/"
@@ -179,9 +211,9 @@ CORUM_XML_FILE_PATTERN='*.xml'
 ############################################################
 # DIP
 
-#DIP_DOWNLOAD_FILES="dip20111027.mif25.gz"
 DIP_DOWNLOAD_SCRIPT='irdata_fetch_dip.sh'
 DIP_HOST='dip.doe-mbi.ucla.edu'
+#DIP_DOWNLOAD_FILES="dip20111027.mif25.gz"
 DIP_MIRROR="http://$DIP_HOST"
 
 # NOTE: This resource uses obstructive technical measures to make automation
@@ -190,10 +222,12 @@ DIP_MIRROR="http://$DIP_HOST"
 
 DIP_LOGIN_URL="$DIP_MIRROR/dip/Login.cgi"
 DIP_USER_AGENT="Mozilla/5.0 (X11; Linux i686; rv:10.0.3) Gecko/20120305 Firefox/10.0.3"
-
 DIP_RELEASE_URL="$DIP_MIRROR/dip/Download.cgi?SM=3"
+
 DIP_DIR_NAME="DIP"
 DIP_XML_FILE_PATTERN='*.mif25'
+
+DIP_MANIFEST_URL="$DATA/$DIP_DIR_NAME/dip_downloads_response.txt"
 
 ############################################################
 # Entrez Gene
@@ -222,13 +256,14 @@ GENPEPT_SCHEMA='genpept'
 ############################################################
 # HPRD
 
-HPRD_VERSION='Release 9'
 HPRD_DOWNLOAD_FILES="HPRD_PSIMI_041310"
 HPRD_MIRROR='http://www.hprd.org'
 
 HPRD_RELEASE_URL="$HPRD_MIRROR/edownload/"
 HPRD_DIR_NAME="HPRD"
 HPRD_XML_FILE_PATTERN='PSIMI_XML/*.xml'
+
+HPRD_MANIFEST_URL="$HPRD_MIRROR/download"
 
 ############################################################
 # IntAct
@@ -249,6 +284,8 @@ INNATEDB_MIRROR='http://www.innatedb.com'
 INNATEDB_RELEASE_URL="$INNATEDB_MIRROR/download/interactions/"
 INNATEDB_DIR_NAME="InnateDB"
 INNATEDB_XML_FILE_PATTERN='*.xml'
+
+INNATEDB_MANIFEST_URL="$INNATEDB_MIRROR/download.jsp"
 
 ############################################################
 # IPI
@@ -409,6 +446,8 @@ UNIPROT_SCHEMA='uniprot'
 
 UNIPROT_SPLIT_INTERVAL=100000000
 
+UNIPROT_MANIFEST_PARSER='irdata_manifest_uniprot.sh'
+
 ############################################################
 # UniProt (Fly)
 
@@ -421,6 +460,8 @@ FLY_OTHER_FILE_PATTERN='*.txt'
 FLY_PARSER='irdata_parse_fly.sh'
 FLY_SCHEMA='fly'
 
+FLY_MANIFEST_PARSER='irdata_manifest_fly.sh'
+
 ############################################################
 # UniProt (Yeast)
 
@@ -432,6 +473,8 @@ YEAST_DIR_NAME="yeast"
 YEAST_OTHER_FILE_PATTERN='*.txt'
 YEAST_PARSER='irdata_parse_fly.sh'
 YEAST_SCHEMA='yeast'
+
+YEAST_MANIFEST_PARSER='irdata_manifest_fly.sh'
 
 
 

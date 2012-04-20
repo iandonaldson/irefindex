@@ -23,17 +23,33 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import libxml2dom
 
-def to_string(node):
-    return " ".join([n.nodeValue for n in node[0].xpath(".//text()")]).strip()
+def to_string(nodes):
 
-def first_line(node):
-    return "".join([n.nodeValue for n in node[0].xpath(".//text()")]).strip().split("\n")[0]
+    "Join all text descendants of the first of the given 'nodes'."
+
+    return " ".join([n.nodeValue for n in nodes[0].xpath(".//text()")]).strip()
+
+def first_word(value, sep=None):
+
+    "Extract the first word from the given 'value'."
+
+    return value.strip().split(sep)[0]
+
+def first_line(value):
+
+    "Extract the first line from the given 'value'."
+
+    return first_word(value, "\n")
 
 def identity(value):
+
+    "Return the presented 'value'."
+
     return value
 
 filters = {
     "to_string" : to_string,
+    "first_word" : first_word,
     "first_line" : first_line,
     "identity" : identity,
     }
