@@ -12,7 +12,10 @@ if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME ( <source>... | --all )
 
-Display a manifest of source data releases.
+Display a manifest of source data releases. If --all is specified, the following
+sources will be inspected:
+
+$ALLSOURCES
 EOF
     exit 1
 fi
@@ -28,10 +31,43 @@ fi
 
 for SOURCE in $SOURCES ; do
     eval URL='$'"$SOURCE"_MANIFEST_URL
-    source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
-    DETAILS="$MANIFESTS/irdata_manifest_$source.txt"
+    eval PARSER='$'"$SOURCE"_MANIFEST_PARSER
+    eval FILE='$'"$SOURCE"_MANIFEST_FILE
+    eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES
+    eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+
+    DATADIR="$DATA/$SOURCEDIR"
+
+    # If a source provides a URL, extract manifest information from the resource.
 
     if [ "$URL" ]; then
+        source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
+        DETAILS="$MANIFESTS/irdata_manifest_$source.txt"
+
         "$TOOLS/irdata_manifest.py" "$URL" < "$DETAILS"
+
+    # If a source uses a manifest parser, use that to obtain information.
+
+    elif [ "$PARSER" ]; then
+
+        "$PARSER" "$DATADIR/$FILE"
+
+    # Otherwise, extract basic timestamp information from the downloads.
+
+    elif [ "$DOWNLOAD_FILES" ]; then
+
+        # Expand the download files.
+
+        for DOWNLOAD in $DOWNLOAD_FILES ; do
+            DOWNLOAD_PATHS="${DOWNLOAD_PATHS}${DOWNLOAD_PATHS:+ }"$DATADIR/$DOWNLOAD
+        done
+
+        # Get the earliest timestamp.
+
+          "$SCRIPTS/irfiletime" $DOWNLOAD_PATHS \
+        | sort \
+        | head -n 1 \
+        | sed -e $'s/\(.*\)/DATE\t\\1/'
+
     fi
 done

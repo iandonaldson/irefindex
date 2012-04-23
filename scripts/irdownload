@@ -94,7 +94,7 @@ for SOURCE in $SOURCES; do
                 fi
             else
                 echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
-                if ! wget --retr-symlinks -N -P "$DATADIR" "$URL" ; then
+                if ! wget --timestamping --retr-symlinks -N -P "$DATADIR" "$URL" ; then
                     echo "$PROGNAME: Did not download file: $DOWNLOAD" 1>&2
                     continue
                 fi

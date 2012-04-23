@@ -447,6 +447,7 @@ UNIPROT_SCHEMA='uniprot'
 UNIPROT_SPLIT_INTERVAL=100000000
 
 UNIPROT_MANIFEST_PARSER='irdata_manifest_uniprot.sh'
+UNIPROT_MANIFEST_FILE='reldate.txt'
 
 ############################################################
 # UniProt (Fly)
@@ -461,6 +462,7 @@ FLY_PARSER='irdata_parse_fly.sh'
 FLY_SCHEMA='fly'
 
 FLY_MANIFEST_PARSER='irdata_manifest_fly.sh'
+FLY_MANIFEST_FILE='fly.txt'
 
 ############################################################
 # UniProt (Yeast)
@@ -475,6 +477,7 @@ YEAST_PARSER='irdata_parse_fly.sh'
 YEAST_SCHEMA='yeast'
 
 YEAST_MANIFEST_PARSER='irdata_manifest_fly.sh'
+YEAST_MANIFEST_FILE='yeast.txt'
 
 
 
