@@ -79,14 +79,20 @@ if __name__ == "__main__":
         sys.exit(1)
 
     url = sys.argv[1]
-    d = libxml2dom.parseURI(url, html=True)
 
-    for line in sys.stdin.readlines():
-        name, filter_list, path = line.strip().split("\t")
-        value = d.xpath(path)
-        for filter in filter_list.split(","):
-            filter = filters[filter]
-            value = filter(value)
-        print >>sys.stdout, "%s\t%s" % (name, value)
+    try:
+        d = libxml2dom.parseURI(url, html=True)
+
+        for line in sys.stdin.readlines():
+            name, filter_list, path = line.strip().split("\t")
+            value = d.xpath(path)
+            for filter in filter_list.split(","):
+                filter = filters[filter]
+                value = filter(value)
+            print >>sys.stdout, "%s\t%s" % (name, value)
+
+    except Exception, exc:
+        print >>sys.stderr, "%s: Manifest retrieval failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

@@ -54,7 +54,7 @@ sleep 5
 
   wget -O - --load-cookies "$DIP_COOKIES" --user-agent "$DIP_USER_AGENT" "$DIP_RELEASE_URL" \
 | tee "$DATADIR/dip_downloads_response.txt" \
-| grep -e $"ftp://$DIP_USERNAME:[^@]*@$DIP_HOST/[[:digit:]]\+/mif25/dip[[:digit:]]\+\.mif25\.gz" \
+| grep -e "ftp://$DIP_USERNAME:[^@]*@$DIP_HOST/[[:digit:]]\+/mif25/dip[[:digit:]]\+\.mif25\.gz" \
 | sed -e 's/[^"]*"//' \
 | sed -e 's/".*//' \
 | head -n 1 \

@@ -46,6 +46,8 @@ fi
 
 # Download data.
 
+FAILED=
+
 for SOURCE in $SOURCES; do
     eval DOWNLOAD_SCRIPT='$'"$SOURCE"_DOWNLOAD_SCRIPT
     eval RELEASE_URL='$'"$SOURCE"_RELEASE_URL
@@ -67,11 +69,16 @@ for SOURCE in $SOURCES; do
     # even though they could easily do so.
 
     if [ "$DOWNLOAD_SCRIPT" ]; then
-        "$DOWNLOAD_SCRIPT" $CHECK_ONLY $VERBOSE "$DATADIR"
+        if ! "$DOWNLOAD_SCRIPT" $CHECK_ONLY $VERBOSE "$DATADIR" ; then
+            echo "$PROGNAME: Did not download files using the script for source: $SOURCE" 1>&2
+            FAILED="${FAILED}${FAILED:+ }$SOURCE"
+        fi
 
     # Most resources just publish files.
 
     else
+        FAILED_FILES=0
+
         for DOWNLOAD in $DOWNLOAD_FILES; do
             DOWNLOADED="$DATADIR/$DOWNLOAD"
             URL="${RELEASE_URL}$DOWNLOAD"
@@ -96,6 +103,7 @@ for SOURCE in $SOURCES; do
                 echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
                 if ! wget --timestamping --retr-symlinks -N -P "$DATADIR" "$URL" ; then
                     echo "$PROGNAME: Did not download file: $DOWNLOAD" 1>&2
+                    FAILED_FILES=$(($FAILED_FILES+1))
                     continue
                 fi
 
@@ -115,5 +123,15 @@ for SOURCE in $SOURCES; do
                 fi
             fi
         done
+
+        if [ "$FAILED_FILES" != '0' ]; then
+            echo "$PROGNAME: Did not download $FAILED_FILES files for source: $SOURCE" 1>&2
+            FAILED="${FAILED}${FAILED:+ }$SOURCE"
+        fi
     fi
 done
+
+if [ "$FAILED" ]; then
+    echo "$PROGNAME: The following sources failed: $FAILED" 1>&2
+    exit 1
+fi

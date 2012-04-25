@@ -102,6 +102,24 @@ Source data is downloaded using the following command:
 
   irdownload --all
 
+Any sources that could not be downloaded in their entirety will be reported as
+having failed. It is then necessary to attempt to download them individually
+and potentially investigate any underlying problems with each of the download
+activities.
+
+Generating Manifest Information
+-------------------------------
+
+Manifest/release information for the data sources is generated using the
+following command:
+
+  irmanifest --all
+
+Any sources that could not provide manifests will be reported as having
+failed. Re-running irmanifest with specific source names will add information
+for those sources to the manifest file, although some investigation of
+problems related to manifest/release information retrieval may be necessary.
+
 Importing Source Data
 ---------------------
 

@@ -8,14 +8,21 @@ else
     . 'irdata-config'
 fi
 
+MANIFEST_OUTPUT="$DATA/irefindex_manifest"
+
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME ( <source>... | --all )
 
-Display a manifest of source data releases. If --all is specified, the following
+Create a manifest of source data releases. If --all is specified, the following
 sources will be inspected:
 
 $ALLSOURCES
+
+Specifying --all will create a new manifest file. Specifying individual sources
+will append manifest entries to any existing file in the following location:
+
+$MANIFEST_OUTPUT
 EOF
     exit 1
 fi
@@ -25,6 +32,12 @@ if [ ! "$1" ]; then
     exit 1
 elif [ "$1" = '--all' ]; then
     SOURCES="$ALLSOURCES"
+
+    # Remove any existing output if it exists.
+
+    if [ -e "$MANIFEST_OUTPUT" ]; then
+        rm "$MANIFEST_OUTPUT"
+    fi
 else
     SOURCES=$*
 fi
@@ -78,8 +91,22 @@ fi
       fi
 
   done \
-> "$DATA/irefindex_manifest"
+>> "$MANIFEST_OUTPUT"
 
 # Make the date formats available for import.
 
 cp "$MANIFESTS/dateformats.txt" "$DATA"
+
+# Report any failed manifests.
+
+FAILED=
+for SOURCE in $SOURCES ; do
+    if ! grep -e "^$SOURCE"$'\t' "$MANIFEST_OUTPUT" > /dev/null 2>&1 ; then
+        FAILED="${FAILED}${FAILED:+ }$SOURCE"
+    fi
+done
+
+if [ "$FAILED" ]; then
+    echo "$PROGNAME: Manifest generation failed for sources: $FAILED"
+    exit 1
+fi
