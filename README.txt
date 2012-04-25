@@ -9,6 +9,7 @@ The following software is required to use this distribution:
   * A POSIX-like shell and environment (for the high-level scripts)
   * Python (tested with 2.5.4, for the tools)
   * cmdsyntax (command option processing)
+  * libxml2dom (HTML parsing for the manifest generation)
 
 Most Unix-based operating systems will provide the necessary commands for the
 high-level scripts, but these commands may be provided separately or

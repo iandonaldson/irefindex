@@ -29,45 +29,57 @@ else
     SOURCES=$*
 fi
 
-for SOURCE in $SOURCES ; do
-    eval URL='$'"$SOURCE"_MANIFEST_URL
-    eval PARSER='$'"$SOURCE"_MANIFEST_PARSER
-    eval FILE='$'"$SOURCE"_MANIFEST_FILE
-    eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES
-    eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+# Loop over the sources and collect manifest information in a file.
 
-    DATADIR="$DATA/$SOURCEDIR"
+  for SOURCE in $SOURCES ; do
+      eval URL='$'"$SOURCE"_MANIFEST_URL
+      eval PARSER='$'"$SOURCE"_MANIFEST_PARSER
+      eval FILE='$'"$SOURCE"_MANIFEST_FILE
+      eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES
+      eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
 
-    # If a source provides a URL, extract manifest information from the resource.
+      DATADIR="$DATA/$SOURCEDIR"
 
-    if [ "$URL" ]; then
-        source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
-        DETAILS="$MANIFESTS/irdata_manifest_$source.txt"
+      # If a source provides a URL, extract manifest information from the resource.
 
-        "$TOOLS/irdata_manifest.py" "$URL" < "$DETAILS"
+      if [ "$URL" ]; then
+          source=$(echo $SOURCE | tr '[:upper:]' '[:lower:]')
+          DETAILS="$MANIFESTS/irdata_manifest_$source.txt"
 
-    # If a source uses a manifest parser, use that to obtain information.
+            "$TOOLS/irdata_manifest.py" "$URL" < "$DETAILS" \
+          | sed -e $"s/\(.*\)/$SOURCE\t\\1/"
 
-    elif [ "$PARSER" ]; then
+      # If a source uses a manifest parser, use that to obtain information.
 
-        "$PARSER" "$DATADIR/$FILE"
+      elif [ "$PARSER" ]; then
 
-    # Otherwise, extract basic timestamp information from the downloads.
+            "$PARSER" "$DATADIR/$FILE" \
+          | sed -e $"s/\(.*\)/$SOURCE\t\\1/"
 
-    elif [ "$DOWNLOAD_FILES" ]; then
+      # Otherwise, extract basic timestamp information from the downloads.
 
-        # Expand the download files.
+      elif [ "$DOWNLOAD_FILES" ]; then
 
-        for DOWNLOAD in $DOWNLOAD_FILES ; do
-            DOWNLOAD_PATHS="${DOWNLOAD_PATHS}${DOWNLOAD_PATHS:+ }"$DATADIR/$DOWNLOAD
-        done
+          # Expand the download files.
 
-        # Get the earliest timestamp.
+          DOWNLOAD_PATHS=
 
-          "$SCRIPTS/irfiletime" $DOWNLOAD_PATHS \
-        | sort \
-        | head -n 1 \
-        | sed -e $'s/\(.*\)/DATE\t\\1/'
+          for DOWNLOAD in $DOWNLOAD_FILES ; do
+              DOWNLOAD_PATHS="${DOWNLOAD_PATHS}${DOWNLOAD_PATHS:+ }"$DATADIR/$DOWNLOAD
+          done
 
-    fi
-done
+          # Get the earliest timestamp.
+
+            "$SCRIPTS/irfiletime" $DOWNLOAD_PATHS \
+          | sort \
+          | head -n 1 \
+          | sed -e $"s/\(.*\)/$SOURCE\tDATE\t\\1/"
+
+      fi
+
+  done \
+> "$DATA/irefindex_manifest"
+
+# Make the date formats available for import.
+
+cp "$MANIFESTS/dateformats.txt" "$DATA"

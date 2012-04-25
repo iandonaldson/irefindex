@@ -35,6 +35,12 @@ def first_word(value, sep=None):
 
     return value.strip().split(sep)[0]
 
+def last_word(value, sep=None):
+
+    "Extract the last word from the given 'value'."
+
+    return value.strip().split(sep)[-1]
+
 def first_line(value):
 
     "Extract the first line from the given 'value'."
@@ -47,11 +53,19 @@ def identity(value):
 
     return value
 
+def strip_brackets(value):
+
+    "Remove brackets around 'value'."
+
+    return value.strip("()")
+
 filters = {
     "to_string" : to_string,
     "first_word" : first_word,
+    "last_word" : last_word,
     "first_line" : first_line,
     "identity" : identity,
+    "strip_brackets" : strip_brackets,
     }
 
 if __name__ == "__main__":
@@ -68,8 +82,11 @@ if __name__ == "__main__":
     d = libxml2dom.parseURI(url, html=True)
 
     for line in sys.stdin.readlines():
-        name, filter, path = line.strip().split("\t")
-        filter = filters[filter]
-        print >>sys.stdout, "%s\t%s" % (name, filter(d.xpath(path)))
+        name, filter_list, path = line.strip().split("\t")
+        value = d.xpath(path)
+        for filter in filter_list.split(","):
+            filter = filters[filter]
+            value = filter(value)
+        print >>sys.stdout, "%s\t%s" % (name, value)
 
 # vim: tabstop=4 expandtab shiftwidth=4
