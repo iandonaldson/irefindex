@@ -30,7 +30,7 @@ PATTERN=$'[[:digit:]]\{4\}_[[:digit:]]\{2\}'
 
   grep -e '^Release:' "$FILENAME" \
 | head -n 1 \
-| sed -e $"s/.*\($PATTERN\).*/\\1/" \
+| sed -e "s/.*\($PATTERN\).*/\\1/" \
 | sed -e $'s/\(.*\)/VERSION\t\\1/'
 
 # Look for "99-ZZZ-9999" and emit that as the date.
@@ -39,5 +39,5 @@ PATTERN=$'[[:digit:]]\{2\}-[[:alpha:]]\{3\}-[[:digit:]]\{4\}'
 
   grep -e '^Release:' "$FILENAME" \
 | head -n 1 \
-| sed -e $"s/.*\($PATTERN\).*/\\1/" \
+| sed -e "s/.*\($PATTERN\).*/\\1/" \
 | sed -e $'s/\(.*\)/DATE\t\\1/'

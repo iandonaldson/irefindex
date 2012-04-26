@@ -29,7 +29,7 @@ fi
 PATTERN=$'[[:digit:]]\{4\}_[[:digit:]]\{2\}'
 
   grep -e "$PATTERN" "$FILENAME" \
-| sed -e $"s/.*Release \($PATTERN\).*/\\1/" \
+| sed -e "s/.*Release \($PATTERN\).*/\\1/" \
 | head -n 1 \
 | sed -e $'s/\(.*\)/VERSION\t\\1/'
 
@@ -38,6 +38,6 @@ PATTERN=$'[[:digit:]]\{4\}_[[:digit:]]\{2\}'
 PATTERN=$'[[:digit:]]\{2\}-[[:alpha:]]\{3\}-[[:digit:]]\{4\}'
 
   grep -e "$PATTERN" "$FILENAME" \
-| sed -e $"s/.* of \($PATTERN\)/\\1/" \
+| sed -e "s/.* of \($PATTERN\)/\\1/" \
 | head -n 1 \
 | sed -e $'s/\(.*\)/DATE\t\\1/'

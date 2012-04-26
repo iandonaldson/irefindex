@@ -60,14 +60,14 @@ fi
           DETAILS="$MANIFESTS/irdata_manifest_$source.txt"
 
             "$TOOLS/irdata_manifest.py" "$URL" < "$DETAILS" \
-          | sed -e $"s/\(.*\)/$SOURCE\t\\1/"
+          | sed -e "s/\(.*\)/$SOURCE\t\\1/"
 
       # If a source uses a manifest parser, use that to obtain information.
 
       elif [ "$PARSER" ]; then
 
             "$PARSER" "$DATADIR/$FILE" \
-          | sed -e $"s/\(.*\)/$SOURCE\t\\1/"
+          | sed -e "s/\(.*\)/$SOURCE\t\\1/"
 
       # Otherwise, extract basic timestamp information from the downloads.
 
@@ -86,7 +86,7 @@ fi
             "$SCRIPTS/irfiletime" $DOWNLOAD_PATHS \
           | sort \
           | head -n 1 \
-          | sed -e $"s/\(.*\)/$SOURCE\tDATE\t\\1/"
+          | sed -e "s/\(.*\)/$SOURCE\tDATE\t\\1/"
 
       fi
 
