@@ -10,6 +10,7 @@ The following software is required to use this distribution:
   * Python (tested with 2.5.4, for the tools)
   * cmdsyntax (command option processing)
   * libxml2dom (HTML parsing for the manifest generation)
+  * libxml2 (required by libxml2dom)
 
 Most Unix-based operating systems will provide the necessary commands for the
 high-level scripts, but these commands may be provided separately or
@@ -39,7 +40,8 @@ Configuring an Installation of the Software
 If a system-wide installation is to reside in a directory hierarchy other than
 the conventional system root (that being /, with programs situated in
 /usr/bin, and so on), the configuration script should be copied from the
-scripts directory into the same directory as this file and modified:
+scripts directory into this software's distribution directory (normally
+containing this file) and modified:
 
   cp scripts/irdata-config .
 
@@ -170,8 +172,17 @@ specified:
 
   irbuild --reports
 
-Notes on Formats
-----------------
+The report output includes a summary Wiki page featuring a selection of
+individual reports which can be published when the build has been completed.
+
+Output files are generated using the following command:
+
+  irbuild --output
+
+The primary output format is PSI-MI TAB, also known as MITAB.
+
+Notes on Source Formats
+-----------------------
 
 Generally, identifier locality restrictions are not prominently specified or
 adhered to.
