@@ -32,9 +32,22 @@ create temporary table tmp_rigids_unique_by_source as
     group by source;
 
 create temporary table tmp_interaction_coverage as
-    select available.source, available.total as available_total,
+    select available.source,
+
+        -- Available interactions.
+
+        available.total as available_total,
+
+        -- Suitable interactions.
+
         coalesce(suitable.total, 0) as suitable_total,
+
+        -- Assigned/used RIGIDs for interactions.
+
         coalesce(used.total, 0) as assigned_total,
+
+        -- Assigned/used RIGIDs as a percentage of suitable interactions.
+
         case when suitable.total <> 0 then
             round(
                 cast(
@@ -44,7 +57,13 @@ create temporary table tmp_interaction_coverage as
                 )
             else null
         end as assigned_coverage,
+
+        -- Unique RIGIDs.
+
         coalesce(unique_rigids.total, 0) as unique_total,
+
+        -- Unique coverage as a percentage of the number of assigned/used RIGIDs.
+
         case when used.total <> 0 then
             round(
                 cast(
@@ -54,6 +73,7 @@ create temporary table tmp_interaction_coverage as
                 )
             else null
         end as unique_coverage
+
     from tmp_interactions_available_by_source as available
     left outer join tmp_interactions_having_assignments as suitable
         on available.source = suitable.source
@@ -65,7 +85,7 @@ create temporary table tmp_interaction_coverage as
     group by available.source, available.total, used.total, suitable.total, unique_rigids.total
     order by available.source;
 
--- Add headers.
+-- Add headers and totals.
 
 create temporary table tmp_interaction_coverage_by_source as
     select 'Source' as source, 'Total records' as available_total, 'Protein-related interactions' as suitable_total,
@@ -75,6 +95,11 @@ create temporary table tmp_interaction_coverage_by_source as
     select source, cast(available_total as varchar), cast(suitable_total as varchar),
         cast(assigned_total as varchar), cast(assigned_coverage as varchar),
         cast(unique_total as varchar), cast(unique_coverage as varchar)
+    from tmp_interaction_coverage
+    union all
+    select '(All)' as source, cast(sum(available_total) as varchar), cast(sum(suitable_total) as varchar),
+        cast(sum(assigned_total) as varchar), cast(round(cast(cast(sum(assigned_total) as real) / sum(suitable_total) * 100 as numeric), 2) as varchar),
+        cast(sum(unique_total) as varchar), cast(round(cast(cast(sum(unique_total) as real) / sum(assigned_total) * 100 as numeric), 2) as varchar)
     from tmp_interaction_coverage;
 
 \copy tmp_interaction_coverage_by_source to '<directory>/interaction_coverage_by_source'

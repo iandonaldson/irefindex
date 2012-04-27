@@ -156,7 +156,7 @@ create temporary table tmp_assignment_coverage as
 
 create temporary table tmp_rogid_coverage as
 
-    -- Make a header.
+    -- Add a header and totals.
 
     select 'Source' as source, 'Protein interactors' as total, 'Assigned' as assigned_total, '%' as coverage,
         'Arbitrary' as arbitrary_total, 'Matching sequence' as matching_sequence_total,
@@ -167,6 +167,17 @@ create temporary table tmp_rogid_coverage as
         cast(arbitrary_total as varchar), cast(matching_sequence_total as varchar),
         cast(interactor_sequence_total as varchar), cast(unassigned_total as varchar),
         cast(rogids_total as varchar)
+    from tmp_assignment_coverage
+    union all
+    select '(All)' as source,
+        cast(sum(total) as varchar),
+        cast(sum(assigned_total) as varchar),
+        cast(round(cast(cast(sum(assigned_total) as real) / (sum(assigned_total) + sum(unassigned_total)) * 100 as numeric), 2) as varchar),
+        cast(sum(arbitrary_total) as varchar),
+        cast(sum(matching_sequence_total) as varchar),
+        cast(sum(interactor_sequence_total) as varchar),
+        cast(sum(unassigned_total) as varchar),
+        cast(sum(rogids_total) as varchar)
     from tmp_assignment_coverage;
 
 \copy tmp_rogid_coverage to '<directory>/rogid_coverage_by_source'
