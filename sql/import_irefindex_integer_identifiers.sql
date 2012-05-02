@@ -38,11 +38,26 @@ insert into irefindex_rig2rigid
     union all
     select nextval('tmp_rig'), rigid, false
     from (
+
+        -- Newly numbered interactions can be interactions provided by
+        -- interaction records...
+
         select distinct N.rigid
         from irefindex_rigids as N
         left outer join tmp_rig2rigid as O
             on N.rigid = O.rigid
         where O.rigid is null
+        union
+
+        -- ...or canonical interactions not directly provided by interaction
+        -- records.
+
+        select distinct N.crigid
+        from irefindex_rigids_canonical as N
+        left outer join tmp_rig2rigid as O
+            on N.crigid = O.rigid
+        where O.rigid is null
+
         ) as X;
 
 create index irefindex_rig2rigid_rigid on irefindex_rig2rigid(rigid);
@@ -63,11 +78,27 @@ insert into irefindex_rog2rogid
     union all
     select nextval('tmp_rog'), rogid, false
     from (
+
+        -- Newly numbered interactors can be interactors provided by interaction
+        -- records.
+
         select distinct N.rogid
         from irefindex_rogids as N
         left outer join tmp_rog2rogid as O
             on N.rogid = O.rogid
         where O.rogid is null
+        union
+
+        -- ...or canonical interactors not directly provided by interaction
+        -- records, but known from sequence database records not employed by
+        -- interaction records.
+
+        select distinct N.crogid
+        from irefindex_rogids_canonical as N
+        left outer join tmp_rog2rogid as O
+            on N.crogid = O.rogid
+        where O.rogid is null
+
         ) as X;
 
 create index irefindex_rog2rogid_rogid on irefindex_rog2rogid(rogid);
