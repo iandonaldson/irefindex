@@ -229,8 +229,5 @@ if [ "$MAKE_OUTPUT" ]; then
 
     # Make output files.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" "$DATA" ; then
-        echo "$PROGNAME: Could not generate MITAB data." 1>&2
-        exit 1
-    fi
+    "$SCRIPTS/iroutput"
 fi

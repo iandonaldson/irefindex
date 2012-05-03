@@ -165,6 +165,10 @@ create temporary table tmp_secondary_references as
 
 analyze tmp_secondary_references;
 
+
+
+-- Build the assignments table from the different components.
+
 -- Take unambiguous primary reference assignments and all additional secondary
 -- references.
 
@@ -230,6 +234,8 @@ insert into irefindex_assignments
         and A.interactorid is null;
 
 analyze irefindex_assignments;
+
+
 
 -- Remaining unassigned interactors.
 
@@ -309,6 +315,8 @@ insert into irefindex_assignment_scores
            (P.source, P.filename, P.entry, P.interactorid, P.sequencelink, P.dblabel, P.refvalue);
 
 analyze irefindex_assignment_scores;
+
+
 
 -- ROG identifiers.
 -- Since more than one link to a sequence database may exist, the records must

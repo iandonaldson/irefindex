@@ -440,68 +440,6 @@ analyze tmp_mitab_interactions;
 -- Combine with ROG-related information to produce MITAB-appropriate records.
 
 create temporary table tmp_mitab_all as
-
-    -- Header section.
-
-    select
-        cast('#uidA' as varchar) as uidA,
-        cast('uidB' as varchar) as uidB,
-        cast('altA' as varchar) as altA,
-        cast('altB' as varchar) as altB,
-        cast('aliasA' as varchar) as aliasA,
-        cast('aliasB' as varchar) as aliasB,
-        cast('method' as varchar) as method,
-        cast('author' as varchar) as author,
-        cast('pmids' as varchar) as pmids,
-        cast('taxa' as varchar) as taxA,
-        cast('taxb' as varchar) as taxB,
-        cast('interactionType' as varchar) as interactionType,
-        cast('sourcedb' as varchar) as sourcedb,
-        cast('interactionIdentifier' as varchar) as interactionIdentifier,
-        cast('confidence' as varchar) as confidence,
-        cast('expansion' as varchar) as expansion,
-        cast('biological_role_A' as varchar) as biologicalRoleA,
-        cast('biological_role_B' as varchar) as biologicalRoleB,
-        cast('experimental_role_A' as varchar) as experimentalRoleA,
-        cast('experimental_role_B' as varchar) as experimentalRoleB,
-        cast('interactor_type_A' as varchar) as interactorTypeA,
-        cast('interactor_type_B' as varchar) as interactorTypeB,
-        cast('xrefs_A' as varchar) as xrefsA,
-        cast('xrefs_B' as varchar) as xrefsB,
-        cast('xrefs_Interaction' as varchar) as xrefsInteraction,
-        cast('Annotations_A' as varchar) as annotationsA,
-        cast('Annotations_B' as varchar) as annotationsB,
-        cast('Annotations_Interaction' as varchar) as annotationsInteraction,
-        cast('Host_organism_taxid' as varchar) as hostOrganismTaxid,
-        cast('parameters_Interaction' as varchar) as parametersInteraction,
-        cast('Creation_date' as varchar) as creationDate,
-        cast('Update_date' as varchar) as updateDate,
-        cast('Checksum_A' as varchar) as checksumA,
-        cast('Checksum_B' as varchar) as checksumB,
-        cast('Checksum_Interaction' as varchar) as checksumInteraction,
-        cast('Negative' as varchar) as negative,
-        cast('OriginalReferenceA' as varchar) as originalReferenceA,
-        cast('OriginalReferenceB' as varchar) as originalReferenceB,
-        cast('FinalReferenceA' as varchar) as finalReferenceA,
-        cast('FinalReferenceB' as varchar) as finalReferenceB,
-        cast('MappingScoreA' as varchar) as mappingScoreA,
-        cast('MappingScoreB' as varchar) as mappingScoreB,
-        cast('irogida' as varchar) as irogida,
-        cast('irogidb' as varchar) as irogidb,
-        cast('irigid' as varchar) as irigid,
-        cast('crogida' as varchar) as crogida,
-        cast('crogidb' as varchar) as crogidb,
-        cast('crigid' as varchar) as crigid,
-        cast('icrogida' as varchar) as icrogida,
-        cast('icrogidb' as varchar) as icrogidb,
-        cast('icrigid' as varchar) as icrigid,
-        cast('imex_id' as varchar) as imexid,
-        cast('edgetype' as varchar) as edgetype,
-        cast('numParticipants' as varchar) as numParticipants
-    union all
-
-    -- Data section.
-
     select
 
         -- uidA (identifier, preferably uniprotkb accession, refseq, complex as 'complex:...')
@@ -821,6 +759,42 @@ create temporary table tmp_mitab_all as
     inner join irefindex_rig2rigid as icrig
         on crigid.crigid = icrig.rigid;
 
+analyze tmp_mitab_all;
+
+-- Final output production.
+
+-- The complete data set for all organisms. Note that the headers will need
+-- adding.
+
 \copy tmp_mitab_all to '<directory>/mitab_all'
+
+-- Make special organism-specific files.
+
+create temporary table tmp_organisms (
+    taxid integer not null
+);
+
+\copy tmp_organisms from '<directory>/organisms.txt'
+analyze tmp_organisms;
+
+create temporary table tmp_interaction_taxids as
+    select distinct 'rigid:' || rigid as checksumInteraction, cast(substring(rogid from 28) as integer) as taxid
+    from irefindex_interactions;
+
+analyze tmp_interaction_taxids;
+
+-- The concatenated data set for each of the selected organisms. Note that the
+-- first taxonomy column will need stripping and the headers adding.
+
+create temporary table tmp_mitab_all_organisms as
+    select coalesce(cast(O.taxid as varchar), 'other') as taxid, M.*
+    from tmp_mitab_all as M
+    inner join tmp_interaction_taxids as T
+        on T.checksumInteraction = M.checksumInteraction
+    left outer join tmp_organisms as O
+        on O.taxid = T.taxid
+    order by T.taxid;
+
+\copy tmp_mitab_all_organisms to '<directory>/mitab_all_organisms'
 
 rollback;
