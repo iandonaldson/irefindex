@@ -9,7 +9,8 @@ else
 fi
 
 DATESTAMP=`date +%Y-%m-%d`
-MITAB_OUTPUT="$DATA/All.mitab.$DATESTAMP.txt"
+MITAB_COMPLETE_OUTPUT="$DATA/All.mitab.$DATESTAMP.txt"
+MITAB_ORGANISM_OUTPUT="$DATA/{}.mitab.$DATESTAMP.txt"
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
@@ -17,7 +18,7 @@ Usage: $PROGNAME
 
 Generate the complete MITAB output file...
 
-$MITAB_OUTPUT
+$MITAB_COMPLETE_OUTPUT
 
 ...along with organism-specific files.
 EOF
@@ -36,13 +37,11 @@ fi
 # Add the header to the complete file.
 
   cat "$SQL/mitab_header.txt" "$DATA/mitab_all" \
-> "$MITAB_OUTPUT"
+> "$MITAB_COMPLETE_OUTPUT"
 
 # Use the organisms file to produce separate specific files.
 # Select the header line and lines containing each taxonomy identifier, removing
 # the taxonomy column.
-
-OUTPUT="$DATA/{}.mitab.$DATESTAMP.txt"
 
 echo 'other' >> "$DATA/organisms.txt"
 
@@ -50,4 +49,4 @@ echo 'other' >> "$DATA/organisms.txt"
 # Append the actual content to the header.
 
   cat "$DATA/organisms.txt" \
-| xargs $XARGS_I'{}' sh -c "cp \"$SQL/mitab_header.txt\" \"$OUTPUT\" && grep -e $'^{}\t' \"$DATA/mitab_all_organisms\" | cut -f 2- >> \"$OUTPUT\""
+| xargs $XARGS_I'{}' sh -c "cp \"$SQL/mitab_header.txt\" \"$MITAB_ORGANISM_OUTPUT\" && grep -e $'^{}\t' \"$DATA/mitab_all_organisms\" | cut -f 2- >> \"$MITAB_ORGANISM_OUTPUT\""
