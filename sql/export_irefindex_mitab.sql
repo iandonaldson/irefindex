@@ -451,7 +451,6 @@ create temporary table tmp_mitab_all as
         prefB.dblabel || ':' || prefB.refvalue as uidB,
 
         -- altA (alternatives for A, preferably uniprotkb accession, refseq, entrezgene/locuslink identifier, including rogid, irogid)
-        -- NOTE: Complexes use the 'rogid:' prefix.
 
         case when edgetype = 'C' then 'rogid:' || I.rigid
              else array_to_string(
@@ -479,7 +478,6 @@ create temporary table tmp_mitab_all as
                 ), '|') as altB,
 
         -- aliasA (aliases for A, preferably uniprotkb identifier/entry, entrezgene/locuslink symbol, including crogid, icrogid)
-        -- NOTE: Complexes use the 'crogid:', 'icrogid:' prefixes.
 
         case when edgetype = 'C' then 'crogid:' || crigid.crigid || '|icrogid:' || cast(icrig.rig as varchar)
              else array_to_string(
@@ -613,12 +611,10 @@ create temporary table tmp_mitab_all as
         cast(current_date as varchar) as updateDate,
 
         -- checksumA (the rogid for interactor A as "rogid:...")
-        -- NOTE: The prefix is somewhat inappropriate for complexes.
 
         'rogid:' || I.uidA as checksumA,
 
         -- checksumB (the rogid for interactor B as "rogid:...")
-        -- NOTE: The prefix is somewhat inappropriate for complexes.
 
         'rogid:' || I.uidB as checksumB,
 
