@@ -18,11 +18,10 @@ EOF
     exit 1
 fi
 
-DATADIR=$1
-FILENAME=$2
+FILENAME=$1
 
-if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
-    echo "$PROGNAME: A data directory and an input filename must be specified." 1>&2
+if [ ! "$FILENAME" ]; then
+    echo "$PROGNAME: An input filename must be specified." 1>&2
     exit 1
 fi
 

@@ -31,7 +31,7 @@ RESULTFILE="$FILENAME.result"
 # Note that this is done serially due to Entrez usage restrictions.
 
   "$TOOLS/irdata_split.py" -1 10000 "$FILENAME" \
-| xargs $XARGS_I'{}' sh -c "echo {} | \"$SCRIPTS/irslice\" \"$FILENAME\" - | \"$TOOLS/irdata_fetch_eutils.sh\" \"$DATADIR\" \"$FILENAME\"" \
+| xargs $XARGS_I'{}' sh -c "echo {} | \"$SCRIPTS/irslice\" \"$FILENAME\" - | \"$TOOLS/irdata_fetch_eutils.sh\" \"$FILENAME\"" \
 > "$RESULTFILE"
 
 # Parse the feature table output, producing files similar to those normally
