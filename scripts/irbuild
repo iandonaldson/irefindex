@@ -63,6 +63,20 @@ if [ "$BUILD" ]; then
         exit 1
     fi
 
+    # Import obsolete identifiers from a previous release.
+
+    if [ -e "$DATA/obsolete" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_obsolete.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not import obsolete identifiers from the previous release." 1>&2
+        exit 1
+    fi
+
+    # Build a sequence archive for the release.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_sequences.sql" ; then
+        echo "$PROGNAME: Could not build a sequence archive from the imported data." 1>&2
+        exit 1
+    fi
+
     # Identify the interactors.
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactors.sql" ; then
