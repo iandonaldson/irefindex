@@ -50,6 +50,13 @@ if [ "$PGSQL" ]; then
         exit 1
     fi
 
+    # Export obsolete identifiers from a PostgreSQL database.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_obsolete.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not export obsolete identifiers from the previous database." 1>&2
+        exit 1
+    fi
+
 elif [ "$MYSQL" ]; then
 
     # Export identifiers from a MySQL database.
@@ -64,4 +71,10 @@ elif [ "$MYSQL" ]; then
         exit 1
     fi
 
+    # Export obsolete identifiers from a MySQL database.
+
+    if ! mysql $OPTIONS < "$SQL/mysql/export_irefindex_obsolete.sql" > "$DATA/obsolete" ; then
+        echo "$PROGNAME: Could not export obsolete identifiers from the previous database." 1>&2
+        exit 1
+    fi
 fi
