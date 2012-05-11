@@ -3,10 +3,16 @@ begin;
 -- UniProt accessions mapping directly and indirectly to proteins.
 
 insert into irefindex_sequences
-    select distinct 'uniprotkb' as dblabel, accession as refvalue,
+
+    -- Accessions are distinct in the proteins table.
+
+    select 'uniprotkb' as dblabel, accession as refvalue,
         taxid as reftaxid, sequence as refsequence, sequencedate as refdate
     from uniprot_proteins as P
     union all
+
+    -- Accessions may occur many times in the accessions table.
+
     select distinct 'uniprotkb' as dblabel, A.accession as refvalue,
         P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
     from uniprot_accessions as A
@@ -20,17 +26,25 @@ insert into irefindex_sequences
     where P2.accession is null;
 
 -- RefSeq versions and accessions mapping directly to proteins.
+
+insert into irefindex_sequences
+
+    -- Versions and accessions are distinct in the proteins table.
+
+    select 'refseq' as dblabel, version as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from refseq_proteins as P
+    union all
+    select 'refseq' as dblabel, accession as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from refseq_proteins as P;
+
 -- RefSeq nucleotides mapping directly and indirectly to proteins.
 
 insert into irefindex_sequences
-    select distinct 'refseq' as dblabel, version as refvalue,
-        taxid as reftaxid, sequence as refsequence, null as refdate
-    from refseq_proteins as P
-    union all
-    select distinct 'refseq' as dblabel, accession as refvalue,
-        taxid as reftaxid, sequence as refsequence, null as refdate
-    from refseq_proteins as P
-    union all
+
+    -- Nucleotides can be mapped to a number of different proteins.
+
     select distinct 'refseq' as dblabel, nucleotide as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from refseq_nucleotides as N
@@ -43,13 +57,7 @@ insert into irefindex_sequences
     inner join refseq_nucleotides as N
         on A.nucleotide = N.nucleotide
     inner join refseq_proteins as P
-        on N.protein = P.accession
-
-    -- Exclude previous matches.
-
-    left outer join refseq_proteins as P2
-        on A.shortform = P2.accession
-    where P2.accession is null;
+        on N.protein = P.accession;
 
 -- FlyBase accessions mapping directly and indirectly to proteins.
 
@@ -118,15 +126,18 @@ insert into irefindex_sequences
 -- RefSeq and GenPept.
 
 insert into irefindex_sequences
-    select distinct 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
+
+    -- GenBank identifiers are distinct in RefSeq and GenPept.
+
+    select 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from refseq_proteins as P
     union all
-    select distinct 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
+    select 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from genpept_proteins as P
     union all
-    select distinct 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
+    select 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
         P.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from genpept_accessions as A
     inner join genpept_proteins as P
@@ -135,11 +146,14 @@ insert into irefindex_sequences
 -- GenBank accessions mapping directly and indirectly to proteins.
 
 insert into irefindex_sequences
-    select distinct 'ddbj/embl/genbank' as dblabel, accession as refvalue,
+
+    -- Accessions and the short forms are distinct in GenPept.
+
+    select 'ddbj/embl/genbank' as dblabel, accession as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from genpept_proteins as P
     union all
-    select distinct 'ddbj/embl/genbank' as dblabel, shortform as refvalue,
+    select 'ddbj/embl/genbank' as dblabel, shortform as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from genpept_accessions as A
     inner join genpept_proteins as P

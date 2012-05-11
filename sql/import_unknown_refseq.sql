@@ -144,14 +144,20 @@ insert into irefindex_gene2refseq
 create temporary table tmp_irefindex_sequences as
     select dblabel, refvalue, reftaxid, refsequence, refdate
     from (
-        select distinct 'refseq' as dblabel, version as refvalue,
+
+        -- Versions and accessions are distinct in the proteins table.
+
+        select 'refseq' as dblabel, version as refvalue,
             taxid as reftaxid, sequence as refsequence, null as refdate
         from tmp_refseq_proteins as P
         union all
-        select distinct 'refseq' as dblabel, accession as refvalue,
+        select 'refseq' as dblabel, accession as refvalue,
             taxid as reftaxid, sequence as refsequence, null as refdate
         from tmp_refseq_proteins as P
         union all
+
+        -- Nucleotides can be mapped to a number of different proteins.
+
         select distinct 'refseq' as dblabel, nucleotide as refvalue,
             taxid as reftaxid, sequence as refsequence, null as refdate
         from refseq_nucleotides as N
@@ -166,11 +172,6 @@ create temporary table tmp_irefindex_sequences as
         inner join refseq_proteins as P
             on N.protein = P.accession
 
-        -- Exclude previous matches.
-
-        left outer join refseq_proteins as P2
-            on A.shortform = P2.accession
-        where P2.accession is null
         ) as X
 
     -- Exclude previous matches.
