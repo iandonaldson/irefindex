@@ -50,10 +50,10 @@ if [ "$PGSQL" ]; then
         exit 1
     fi
 
-    # Export obsolete identifiers from a PostgreSQL database.
+    # Export archived identifiers from a PostgreSQL database.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_obsolete.sql" "$DATA" ; then
-        echo "$PROGNAME: Could not export obsolete identifiers from the previous database." 1>&2
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_archived.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not export archived identifiers from the previous database." 1>&2
         exit 1
     fi
 
@@ -61,20 +61,20 @@ elif [ "$MYSQL" ]; then
 
     # Export identifiers from a MySQL database.
 
-    if ! mysql $OPTIONS < "$SQL/mysql/export_irefindex_integer_rigids.sql" > "$DATA/rig2rigid" ; then
+    if ! mysql -N $OPTIONS < "$SQL/mysql/export_irefindex_integer_rigids.sql" > "$DATA/rig2rigid" ; then
         echo "$PROGNAME: Could not export integer RIG identifiers from the previous database." 1>&2
         exit 1
     fi
 
-    if ! mysql $OPTIONS < "$SQL/mysql/export_irefindex_integer_rogids.sql" > "$DATA/rog2rogid" ; then
+    if ! mysql -N $OPTIONS < "$SQL/mysql/export_irefindex_integer_rogids.sql" > "$DATA/rog2rogid" ; then
         echo "$PROGNAME: Could not export integer ROG identifiers from the previous database." 1>&2
         exit 1
     fi
 
-    # Export obsolete identifiers from a MySQL database.
+    # Export archived identifiers from a MySQL database.
 
-    if ! mysql $OPTIONS < "$SQL/mysql/export_irefindex_obsolete.sql" > "$DATA/obsolete" ; then
-        echo "$PROGNAME: Could not export obsolete identifiers from the previous database." 1>&2
+    if ! mysql -N $OPTIONS < "$SQL/mysql/export_irefindex_archived.sql" > "$DATA/sequences_archived" ; then
+        echo "$PROGNAME: Could not export archived identifiers from the previous database." 1>&2
         exit 1
     fi
 fi

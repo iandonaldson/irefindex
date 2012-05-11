@@ -1,6 +1,6 @@
--- A mapping from accessions to reference database sequences.
+-- Archived sequences.
 
-create table irefindex_sequences (
+create table irefindex_sequences_archived (
 
     -- Identifier details.
 
@@ -9,9 +9,8 @@ create table irefindex_sequences (
 
     -- Sequence reference database information.
 
-    reftaxid integer,
-    refsequence varchar,
-    refdate varchar
+    reftaxid integer not null,
+    refsequence varchar not null
 
     -- Constraints are added after import.
 );

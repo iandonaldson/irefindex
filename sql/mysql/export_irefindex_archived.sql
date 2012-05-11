@@ -1,4 +1,4 @@
-select distinct dblabel, refvalue, sequence, taxid
+select distinct dblabel, refvalue, taxid, sequence
 from (
     select case when db like 'uniprot%' or db = 'Swiss-Prot' then 'uniprotkb'
                 else lower(db)
@@ -6,5 +6,5 @@ from (
            acc as refvalue,
            seguid as sequence,
            taxid
-    from seguid_remv
+    from seguid
     ) as X;

@@ -320,6 +320,25 @@ insert into xml_xref_sequences
 create index xml_xref_sequences_index on xml_xref_sequences(dblabel, refvalue);
 analyze xml_xref_sequences;
 
+-- Obtain unmapped accessions.
+-- Use archived information to map these accessions to sequences.
+
+insert into xml_xref_sequences
+    select distinct X.dblabel, X.refvalue, X.dblabel || '/archived' as sequencelink,
+        reftaxid, refsequence, null as refdate
+    from (
+        select distinct X.dblabel, X.refvalue
+        from xml_xref_interactors as X
+        left outer join xml_xref_sequences as S
+            on (X.dblabel, X.refvalue) = (S.dblabel, S.refvalue)
+        where S.dblabel is null
+        ) as X
+    inner join irefindex_sequences_archived as P
+        on X.dblabel = P.dblabel
+        and X.refvalue = P.refvalue;
+
+analyze xml_xref_sequences;
+
 -- Combine the interactor details with the identifier sequence details.
 
 insert into xml_xref_interactor_sequences

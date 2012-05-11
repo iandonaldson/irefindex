@@ -304,7 +304,7 @@ insert into irefindex_assignment_scores
             case when method                = 'arbitrary'                                                               then 'L' else '' end,
             case when A.dblabel             = 'genbank_protein_gi'                                                      then 'I' else '' end,
             case when missing                                                                                           then 'E' else '' end,
-            '', -- Y score not yet supported (refers to obsolete assignment)
+            case when sequencelink          like '%/archived' 								then 'Y' else '' end,
             -- NOTE: N refers to "new assignment", but this appears to be specific to interaction record sequences.
             case when method                = 'interactor sequence'                                                     then 'N' else '' end,
             case when reftypelabel          = 'see-also'                                                                then 'Q' else '' end
