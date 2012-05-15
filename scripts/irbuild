@@ -84,6 +84,27 @@ if [ "$BUILD" ]; then
         exit 1
     fi
 
+    # Map identifiers to sequences in current databases.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" --defs sequences irefindex_sequences linkprefix '' ; then
+        echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+        exit 1
+    fi
+
+    # Map identifiers to sequences in archived databases.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" --defs sequences irefindex_sequences_archived linkprefix 'archived/' ; then
+        echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+        exit 1
+    fi
+
+    # Map interactors to sequences.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactor_sequences.sql" ; then
+        echo "$PROGNAME: Could not map interactors to sequences." 1>&2
+        exit 1
+    fi
+
     # Add missing interactor information.
 
     if ! "$SCRIPTS/irmissing" $MISSING_OPTIONS ; then
@@ -108,7 +129,7 @@ if [ "$BUILD" ]; then
 
     # Make canonical interactor information.
 
-    if ! "$SCRIPTS/ircanonical" ; then
+    if ! "$SCRIPTS/ircanonical" --build ; then
         echo "$PROGNAME: Did not make canonical information." 1>&2
         exit 1
     fi

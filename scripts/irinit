@@ -36,6 +36,16 @@ for SOURCE in $ALLSOURCES ; do
     fi
 done
 
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_sequences.sql" ; then
+    echo "$PROGNAME: Could not initialise the consolidated sequence information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_archived.sql" ; then
+    echo "$PROGNAME: Could not initialise the archived sequence information schema." 1>&2
+    exit 1
+fi
+
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactors.sql" ; then
     echo "$PROGNAME: Could not initialise the interactor information schema." 1>&2
     exit 1

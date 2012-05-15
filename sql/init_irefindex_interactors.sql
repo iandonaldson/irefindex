@@ -112,14 +112,13 @@ create table xml_xref_sequences (
 
     reftaxid integer,
     refsequence varchar,
-    refdate varchar,
 
     -- Sequence availability information.
 
     missing boolean not null default false
-
-    -- Constraints are added after import.
 );
+
+create index xml_xref_sequences_index on xml_xref_sequences(dblabel, refvalue);
 
 -- Specific interactor sequences.
 
@@ -160,8 +159,7 @@ create table xml_xref_interactor_sequences (
     -- Sequence reference database information.
 
     reftaxid integer,
-    refsequence varchar,
-    refdate varchar
+    refsequence varchar
 
     -- Constraints are added after import.
 );

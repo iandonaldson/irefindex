@@ -193,7 +193,7 @@ analyze tmp_irefindex_sequences;
 
 create temporary table tmp_plain as
     select distinct X.dblabel, X.refvalue, X.dblabel as sequencelink,
-        reftaxid, refsequence, refdate
+        reftaxid, refsequence
     from xml_xref_interactors as X
     inner join tmp_irefindex_sequences as P
         on X.dblabel = P.dblabel
@@ -208,7 +208,7 @@ create temporary table tmp_refseq_discarding_version as
     -- The latest version for the matching accession is chosen.
 
     select distinct X.dblabel, X.refvalue, 'refseq/version-discarded' as sequencelink,
-        reftaxid, refsequence, null as refdate
+        reftaxid, refsequence
     from xml_xref_interactors as X
     inner join tmp_irefindex_sequences as P
         on X.dblabel = P.dblabel
@@ -220,7 +220,7 @@ create temporary table tmp_refseq_discarding_version as
 
 create temporary table tmp_refseq_gene as
     select distinct X.dblabel, X.refvalue, 'refseq/entrezgene' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join tmp_irefindex_gene2refseq as P
         on X.refvalue ~ '^[[:digit:]]*$'
@@ -231,7 +231,7 @@ create temporary table tmp_refseq_gene as
 
 create temporary table tmp_refseq_gene_history as
     select distinct X.dblabel, X.refvalue, 'refseq/entrezgene-history' as sequencelink,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+        P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join gene_history as H
         on X.refvalue ~ '^[[:digit:]]*$'
@@ -256,7 +256,6 @@ create temporary table tmp_xml_xref_sequences (
     sequencelink varchar,
     reftaxid integer,
     refsequence varchar,
-    refdate varchar,
     missing boolean not null default true
 );
 
@@ -294,7 +293,7 @@ insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, reftypelabel,
         I.dblabel, I.refvalue,
         originaldblabel, originalrefvalue, missing,
-        taxid, sequence, sequencelink, reftaxid, refsequence, refdate
+        taxid, sequence, sequencelink, reftaxid, refsequence
     from xml_xref_interactors as I
     inner join tmp_xml_xref_sequences as S
         on (I.dblabel, I.refvalue) = (S.dblabel, S.refvalue);
