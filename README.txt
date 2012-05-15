@@ -122,6 +122,18 @@ failed. Re-running irmanifest with specific source names will add information
 for those sources to the manifest file, although some investigation of
 problems related to manifest/release information retrieval may be necessary.
 
+Parsing Source Data
+-------------------
+
+The source data must be parsed and converted to a form that can be imported
+into the database; this is done as follows:
+
+  irparse --all
+
+Once parsed, the import data will reside in an "import" subdirectory of the
+main data directory. Thus, if the main data directory is /home/irefindex/data
+then the import data will reside in /home/irefindex/data/import.
+
 Importing Source Data
 ---------------------
 
