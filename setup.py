@@ -23,6 +23,7 @@ setup(
               glob.glob("irdata-config"),
     data_files = [
         (os.path.join("share", "irdata", "sql"), glob.glob(os.path.join("sql", "*.sql"))),
+        (os.path.join("share", "irdata", "sql", "mysql"), glob.glob(os.path.join("sql", "mysql", "*.sql"))),
         (os.path.join("share", "irdata", "reports"), glob.glob(os.path.join("reports", "*.sql"))),
         (os.path.join("share", "irdata", "manifests"), glob.glob(os.path.join("manifests", "*.txt"))),
         ]
