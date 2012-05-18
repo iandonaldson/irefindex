@@ -38,6 +38,11 @@ QUERYFILE="$FILENAME.query"
 |  sed -e 's/,$//' \
 >> "$QUERYFILE"
 
+# Wait before wget because the retrieval operation will only get one resource.
+
+echo "$PROGNAME: Waiting for $WGET_WAIT..." 1>&2
+sleep "$WGET_WAIT"
+
 if ! wget -O - "$EFETCH_URL" --post-file="$QUERYFILE" ; then
     echo "$PROGNAME: Could not download the missing sequence records from RefSeq." 1>&2
     exit 1
