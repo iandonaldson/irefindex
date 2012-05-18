@@ -68,7 +68,7 @@ insert into refseq_proteins
 analyze refseq_proteins;
 
 insert into refseq_identifiers
-    select distinct T.*
+    select distinct T.accession, T.dblabel, T.refvalue, T.position, true as missing
     from tmp_refseq_identifiers as T
     left outer join refseq_identifiers as I
         on T.accession = I.accession
@@ -79,7 +79,7 @@ insert into refseq_identifiers
 analyze refseq_identifiers;
 
 insert into refseq_nucleotides
-    select distinct T.*
+    select distinct T.nucleotide, T.protein, true as missing
     from tmp_refseq_nucleotides as T
     left outer join refseq_nucleotides as N
         on T.nucleotide = N.nucleotide
@@ -89,7 +89,7 @@ insert into refseq_nucleotides
 analyze refseq_nucleotides;
 
 insert into refseq_nucleotide_accessions
-    select T.*
+    select T.nucleotide, T.shortform, true as missing
     from tmp_refseq_nucleotide_accessions as T
     left outer join refseq_nucleotide_accessions as A
         on T.nucleotide = A.nucleotide
@@ -102,7 +102,7 @@ analyze refseq_nucleotide_accessions;
 -- Augment the gene mapping with new protein information.
 
 create temporary table tmp_irefindex_gene2refseq as
-    select geneid, accession, taxid, sequence, length
+    select X.geneid, X.accession, X.taxid, X.sequence, X.length, true as missing
     from (
         select geneid, P.accession, P.taxid, P.sequence, P.length
         from gene2refseq as G
@@ -129,56 +129,103 @@ create temporary table tmp_irefindex_gene2refseq as
 analyze tmp_irefindex_gene2refseq;
 
 insert into irefindex_gene2refseq
-    select * from tmp_irefindex_gene2refseq;
+    select geneid, accession, taxid, sequence, length, missing
+    from tmp_irefindex_gene2refseq;
 
 
 
 -- Augment the sequences archive.
 -- See import_irefindex_sequences.sql for similar code.
--- Note that the whole RefSeq dataset is used in some places since there may be
--- new records that are referenced by existing ones.
 
 -- RefSeq versions and accessions mapping directly to proteins.
 -- RefSeq nucleotides mapping directly and indirectly to proteins.
 
+create temporary table tmp_irefindex_sequences_updated as
+
+    -- Versions and accessions are distinct in the proteins table.
+
+    select 'refseq' as dblabel, version as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from tmp_refseq_proteins as P
+    union all
+    select 'refseq' as dblabel, accession as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from tmp_refseq_proteins as P
+    union all
+
+    -- Nucleotides can be mapped to a number of different proteins.
+
+    -- Completely new nucleotide and protein records.
+
+    select distinct 'refseq' as dblabel, nucleotide as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from tmp_refseq_nucleotides as N
+    inner join tmp_refseq_proteins as P
+        on N.protein = P.accession
+    union
+
+    -- Completely new nucleotide records.
+
+    select distinct 'refseq' as dblabel, nucleotide as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from tmp_refseq_nucleotides as N
+    inner join refseq_proteins as P
+        on N.protein = P.accession
+    union
+
+    -- Completely new protein records.
+
+    select distinct 'refseq' as dblabel, nucleotide as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from refseq_nucleotides as N
+    inner join tmp_refseq_proteins as P
+        on N.protein = P.accession
+    union all
+
+    -- Completely new nucleotide and protein records.
+
+    select distinct 'refseq' as dblabel, shortform as refvalue,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from tmp_refseq_nucleotide_accessions as A
+    inner join tmp_refseq_nucleotides as N
+        on A.nucleotide = N.nucleotide
+    inner join refseq_proteins as P
+        on N.protein = P.accession
+    union
+
+    -- Completely new nucleotide records.
+
+    select distinct 'refseq' as dblabel, shortform as refvalue,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from tmp_refseq_nucleotide_accessions as A
+    inner join tmp_refseq_nucleotides as N
+        on A.nucleotide = N.nucleotide
+    inner join refseq_proteins as P
+        on N.protein = P.accession
+    union
+
+    -- Completely new protein records.
+
+    select distinct 'refseq' as dblabel, shortform as refvalue,
+        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
+    from refseq_nucleotide_accessions as A
+    inner join refseq_nucleotides as N
+        on A.nucleotide = N.nucleotide
+    inner join tmp_refseq_proteins as P
+        on N.protein = P.accession;
+
+create index tmp_irefindex_sequences_updated_index on tmp_irefindex_sequences_updated(dblabel, refvalue);
+analyze tmp_irefindex_sequences_updated;
+
 create temporary table tmp_irefindex_sequences as
-    select dblabel, refvalue, reftaxid, refsequence, refdate
-    from (
-
-        -- Versions and accessions are distinct in the proteins table.
-
-        select 'refseq' as dblabel, version as refvalue,
-            taxid as reftaxid, sequence as refsequence, null as refdate
-        from tmp_refseq_proteins as P
-        union all
-        select 'refseq' as dblabel, accession as refvalue,
-            taxid as reftaxid, sequence as refsequence, null as refdate
-        from tmp_refseq_proteins as P
-        union all
-
-        -- Nucleotides can be mapped to a number of different proteins.
-
-        select distinct 'refseq' as dblabel, nucleotide as refvalue,
-            taxid as reftaxid, sequence as refsequence, null as refdate
-        from refseq_nucleotides as N
-        inner join refseq_proteins as P
-            on N.protein = P.accession
-        union all
-        select distinct 'refseq' as dblabel, shortform as refvalue,
-            P.taxid as reftaxid, P.sequence as refsequence, null as refdate
-        from refseq_nucleotide_accessions as A
-        inner join refseq_nucleotides as N
-            on A.nucleotide = N.nucleotide
-        inner join refseq_proteins as P
-            on N.protein = P.accession
-
-        ) as X
+    select X.dblabel, X.refvalue, X.reftaxid, X.refsequence, X.refdate
+    from tmp_irefindex_sequences_updated as X
 
     -- Exclude previous matches.
 
     left outer join irefindex_sequences as P2
         on X.dblabel = P2.dblabel
-        and X.refvalue = P2.refvalue;
+        and X.refvalue = P2.refvalue
     where P2.dblabel is null;
 
 create index tmp_irefindex_sequences_index on tmp_irefindex_sequences(dblabel, refvalue);
@@ -270,6 +317,8 @@ insert into tmp_xml_xref_sequences
 
 create index tmp_xml_xref_sequences_index on tmp_xml_xref_sequences(dblabel, refvalue);
 analyze tmp_xml_xref_sequences;
+
+
 
 -- Update the identifier-to-sequence mapping with the new information.
 

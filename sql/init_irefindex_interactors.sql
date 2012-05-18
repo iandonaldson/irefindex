@@ -32,6 +32,8 @@ create table irefindex_gene2refseq (
     "sequence" varchar not null,
     length integer not null,
 
+    missing boolean not null default false, -- indicates whether the mapping was initially missing
+
     primary key(geneid, accession)
 );
 
