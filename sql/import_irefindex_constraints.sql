@@ -22,6 +22,4 @@ analyze xml_xref;
 
 analyze xml_organisms;
 
-analyze xml_hostorganisms;
-
 commit;
