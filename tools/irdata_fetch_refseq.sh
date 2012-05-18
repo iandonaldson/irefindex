@@ -50,5 +50,5 @@ cat "$DATADIR"/*_nucleotides > "$DATADIR/refseq_nucleotides.txt"
 
 # Process the sequence data.
 
-"$TOOLS/irdata_process_signatures.sh" "$DATADIR"
+"$TOOLS/irdata_process_signatures.sh" "$DATADIR" --append-length
 exit $?
