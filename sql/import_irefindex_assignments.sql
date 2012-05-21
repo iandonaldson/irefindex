@@ -251,6 +251,8 @@ insert into irefindex_unassigned
 
 analyze irefindex_unassigned;
 
+
+
 -- Preferred assignments.
 -- The above assignments includes potentially multiple paths to the same
 -- sequence for each interactor. By nominating preferred sequence links, a
@@ -282,6 +284,8 @@ insert into irefindex_assignments_preferred
            (P.source, P.filename, P.entry, P.interactorid, preferred[2], preferred[3], preferred[4]);
 
 analyze irefindex_assignments_preferred;
+
+
 
 -- Scoring of assignments.
 
