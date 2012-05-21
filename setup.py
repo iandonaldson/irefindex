@@ -3,7 +3,8 @@
 "Setup file for irdata."
 
 from distutils.core import setup
-import glob, os
+from glob import glob
+from os.path import join
 
 setup(
     name="irdata",
@@ -17,15 +18,15 @@ setup(
         # Add new modules here.
         ],
     # Install a modified irdata-config file in the current directory, if present.
-    scripts = glob.glob(os.path.join("scripts", "*")) + \
-              glob.glob(os.path.join("tools", "*.py")) + \
-              glob.glob(os.path.join("tools", "*.sh")) + \
-              glob.glob("irdata-config"),
+    scripts = glob(join("scripts", "*")) + \
+              glob(join("tools", "*.py")) + \
+              glob(join("tools", "*.sh")) + \
+              glob("irdata-config"),
     data_files = [
-        (os.path.join("share", "irdata", "sql"), glob.glob(os.path.join("sql", "*.sql"))),
-        (os.path.join("share", "irdata", "sql", "mysql"), glob.glob(os.path.join("sql", "mysql", "*.sql"))),
-        (os.path.join("share", "irdata", "reports"), glob.glob(os.path.join("reports", "*.sql"))),
-        (os.path.join("share", "irdata", "manifests"), glob.glob(os.path.join("manifests", "*.txt"))),
+        (join("share", "irdata", "sql"), glob(join("sql", "*.sql")) + glob(join("sql", "*.txt"))),
+        (join("share", "irdata", "sql", "mysql"), glob(join("sql", "mysql", "*.sql"))),
+        (join("share", "irdata", "reports"), glob(join("reports", "*.sql"))),
+        (join("share", "irdata", "manifests"), glob(join("manifests", "*.txt"))),
         ]
     )
 
