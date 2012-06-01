@@ -8,22 +8,7 @@ insert into irefindex_sequences
 
     select 'uniprotkb' as dblabel, accession as refvalue,
         taxid as reftaxid, sequence as refsequence, sequencedate as refdate
-    from uniprot_proteins as P
-    union all
-
-    -- Accessions may occur many times in the accessions table.
-
-    select distinct 'uniprotkb' as dblabel, A.accession as refvalue,
-        P.taxid as reftaxid, P.sequence as refsequence, P.sequencedate as refdate
-    from uniprot_accessions as A
-    inner join uniprot_proteins as P
-        on A.uniprotid = P.uniprotid
-
-    -- Exclude previous matches.
-
-    left outer join uniprot_proteins as P2
-        on A.accession = P2.accession
-    where P2.accession is null;
+    from uniprot_proteins as P;
 
 -- RefSeq versions and accessions mapping directly to proteins.
 
@@ -34,10 +19,12 @@ insert into irefindex_sequences
     select 'refseq' as dblabel, version as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from refseq_proteins as P
+    where version is not null
     union all
     select 'refseq' as dblabel, accession as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
-    from refseq_proteins as P;
+    from refseq_proteins as P
+    where accession is not null;
 
 -- RefSeq nucleotides mapping directly and indirectly to proteins.
 

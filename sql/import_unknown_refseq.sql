@@ -147,10 +147,12 @@ create temporary table tmp_irefindex_sequences_updated as
     select 'refseq' as dblabel, version as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from tmp_refseq_proteins as P
+    where version is not null
     union all
     select 'refseq' as dblabel, accession as refvalue,
         taxid as reftaxid, sequence as refsequence, null as refdate
     from tmp_refseq_proteins as P
+    where accession is not null
     union all
 
     -- Nucleotides can be mapped to a number of different proteins.
@@ -212,7 +214,14 @@ create temporary table tmp_irefindex_sequences_updated as
     inner join refseq_nucleotides as N
         on A.nucleotide = N.nucleotide
     inner join tmp_refseq_proteins as P
-        on N.protein = P.accession;
+        on N.protein = P.accession
+    union all
+
+    -- Completely new protein records referenced using GenBank identifiers.
+
+    select 'genbank_protein_gi' as dblabel, cast(gi as varchar) as refvalue,
+        taxid as reftaxid, sequence as refsequence, null as refdate
+    from tmp_refseq_proteins;
 
 create index tmp_irefindex_sequences_updated_index on tmp_irefindex_sequences_updated(dblabel, refvalue);
 analyze tmp_irefindex_sequences_updated;
@@ -230,6 +239,12 @@ create temporary table tmp_irefindex_sequences as
 
 create index tmp_irefindex_sequences_index on tmp_irefindex_sequences(dblabel, refvalue);
 analyze tmp_irefindex_sequences;
+
+insert into irefindex_sequences
+    select *
+    from tmp_irefindex_sequences;
+
+analyze irefindex_sequences;
 
 
 

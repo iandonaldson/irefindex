@@ -1,3 +1,7 @@
+-- In this template, the following parameters can be specified:
+-- <sequences> may be given as 'irefindex_sequences' or 'irefindex_sequences_archived'
+-- <linkprefix> may be given as '' or 'archived/'
+
 begin;
 
 -- Find identifiers in sequence databases.
@@ -118,15 +122,16 @@ create temporary table tmp_yeast_primary as
         on (X.dblabel, X.refvalue) = (P2.dblabel, P2.refvalue)
     where P2.dblabel is null;
 
--- GenBank protein identifier matches in RefSeq.
+-- GenBank protein identifier matches in RefSeq or against accessions.
 
 create temporary table tmp_genpept_genbank_accession as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'genpept/genbank-accession-bad-gi' as sequencelink,
+    select distinct P.dblabel, X.refvalue, '<linkprefix>' || 'genpept/genbank-accession-bad-gi' as sequencelink,
         reftaxid, refsequence
     from xml_xref_interactors as X
     inner join <sequences> as P
         on not X.refvalue ~ '^[[:digit:]]{1,9}$'
         and X.refvalue = P.refvalue
+        and P.dblabel in ('refseq', 'ddbj/embl/genbank')
     where X.dblabel = 'genbank_protein_gi';
 
 -- IPI accession matches discarding versioning.
