@@ -76,7 +76,7 @@ for SOURCE in $SOURCES; do
 
     # Most resources just publish files.
 
-    else
+    elif [ "$DOWNLOAD_FILES" ]; then
         FAILED_FILES=0
 
         for DOWNLOAD in $DOWNLOAD_FILES; do
@@ -101,7 +101,21 @@ for SOURCE in $SOURCES; do
                 fi
             else
                 echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
-                if ! wget --timestamping --retr-symlinks -w "$WGET_WAIT" -N -P "$DATADIR" "$URL" ; then
+
+                # Get downloads, counting failures.
+                # File URLs are treated as local files.
+
+                if [ "${URL#file://}" != "$URL" ]; then
+
+                    if ! cp ${URL#file://} "$DATADIR" ; then
+                        echo "$PROGNAME: Did not copy local file: $DOWNLOAD" 1>&2
+                        FAILED_FILES=$(($FAILED_FILES+1))
+                        continue
+                    fi
+
+                # All other URLs are accessed using wget.
+
+                elif ! wget --timestamping --retr-symlinks -w "$WGET_WAIT" -N -P "$DATADIR" "$URL" ; then
                     echo "$PROGNAME: Did not download file: $DOWNLOAD" 1>&2
                     FAILED_FILES=$(($FAILED_FILES+1))
                     continue
@@ -124,10 +138,18 @@ for SOURCE in $SOURCES; do
             fi
         done
 
+        # Add the source to the failed list, inserting a space after any
+        # existing sources.
+
         if [ "$FAILED_FILES" != '0' ]; then
             echo "$PROGNAME: Did not download $FAILED_FILES files for source: $SOURCE" 1>&2
             FAILED="${FAILED}${FAILED:+ }$SOURCE"
         fi
+
+    # If no files or script are defined for a source, the source is ignored.
+
+    else
+        echo "$PROGNAME: No download files defined for $SOURCE. Continuing without error." 1>&2
     fi
 done
 

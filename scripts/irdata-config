@@ -160,13 +160,17 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 # import, the latter are listed before the former in the
 # other sources list. Otherwise, these lists have been kept
 # in an alphabetical order.
+#
+# The OPHID data is not publicly available. If not available
+# locally, it can be removed from the XMLSOURCES list below.
+# If available, review the OPHID_MIRROR and
+# OPHID_RELEASE_URL settings below.
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
 OTHERSOURCES="PSI_MI TAXONOMY BIND FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
-# NOTE: To be completed for acquisition by other means: OPHID
 # NOTE: To be completed and added below for parsing: SEGUID
 
 ############################################################
@@ -367,6 +371,10 @@ MPPI_XML_FILE_PATTERN='mppi'
 ############################################################
 # OPHID
 
+OPHID_DOWNLOAD_FILES='ophid*.xml'
+OPHID_MIRROR='file://'
+
+OPHID_RELEASE_URL="$OPHID_MIRROR/biotek/cnkeeper/donaldson3/DATA/OPHID/02_08_2010/"
 OPHID_DIR_NAME="OPHID"
 OPHID_XML_FILE_PATTERN='*.xml'
 
