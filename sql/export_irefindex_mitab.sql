@@ -391,25 +391,25 @@ create temporary table tmp_mitab_interactions as
 
         -- biologicalRoleA
 
-        case when edgetype = 'C' or bioroleA.refvalues is null or array_length(bioroleA.refvalues, 1) = 0 then '-'
+        case when edgetype = 'C' or bioroleA.refvalues is null or array_length(bioroleA.refvalues, 1) = 0 then 'MI:0000(unspecified)'
              else array_to_string(bioroleA.refvalues, '|')
         end as biologicalRoleA,
 
         -- biologicalRoleB
 
-        case when bioroleB.refvalues is null or array_length(bioroleB.refvalues, 1) = 0 then '-'
+        case when bioroleB.refvalues is null or array_length(bioroleB.refvalues, 1) = 0 then 'MI:0000(unspecified)'
              else array_to_string(bioroleB.refvalues, '|')
         end as biologicalRoleB,
 
         -- experimentalRoleA
 
-        case when edgetype = 'C' or exproleA.refvalues is null or array_length(exproleA.refvalues, 1) = 0 then '-'
+        case when edgetype = 'C' or exproleA.refvalues is null or array_length(exproleA.refvalues, 1) = 0 then 'MI:0000(unspecified)'
              else array_to_string(exproleA.refvalues, '|')
         end as experimentalRoleA,
 
         -- experimentalRoleB
 
-        case when exproleB.refvalues is null or array_length(exproleB.refvalues, 1) = 0 then '-'
+        case when exproleB.refvalues is null or array_length(exproleB.refvalues, 1) = 0 then 'MI:0000(unspecified)'
              else array_to_string(exproleB.refvalues, '|')
         end as experimentalRoleB
 
