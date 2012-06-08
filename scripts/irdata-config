@@ -320,7 +320,7 @@ MATRIXDB_XML_FILE_PATTERN='*.xml'
 MINT_DOWNLOAD_FILES='*.psi25.zip'
 MINT_MIRROR='ftp://mint.bio.uniroma2.it'
 
-MINT_RELEASE_URL="$MINT_MIRROR/pub/release/psi/current/psi25/pmid/"
+MINT_RELEASE_URL="$MINT_MIRROR/pub/release/psi/current/psi25/pmids/"
 MINT_DIR_NAME="MINT"
 MINT_XML_FILE_PATTERN='*.xml'
 
