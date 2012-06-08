@@ -34,6 +34,10 @@ if [ ! "$DATADIR" ]; then
     exit 1
 fi
 
+if [ ! -e "$DATADIR" ]; then
+    mkdir "$DATADIR"
+fi
+
 # Log into the DIP site.
 
 FORMDATA="lgn=1&login=$DIP_USERNAME&pass=$DIP_PASSWORD&Login=Login"
