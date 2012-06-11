@@ -103,8 +103,8 @@ for FILEPATTERN in $FILEPATTERNS; do
         # NOTE: This relies on there either being XML files or other kinds of
         # NOTE: files.
 
-        if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2>&1 ; then
-            echo "$PROGNAME: File $XMLFILE in source $SOURCE failed." 1>&2
+        if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2> "$OUTPUTDIR/xmllint-`basename $FILE`.log" ; then
+            echo "$PROGNAME: File $FILE in source $SOURCE failed." 1>&2
             exit 1
         fi
 
