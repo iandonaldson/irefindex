@@ -87,7 +87,7 @@ class PSIParser(EmptyElementParser):
         EmptyElementParser.__init__(self)
         self.writer = writer
 
-    def reset():
+    def reset(self):
 
         # For transient identifiers.
 
