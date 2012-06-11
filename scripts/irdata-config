@@ -161,10 +161,11 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 # other sources list. Otherwise, these lists have been kept
 # in an alphabetical order.
 #
-# The OPHID data is not publicly available. If not available
-# locally, it can be removed from the XMLSOURCES list below.
-# If available, review the OPHID_MIRROR and
-# OPHID_RELEASE_URL settings below.
+# The BIND and OPHID data is not publicly available. If not
+# available locally, these sources can be respectively
+# removed from the XMLSOURCES and OTHERSOURCES lists below.
+# If available, review the BIND_MIRROR, BIND_RELEASE_URL,
+# OPHID_MIRROR and OPHID_RELEASE_URL settings below.
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
@@ -176,6 +177,10 @@ ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 ############################################################
 # BIND
 
+BIND_DOWNLOAD_FILES='20060525*.txt'
+BIND_MIRROR='file://'
+
+BIND_RELEASE_URL="$BIND_MIRROR/biotek/cnkeeper/donaldson3/DATA/BIND/02_08_2010/"
 BIND_DIR_NAME="BIND"
 BIND_OTHER_FILE_PATTERN='*.txt'
 BIND_PARSER='irdata_parse_bind.sh'
