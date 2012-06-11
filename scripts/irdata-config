@@ -261,10 +261,10 @@ GENPEPT_SCHEMA='genpept'
 ############################################################
 # HPRD
 
-HPRD_DOWNLOAD_FILES="HPRD_PSIMI_041310"
+HPRD_DOWNLOAD_FILES="HPRD_PSIMI_041310.tar.gz"
 HPRD_MIRROR='http://www.hprd.org'
 
-HPRD_RELEASE_URL="$HPRD_MIRROR/edownload/"
+HPRD_RELEASE_URL="$HPRD_MIRROR/RELEASE9/"
 HPRD_DIR_NAME="HPRD"
 HPRD_XML_FILE_PATTERN='PSIMI_XML/*.xml'
 

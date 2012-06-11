@@ -81,6 +81,7 @@ for SOURCE in $SOURCES; do
 
         for DOWNLOAD in $DOWNLOAD_FILES; do
             DOWNLOADED="$DATADIR/$DOWNLOAD"
+
             URL="${RELEASE_URL}$DOWNLOAD"
 
             if [ "$VERBOSE" ]; then
@@ -94,11 +95,27 @@ for SOURCE in $SOURCES; do
             # Here, DOWNLOAD may be a pattern, thus making DOWNLOADED also a pattern.
 
             if [ "$CHECK_ONLY" ]; then
-                if [ ! -e "$DOWNLOADED" ]; then
-                    echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
-                else
-                    echo "$DOWNLOADED"
-                fi
+
+                # Check any pattern to see if it expanded.
+
+                for DOWNLOADEDFILE in $DOWNLOADED; do
+
+                    # For single files, the download variables will be the same.
+                    # For patterns, if files do not exist, the variables will also be the same.
+                    # For patterns, if files do exist, the variables will be different.
+
+                    if [[ "$DOWNLOADEDFILE" = "$DOWNLOADED" && ! -e "$DOWNLOADEDFILE" ]]; then
+                        echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
+
+                    # Output available files, either single files or patterns.
+
+                    else
+                        echo "$DOWNLOADED"
+                    fi
+
+                    break
+                done
+
             else
                 echo "$PROGNAME: Downloading file: $DOWNLOAD" 1>&2
 
