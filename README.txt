@@ -122,6 +122,16 @@ failed. Re-running irmanifest with specific source names will add information
 for those sources to the manifest file, although some investigation of
 problems related to manifest/release information retrieval may be necessary.
 
+Unpacking Source Data
+---------------------
+
+The downloaded data is typically provided in the form of compressed archives
+potentially containing many individual files. Before parsing can be performed,
+such archives must be unpacked, and this can be done for all sources as
+follows:
+
+  irunpack --all
+
 Parsing Source Data
 -------------------
 
