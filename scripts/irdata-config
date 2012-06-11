@@ -235,7 +235,7 @@ DIP_USER_AGENT="Mozilla/5.0 (X11; Linux i686; rv:10.0.3) Gecko/20120305 Firefox/
 DIP_RELEASE_URL="$DIP_MIRROR/dip/Download.cgi?SM=3"
 
 DIP_DIR_NAME="DIP"
-DIP_XML_FILE_PATTERN='*.mif25'
+DIP_XML_FILE_PATTERN='*.mif25 *.mif25.gz'
 
 DIP_MANIFEST_URL="$DATA/$DIP_DIR_NAME/dip_downloads_response.txt"
 
@@ -283,7 +283,7 @@ INTACT_MIRROR='ftp://ftp.ebi.ac.uk'
 
 INTACT_RELEASE_URL="$INTACT_MIRROR/pub/databases/intact/current/psi25/"
 INTACT_DIR_NAME="IntAct"
-INTACT_XML_FILE_PATTERN='pmid/*/*.xml'
+INTACT_XML_FILE_PATTERN='pmid/*/*.xml *.xml'
 
 ############################################################
 # InnateDB
@@ -293,7 +293,7 @@ INNATEDB_MIRROR='http://www.innatedb.com'
 
 INNATEDB_RELEASE_URL="$INNATEDB_MIRROR/download/interactions/"
 INNATEDB_DIR_NAME="InnateDB"
-INNATEDB_XML_FILE_PATTERN='*.xml'
+INNATEDB_XML_FILE_PATTERN='*.xml *.xml.gz'
 
 INNATEDB_MANIFEST_URL="$INNATEDB_MIRROR/download.jsp"
 
@@ -305,7 +305,7 @@ IPI_MIRROR='ftp://ftp.ebi.ac.uk'
 
 IPI_RELEASE_URL="$IPI_MIRROR/pub/databases/IPI/current/"
 IPI_DIR_NAME="IPI"
-IPI_OTHER_FILE_PATTERN='*.fasta'
+IPI_OTHER_FILE_PATTERN='*.fasta *.fasta.gz'
 IPI_PARSER='irdata_parse_ipi.sh'
 IPI_SCHEMA='ipi'
 
@@ -349,7 +349,7 @@ MPACT_MIRROR='ftp://ftpmips.gsf.de'
 
 MPACT_RELEASE_URL="$MPACT_MIRROR/yeast/PPI/"
 MPACT_DIR_NAME="MPACT"
-MPACT_XML_FILE_PATTERN='*.xml'
+MPACT_XML_FILE_PATTERN='*.xml *.xml.gz'
 
 ############################################################
 # MPIDB
@@ -371,7 +371,7 @@ MPPI_MIRROR='http://mips.gsf.de'
 
 MPPI_RELEASE_URL="$MPPI_MIRROR/proj/ppi/data/"
 MPPI_DIR_NAME="MPPI"
-MPPI_XML_FILE_PATTERN='mppi'
+MPPI_XML_FILE_PATTERN='mppi mppi.gz'
 
 ############################################################
 # OPHID
