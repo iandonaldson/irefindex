@@ -10,7 +10,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --check ] [ --no-parse ] <source>
+Usage: $PROGNAME [ --check | --no-parse ] <source>
 
 Parse data from the specified source. The following sources are supported:
 
@@ -23,6 +23,7 @@ fi
 
 if [ "$1" = '--check' ]; then
     CHECK=$1
+    NO_PARSE=$1 # --check implies --no-parse
     shift 1
 fi
 
@@ -36,7 +37,12 @@ SOURCE=$1
 if [ "$SOURCE" = '-' ]; then
     echo "$PROGNAME: Reading source name from standard input..." 1>&2
     read -r SOURCE
-    echo "$PROGNAME: Using $SOURCE..." 1>&2
+fi
+
+if [ "$NO_PARSE" ]; then
+    echo "$PROGNAME: Examining $SOURCE..." 1>&2
+else
+    echo "$PROGNAME: Parsing $SOURCE..." 1>&2
 fi
 
 eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
@@ -77,6 +83,7 @@ fi
 # Expand the patterns.
 
 HAVEDATA=
+HAVEFAILED=
 
 # Prevent the patterns from being expanded in the current directory.
 
@@ -90,6 +97,7 @@ for FILEPATTERN in $FILEPATTERNS; do
 
     FILES="$DATADIR/$FILEPATTERN"
     HAVEFILES=
+    FAILED=
 
     for FILE in $FILES; do
 
@@ -105,15 +113,17 @@ for FILEPATTERN in $FILEPATTERNS; do
 
         if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2> "$OUTPUTDIR/xmllint-`basename $FILE`.log" ; then
             echo "$PROGNAME: File $FILE in source $SOURCE failed." 1>&2
-            exit 1
+            FAILED="${FAILED}${FAILED:+ }$FILE"
         fi
 
         HAVEFILES='yes'
     done
 
-    # Make sure there are valid files.
+    HAVEFAILED="${HAVEFAILED}${HAVEFAILED:+ }$FAILED"
 
-    if [ ! "$HAVEFILES" ]; then
+    # Make sure there are valid files and none explicitly failed.
+
+    if [[ ! "$HAVEFILES" || "$FAILED" ]]; then
         continue
     fi
 
@@ -137,8 +147,11 @@ for FILEPATTERN in $FILEPATTERNS; do
     HAVEDATA='yes'
 done
 
-if [ "$HAVEDATA" ]; then
+if [[ "$HAVEDATA" && ! "$FAILED" ]]; then
     echo $SOURCE
+elif [ "$FAILED" ]; then
+    echo "$PROGNAME: Source $SOURCE had invalid data." 1>&2
+    exit 1
 else
     echo "$PROGNAME: Source $SOURCE did not provide any data." 1>&2
     exit 1

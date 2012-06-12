@@ -10,7 +10,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --check ] [ --no-parse ] ( --all | <source>... )
+Usage: $PROGNAME [ --check | --no-parse ] ( --all | <source>... )
 
 Parse or just check data from the different sources. These are configured to be
 the following when --all is specified:

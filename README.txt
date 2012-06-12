@@ -136,13 +136,27 @@ Parsing Source Data
 -------------------
 
 The source data must be parsed and converted to a form that can be imported
-into the database; this is done as follows:
+into the database. Before attempting to parse data, the presence of the
+required data files should be established:
+
+  irparse --no-parse --all
+
+It is also possible to check XML data using the xmllint tool using a command
+of the following form:
+
+  irparse --check <source>
+
+However, xmllint may require excessive amounts of memory for some files and is
+not generally suitable for the task.
+
+Parsing of the source data is done as follows:
 
   irparse --all
 
 Once parsed, the import data will reside in an "import" subdirectory of the
 main data directory. Thus, if the main data directory is /home/irefindex/data
-then the import data will reside in /home/irefindex/data/import.
+then the import data will reside in /home/irefindex/data/import. Parsing
+errors will be reported on standard error.
 
 Importing Source Data
 ---------------------
