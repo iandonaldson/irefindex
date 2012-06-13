@@ -120,6 +120,7 @@ if __name__ == "__main__":
 
         if ext.endswith("gz"):
             opener = gzip.open
+            basename, ext = splitext(basename) # remove any remaining extension
         else:
             opener = open
 
