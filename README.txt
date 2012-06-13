@@ -6,6 +6,9 @@ Prerequisites
 
 The following software is required to use this distribution:
 
+  * PostgreSQL (to host the database)
+  * The PostgreSQL client program, psql, and database management tools
+    (initdb, createdb)
   * A POSIX-like shell and environment (for the high-level scripts)
   * Python (tested with 2.5.4, for the tools)
   * cmdsyntax (command option processing)
@@ -18,6 +21,9 @@ explicitly on some platforms by packages such as GNU Coreutils and Findutils.
 Amongst the commands used are the following:
 
   cat, cp, grep, gunzip, head, mv, rm, sort, tail, tee, xargs
+
+In addition, where a previous release resides in a database system such as
+MySQL, the MySQL client program, mysql, must be installed.
 
 Configuring the Software
 ------------------------
