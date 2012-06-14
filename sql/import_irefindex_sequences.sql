@@ -1,3 +1,26 @@
+-- Generate a mapping of identifiers to sequences for all known sequences in
+-- sequence databases. Although many sequences will not be referenced by
+-- interactors in the current releases or states of interaction databases, they
+-- may have been referenced in previous iRefIndex releases or be referenced in
+-- future releases. If a historical perspective is not required, processing can
+-- be made much quicker by constraining sequence retrieval to identifiers used
+-- by the current interaction database data.
+
+-- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
+--
+-- This program is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU General Public License as published by the Free Software
+-- Foundation; either version 3 of the License, or (at your option) any later
+-- version.
+--
+-- This program is distributed in the hope that it will be useful, but WITHOUT ANY
+-- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+-- PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License along
+-- with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 begin;
 
 -- UniProt accessions mapping directly and indirectly to proteins.
