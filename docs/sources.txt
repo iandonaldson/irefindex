@@ -1,5 +1,14 @@
-Notes on Source Formats
------------------------
+Parsing and Interpretation Issues for PSI-MI XML Sources
+--------------------------------------------------------
+
+Some BIND Translation files lack a suitable encoding declaration:
+
+  <?xml version="1.0" encoding="iso-8859-1"?>
+
+Without such a declaration, a UTF-8 encoding is expected, but the 10090 and
+9606 taxonomy files actually employ byte values that apparently represent
+characters encoded using ISO-8859-1, and the resulting byte sequences are not
+valid UTF-8 content.
 
 Generally, identifier locality restrictions are not prominently specified or
 adhered to.
@@ -34,8 +43,10 @@ example (from data/HPRD/PSIMI_XML/08855_psimi.xml):
 
   <secondaryRef db="uniprot" dbAc="MI:0486" id="Q0VAR9,Q96CW7"/>
 
+Parsing and Interpretation Issues for MITAB Sources
+---------------------------------------------------
+
 MPIDB sources employ a MITAB variant which exposes experimental details in a
 non-standard way. This can result in interactions being assigned multiple
 interaction types, which is typically not done by XML-based sources even
 though the schema does permit it.
-
