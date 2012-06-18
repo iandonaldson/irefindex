@@ -37,7 +37,7 @@ create temporary table tmp_formats (
 -- Convert dates according to the expected format for the source.
 
 insert into irefindex_manifest
-    select A.name, to_date(D.value, coalesce(F.format, 'YYYY-MM-DD HH24:MI:SS')), V.value
+    select A.name, to_date(D.value, coalesce(F.format, 'YYYY-MM-DD HH24:MI:SS')), R.value, N.value, V.value
     from (
         select distinct name
         from tmp_manifest
@@ -45,6 +45,18 @@ insert into irefindex_manifest
     inner join tmp_manifest as D
         on A.name = D.name
         and D.field = 'DATE'
+    inner join tmp_manifest as R
+        on A.name = R.name
+        and R.field = 'RELEASE_URL'
+
+    -- Download files may be provided by a script.
+
+    left outer join tmp_manifest as N
+        on A.name = N.name
+        and N.field = 'DOWNLOAD_FILES'
+
+    -- Handle differing date formats.
+
     left outer join tmp_formats as F
         on D.name = F.name
 

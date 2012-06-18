@@ -35,10 +35,13 @@ fi
 if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init.sql" \
     && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml.sql" \
     && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_mitab.sql" \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_manifest.sql" \
     ) ; then
     echo "$PROGNAME: Could not initialise the database schema." 1>&2
     exit 1
 fi
+
+# Initialise any special schemas for data sources.
 
 for SOURCE in $ALLSOURCES ; do
     eval SCHEMA='$'"$SOURCE"_SCHEMA
@@ -50,6 +53,8 @@ for SOURCE in $ALLSOURCES ; do
         fi
     fi
 done
+
+# Initialise the different build tables.
 
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_sequences.sql" ; then
     echo "$PROGNAME: Could not initialise the consolidated sequence information schema." 1>&2

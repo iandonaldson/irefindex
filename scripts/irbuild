@@ -64,6 +64,13 @@ fi
 
 if [ "$BUILD" ]; then
 
+    # Import any manifest information.
+
+    if [ -e "$DATA/irefindex_manifest" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_manifest.sql" "$DATA" ; then
+        echo "$PROGNAME: Manifest information could not be imported." 1>&2
+        exit 1
+    fi
+
     # Convert MITAB-based data to an XML-compatible representation.
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" ; then
@@ -130,7 +137,14 @@ fi
 
 if [ "$MAKE_REPORTS" ]; then
 
-    # Make an interactor report, if requested.
+    # Make a tidied up manifest report.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/manifest.sql" "$DATA" ; then
+        echo "$PROGNAME: Could not report manifest information." 1>&2
+        exit 1
+    fi
+
+    # Make an interactor report.
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactors_by_source.sql" "$DATA" ; then
         echo "$PROGNAME: Could not report source interactor information." 1>&2

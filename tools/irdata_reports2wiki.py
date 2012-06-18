@@ -135,6 +135,7 @@ if __name__ == "__main__":
 
     file_descriptions = [
         # Title                                                         File                                    Separator   Blank   Headings    Column types
+        ("Data source information",                                     "irefindex_manifest_final",             "\t",       "\\N",  True,       "0,1"),
         ("Interactions available from major taxonomies",                "rigids_by_originaltaxid_top",          "\t",       "",     True,       "0n,2nd"),
         ("Interactions available from major taxonomies (corrected)",    "rigids_by_taxid_top",                  "\t",       "",     True,       "0n,2nd"),
         ("Interactions",                                                "rigids_shared_as_grid",                ",",        "-",    False,      None),

@@ -63,8 +63,12 @@ fi
       eval URL='$'"$SOURCE"_MANIFEST_URL
       eval PARSER='$'"$SOURCE"_MANIFEST_PARSER
       eval FILE='$'"$SOURCE"_MANIFEST_FILE
+
+      # Non-manifest information of interest.
+
       eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES
       eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+      eval RELEASE_URL='$'"$SOURCE"_RELEASE_URL
 
       DATADIR="$DATA/$SOURCEDIR"
 
@@ -103,6 +107,13 @@ fi
           | head -n 1 \
           | sed -e "s/\(.*\)/$SOURCE\tDATE\t\\1/"
 
+      fi
+
+      # Add the non-manifest information.
+
+      printf "%s\t%s\t%s\n" "$SOURCE" 'RELEASE_URL' "$RELEASE_URL"
+      if [ "$DOWNLOAD_FILES" ]; then
+          printf "%s\t%s\t%s\n" "$SOURCE" 'DOWNLOAD_FILES' "$DOWNLOAD_FILES"
       fi
 
   done \
