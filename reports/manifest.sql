@@ -23,7 +23,10 @@ create temporary table tmp_manifest as
         'Version' as version
     union all (
         select source, to_char(releasedate, 'YYYY-MM-DD'),
-            releaseurl, downloadfiles, version
+            case when releaseurl like 'file://%' then cast(null as varchar)
+                 else releaseurl
+            end,
+            downloadfiles, version
         from irefindex_manifest
         order by source
     );
