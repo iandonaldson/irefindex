@@ -86,7 +86,7 @@ ASCII character values. Such a cluster can be defined as follows:
 
   initdb -D /home/irefindex/data --no-locale
 
-A database can be created using the usual PostgreSQL tools:
+A database can then be created using the usual PostgreSQL tools:
 
   createdb irdata
 
@@ -102,6 +102,14 @@ Once the database system has been started, the database used by this software
 can be initialised using the following command:
 
   irinit --init
+
+Should the need arise for the removal of schema information from the database,
+the following command can be used:
+
+  irdrop --drop
+
+However, it may be more convenient to issue the dropdb command on the database
+and recreate it as described above.
 
 Downloading Source Data
 -----------------------
@@ -138,6 +146,11 @@ follows:
 
   irunpack --all
 
+Additional options are available to uncompress all downloaded files, which can
+be useful for inspecting the data, but the parsing process should be able to
+handle compressed single files in gzip format and thus avoid expanding such
+files in the filesystem.
+
 Parsing Source Data
 -------------------
 
@@ -170,6 +183,9 @@ Importing Source Data
 Source data is imported into the database using the following command:
 
   irimport --all
+
+Each imported source should have its name emitted on standard output. Errors
+are produced on standard error.
 
 Obtaining Integer Identifiers from Previous Releases
 ----------------------------------------------------

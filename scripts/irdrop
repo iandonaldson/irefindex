@@ -1,0 +1,112 @@
+#!/bin/sh
+
+# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Original author: Paul Boddie <paul.boddie@biotek.uio.no>
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ] || [ "$1" != '--drop' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME --drop
+
+Remove schema definitions from the database.
+EOF
+    exit 1
+fi
+
+if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop.sql" \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_psixml.sql" \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_mitab.sql" \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_manifest.sql" \
+    ) ; then
+    echo "$PROGNAME: Could not remove the database schema." 1>&2
+    exit 1
+fi
+
+# Remove any special schemas for data sources.
+
+for SOURCE in $ALLSOURCES ; do
+    eval SCHEMA='$'"$SOURCE"_SCHEMA
+
+    if [ "$SCHEMA" ]; then
+        if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_${SCHEMA}.sql" ; then
+            echo "$PROGNAME: Could not remove schema for $SOURCE." 1>&2
+            exit 1
+        fi
+    fi
+done
+
+# Remove the different build tables.
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_sequences.sql" ; then
+    echo "$PROGNAME: Could not remove the consolidated sequence information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_archived.sql" ; then
+    echo "$PROGNAME: Could not remove the archived sequence information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_interactors.sql" ; then
+    echo "$PROGNAME: Could not remove the interactor information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_canonical.sql" ; then
+    echo "$PROGNAME: Could not remove the canonical interactor information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_assignments.sql" ; then
+    echo "$PROGNAME: Could not remove the assignment information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_rigids.sql" ; then
+    echo "$PROGNAME: Could not remove the interaction information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_integer_identifiers.sql" ; then
+    echo "$PROGNAME: Could not remove the integer identifier mappings schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_interactions.sql" ; then
+    echo "$PROGNAME: Could not remove the additional interaction information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_experiments.sql" ; then
+    echo "$PROGNAME: Could not remove the additional experiment information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_participants.sql" ; then
+    echo "$PROGNAME: Could not remove the additional participant information schema." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_confidence.sql" ; then
+    echo "$PROGNAME: Could not remove the confidence score schema." 1>&2
+    exit 1
+fi
