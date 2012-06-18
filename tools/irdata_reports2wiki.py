@@ -24,6 +24,20 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 from os.path import join
 
 def file_to_wiki(pathname, filename, wikitype, separator, blank_value, use_headings, column_types, out):
+
+    """
+    Convert the file residing at the 'pathname', having the given 'filename', to
+    a Wiki page representation for the given 'wikitype', using the given column
+    'separator' and 'blank_value' for column data. If 'use_headings' is set to a
+    true value, the first row of column data will be treated as a collection of
+    headings.
+
+    If 'column_types' is specified, it will be used as a column specification
+    for tables generated for the MoinMoin ImprovedTableParser extension.
+
+    The given 'out' stream is used to collect the output.
+    """
+
     f = open(pathname)
     try:
         if wikitype == "MediaWiki":
