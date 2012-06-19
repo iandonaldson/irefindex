@@ -106,17 +106,24 @@ if [ "$BUILD" ]; then
         exit 1
     fi
 
+    # Establish gene-to-protein mappings.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_gene_mappings.sql" ; then
+        echo "$PROGNAME: Could not create gene-to-protein mappings." 1>&2
+        exit 1
+    fi
+
     # Map identifiers to sequences in current databases.
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" --defs sequences irefindex_sequences linkprefix '' ; then
-        echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+        echo "$PROGNAME: Could not build sequence information from the imported data." 1>&2
         exit 1
     fi
 
     # Map identifiers to sequences in archived databases.
 
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" --defs sequences irefindex_sequences_archived linkprefix 'archived/' ; then
-        echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
+        echo "$PROGNAME: Could not build sequence information from archived data." 1>&2
         exit 1
     fi
 

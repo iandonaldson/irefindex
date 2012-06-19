@@ -119,42 +119,4 @@ insert into xml_xref_interactor_types
 
 analyze xml_xref_interactor_types;
 
--- Create a mapping of gene names to UniProt and RefSeq proteins.
--- This is useful for mapping interactors and for canonicalisation.
-
-insert into irefindex_gene2uniprot
-    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
-    from gene_info as G
-    inner join uniprot_gene_names as N
-        on G.symbol = N.genename
-    inner join uniprot_proteins as P
-        on N.uniprotid = P.uniprotid
-        and P.taxid = G.taxid
-    union
-    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
-    from gene_info as G
-    inner join uniprot_identifiers as I
-        on G.geneid = cast(I.refvalue as integer)
-        and I.dblabel = 'GeneID'
-    inner join uniprot_proteins as P
-        on I.uniprotid = P.uniprotid;
-        -- P.taxid = G.taxid could be used to override any gene association in the UniProt record
-
-analyze irefindex_gene2uniprot;
-
-insert into irefindex_gene2refseq
-    select geneid, P.accession, P.taxid, P.sequence, P.length
-    from gene2refseq as G
-    inner join refseq_proteins as P
-        on G.accession = P.version
-    union all
-    select oldgeneid, P.accession, P.taxid, P.sequence, P.length
-    from gene_history as H
-    inner join gene2refseq as G
-        on H.geneid = G.geneid
-    inner join refseq_proteins as P
-        on G.accession = P.version;
-
-analyze irefindex_gene2refseq;
-
 commit;
