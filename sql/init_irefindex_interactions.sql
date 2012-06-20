@@ -21,3 +21,13 @@ create table xml_xref_interaction_types (
     refvalue varchar not null,
     primary key(source, filename, entry, interactionid, refvalue)
 );
+
+create table xml_names_interaction_names (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactionid varchar not null,
+    nametype varchar not null,
+    name varchar not null,
+    primary key(source, filename, entry, interactionid, nametype, name)
+);

@@ -79,4 +79,14 @@ insert into xml_xref_interaction_types
 
 analyze xml_xref_interaction_types;
 
+-- Get interaction names.
+
+insert into xml_names_interaction_names
+    select source, filename, entry, parentid as interactionid, nametype, name
+    from xml_names
+    where scope = 'interaction'
+        and property = 'interaction';
+
+analyze xml_names_interaction_names;
+
 commit;
