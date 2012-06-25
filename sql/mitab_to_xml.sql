@@ -10,9 +10,10 @@
 
 begin;
 
--- A common sequence number for interactors.
+-- Common sequence numbers for interactors and participants.
 
 create temporary sequence mitab_interactor;
+create temporary sequence mitab_participant;
 
 -- A temporary table for interactors.
 
@@ -24,7 +25,8 @@ create temporary table tmp_mitab_interactors as
 -- Entity tables.
 
 insert into xml_interactors
-    select source, filename, 0 as entry, interactorid, position as participantid, interaction as interactionid
+    select source, filename, 0 as entry, interactorid,
+        nextval('mitab_participant') as participantid, interaction as interactionid
     from tmp_mitab_interactors;
 
 insert into xml_experiments
