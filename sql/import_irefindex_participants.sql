@@ -31,4 +31,8 @@ insert into xml_xref_participants
         and property in ('participantIdentificationMethod', 'biologicalRole', 'experimentalRole')
         and dblabel in ('MI', 'psimi', 'PSI-MI', 'psi-mi');
 
+create index xml_xref_participants_index on xml_xref_participants (source, filename, entry, participantid);
+
+analyze xml_xref_participants;
+
 commit;
