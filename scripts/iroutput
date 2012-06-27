@@ -65,3 +65,12 @@ echo 'other' >> "$DATA/organisms.txt"
 
   cat "$DATA/organisms.txt" \
 | xargs $XARGS_I'{}' sh -c "cp \"$SQL/mitab_header.txt\" \"$MITAB_ORGANISM_OUTPUT\" && grep -e $'^{}\t' \"$DATA/mitab_all_organisms\" | cut -f 2- >> \"$MITAB_ORGANISM_OUTPUT\""
+
+
+
+# Generate the iRefScape output.
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" ; then
+    echo "$PROGNAME: Could not generate iRefScape data." 1>&2
+    exit 1
+fi
