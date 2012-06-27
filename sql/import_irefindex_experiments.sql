@@ -79,4 +79,15 @@ insert into xml_names_experiment_authors
 
 analyze xml_names_experiment_authors;
 
+-- Some method information is also available in short labels.
+
+insert into xml_names_experiment_methods
+    select distinct source, filename, entry, parentid as experimentid, property, name
+    from xml_names
+    where scope = 'experimentDescription'
+        and property in ('interactionDetectionMethod', 'participantIdentificationMethod')
+        and nametype = 'shortLabel';
+
+analyze xml_names_experiment_methods;
+
 commit;

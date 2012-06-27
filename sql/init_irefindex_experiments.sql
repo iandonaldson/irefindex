@@ -47,3 +47,13 @@ create table xml_names_experiment_authors (
     name varchar not null,
     primary key(source, filename, entry, experimentid, name)
 );
+
+create table xml_names_experiment_methods (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    experimentid varchar not null,
+    property varchar not null,
+    name varchar not null,
+    primary key(source, filename, entry, experimentid, property, name)
+);
