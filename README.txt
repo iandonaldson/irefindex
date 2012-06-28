@@ -25,6 +25,16 @@ Amongst the commands used are the following:
 In addition, where a previous release resides in a database system such as
 MySQL, the MySQL client program, mysql, must be installed.
 
+Technical Documentation
+-----------------------
+
+See docs/Project for details of how this distribution is arranged and
+constructed.
+
+See docs/Schema for information about the database schema.
+
+See docs/Sources for details of data source formats and issues.
+
 Configuring the Software
 ------------------------
 
