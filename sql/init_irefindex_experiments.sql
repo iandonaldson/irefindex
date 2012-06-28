@@ -54,6 +54,7 @@ create table xml_names_experiment_methods (
     entry integer not null,
     experimentid varchar not null,
     property varchar not null,
+    nametype varchar not null,
     name varchar not null,
-    primary key(source, filename, entry, experimentid, property, name)
+    primary key(source, filename, entry, experimentid, property, nametype, name)
 );
