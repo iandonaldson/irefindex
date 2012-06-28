@@ -15,10 +15,11 @@ assumptions about XML documents and schema design practices.
 
 Interaction data is centred upon the following general concepts: interactions,
 interactors, participants and experiments. However, one may refer to an
-interaction as a general concept (proteins A and B are known to interact)
-without any contextual information, or as a specific concept (proteins A and B
-interact are observed to interact) under certain conditions. Thus, it becomes
-necessary to distinguish between two notions when referring to concepts:
+interaction as a general statement (proteins A and B are known to interact)
+without any contextual information, or as a specific observation (proteins A
+and B interact are observed to interact) where certain conditions exist. Thus,
+it becomes necessary to distinguish between two notions when referring to
+concepts:
 
 {{{#!table
 '''Concept''' || '''Observations'''
@@ -30,6 +31,10 @@ Interaction   || Observed interactions (or interaction instances)
 Interactor    || Observed interactors (or specific experiment details of an interactor)
               || General interactors (or knowledge about the properties of a protein)
 }}}
+
+Particularly with interactions, it can be informative to consider a combination
+of an interaction with an experiment when considering interaction data sources
+and the interaction records that they provide.
 
 Due to the flexibility of the data representation and presumably the nature of
 collected information, some sources connect the fundamental concepts of
