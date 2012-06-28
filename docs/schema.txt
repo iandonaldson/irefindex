@@ -1,0 +1,24 @@
+## This file uses a syntax notation compatible with MoinMoin and the
+## ImprovedTableParser extension. It can be deployed in a MoinMoin Wiki or read
+## in a text editor.
+
+= Database Schema Details for iRefIndex =
+
+The following table types are provided in the database schema:
+
+{{{#!table
+'''Prefix''' || '''Role'''
+==
+mitab        || MITAB-originating source data
+==
+xml          || PSI-XML-originating source data together with converted MITAB
+                data
+==
+xml_xref     || Data specifically providing cross-references such as identifiers
+==
+xml_names    || Data specifically providing name information such as short
+                labels and full names
+==
+irefindex    || Information derived from the common XML schema and sequence
+                databases for the build process
+}}}

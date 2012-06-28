@@ -1,0 +1,32 @@
+## This file uses a syntax notation compatible with MoinMoin and the
+## ImprovedTableParser extension. It can be deployed in a MoinMoin Wiki or read
+## in a text editor.
+
+= Project Organisation =
+
+The irdata source distribution provides a number of different directories:
+
+{{{#!table
+'''Directory''' || '''Purpose'''
+==
+`docs`          || Documentation plus copyright and licensing information
+==
+`irdata`        || A Python package providing common functionality
+==
+`manifests`     || Resources for accessing and interpreting source database Web
+                   sites in order to gather release/version information
+==
+`packages`      || Operating system distribution packaging resources
+==
+`reports`       || SQL templates producing reports and summaries for an
+                   iRefIndex release
+==
+`scripts`       || The high-level programs used to perform the iRefIndex release
+                   process (written as POSIX shell scripts)
+==
+`sql`           || SQL templates performing processing operations on interaction
+                   and sequence data
+==
+`tools`         || Tools that support the iRefIndex release process (written as
+                   POSIX shell scripts and Python programs)
+}}}

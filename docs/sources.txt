@@ -1,9 +1,55 @@
-Parsing and Interpretation Issues for PSI-MI XML Sources
---------------------------------------------------------
+## This file uses a syntax notation compatible with MoinMoin and the
+## ImprovedTableParser extension. It can be deployed in a MoinMoin Wiki or read
+## in a text editor.
+
+= Data Source Formats and Issues =
+
+Although standard data formats exist for interaction data, there remain issues
+with their application to the data provided by interaction databases, either
+due to obvious non-compliance with the standards or due to ambiguity or a lack
+of clarity or specificity in such standards. As a result, software that must
+consume such data must be aware of issues that appear to defy common
+assumptions about XML documents and schema design practices.
+
+== Concepts and Relationships ==
+
+Interaction data is centred upon the following general concepts: interactions,
+interactors, participants and experiments. However, one may refer to an
+interaction as a general concept (proteins A and B are known to interact)
+without any contextual information, or as a specific concept (proteins A and B
+interact are observed to interact) under certain conditions. Thus, it becomes
+necessary to distinguish between two notions when referring to concepts:
+
+{{{#!table
+'''Concept''' || '''Observations'''
+              || '''Knowledge'''
+==
+Interaction   || Observed interactions (or interaction instances)
+              || General interactions (or interaction knowledge)
+==
+Interactor    || Observed interactors (or specific experiment details of an interactor)
+              || General interactors (or knowledge about the properties of a protein)
+}}}
+
+Due to the flexibility of the data representation and presumably the nature of
+collected information, some sources connect the fundamental concepts of
+interaction data in different ways:
+
+{{{#!table
+   Experiments grouped by interaction (many experiments per interaction)
+|| !BioGrid, !IntAct, MINT, MPACT
+==
+   Interactions grouped by experiment (many interactions per experiment)
+|| BIND Translation, CORUM, DIP, HPRD, MPI-IMEX, MPI-LIT, OPHID
+}}}
+
+== Parsing and Interpretation Issues for PSI-MI XML Sources ==
 
 Some BIND Translation files lack a suitable encoding declaration:
 
-  <?xml version="1.0" encoding="iso-8859-1"?>
+{{{
+<?xml version="1.0" encoding="iso-8859-1"?>
+}}}
 
 Without such a declaration, a UTF-8 encoding is expected, but the 10090 and
 9606 taxonomy files actually employ byte values that apparently represent
@@ -13,10 +59,10 @@ valid UTF-8 content.
 Generally, identifier locality restrictions are not prominently specified or
 adhered to.
 
-  * For version 1.0, the xs:ID type is used for id attributes, but sources
+  * For version 1.0, the `xs:ID` type is used for `id` attributes, but sources
     like OPHID repeat values of such attributes.
 
-  * For version 2.5, the xs:int type is used for id attributes, and it is
+  * For version 2.5, the `xs:int` type is used for `id` attributes, and it is
     noted that these refer to distinct entities throughout a file. However,
     participant identifiers are effectively local and may not have any meaning
     at all.
@@ -39,12 +85,13 @@ interactors are different! Moreover, InnateDB maintains a separate interactor
 list but does not reference those interactors.
 
 HPRD occasionally misuses reference attributes such as in the following
-example (from data/HPRD/PSIMI_XML/08855_psimi.xml):
+example (from `data/HPRD/PSIMI_XML/08855_psimi.xml`):
 
-  <secondaryRef db="uniprot" dbAc="MI:0486" id="Q0VAR9,Q96CW7"/>
+{{{
+<secondaryRef db="uniprot" dbAc="MI:0486" id="Q0VAR9,Q96CW7"/>
+}}}
 
-Parsing and Interpretation Issues for MITAB Sources
----------------------------------------------------
+== Parsing and Interpretation Issues for MITAB Sources ==
 
 MPIDB sources employ a MITAB variant which exposes experimental details in a
 non-standard way. This can result in interactions being assigned multiple
