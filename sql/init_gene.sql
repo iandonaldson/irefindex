@@ -14,6 +14,14 @@ create table gene_info (
     primary key(geneid, symbol)
 );
 
+create table gene_synonyms (
+    taxid integer not null,
+    geneid integer not null,
+    position integer not null,
+    "synonym" varchar not null,
+    primary key(geneid, position)
+);
+
 create table gene_history (
     taxid integer not null,
     geneid integer,
