@@ -22,6 +22,8 @@ begin;
 \copy gene_synonyms from '<directory>/gene_synonyms.txt'
 \copy gene_history from '<directory>/gene_history.txt'
 
+delete from gene_synonyms where "synonym" = '-';
+
 analyze gene2refseq;
 analyze gene_info;
 analyze gene_synonyms;
