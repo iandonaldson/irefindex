@@ -28,12 +28,15 @@ MySQL, the MySQL client program, mysql, must be installed.
 Technical Documentation
 -----------------------
 
-See docs/Project for details of how this distribution is arranged and
+The documentation is in a format that can be used with MoinMoin (and the
+ImprovedTableParser extension) for deployment on the Web.
+
+See docs/pages/Project for details of how this distribution is arranged and
 constructed.
 
-See docs/Schema for information about the database schema.
+See docs/pages/Schema for information about the database schema.
 
-See docs/Sources for details of data source formats and issues.
+See docs/pages/Sources for details of data source formats and issues.
 
 Configuring the Software
 ------------------------
