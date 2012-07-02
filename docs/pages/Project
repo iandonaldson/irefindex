@@ -30,3 +30,186 @@ The irdata source distribution provides a number of different directories:
 `tools`         || Tools that support the iRefIndex release process (written as
                    POSIX shell scripts and Python programs)
 }}}
+
+In addition, there are some top-level files:
+
+ * `README.txt` provides a general overview and quick-start instructions
+ * `setup.py` is a script that can install the software in a suitable location
+
+== Documentation ==
+
+Apart from the copyright and licensing information, which is provided in plain
+text format, the documentation uses a special, human-readable format, which
+can be imported into MoinMoin Wiki instances and viewed as formatted text.
+This has been done with the intention of making the project documentation
+publicly available.
+
+To install the documentation in a Wiki, first make sure that the
+[[MoinMoin:moinsetup]] software has been installed. Then, with a suitable
+configuration file available, run the following command in the irdata source
+distribution directory:
+
+{{{
+python moinsetup.py -m make_page_package docs/pages irdata_pages.zip
+}}}
+
+This will produce a "page package" which can then be imported into a Wiki
+instance as follows:
+
+{{{
+python moinsetup.py -m install_page_package irdata_pages.zip
+}}}
+
+It may be necessary to perform this latter action as a privileged user,
+depending on how you have deployed your Wiki.
+
+== The irdata Python Package ==
+
+For simple use of the software, this package will not be of much interest, but
+its role is to provide support for the tasks performed by the programs
+provided in this distribution. Where the software needs to be extended or
+fixed, however, knowledge of the purpose and functionality provided by each
+module in the `irdata` directory can be useful:
+
+{{{#!table
+'''File'''      || '''Python Module''' || '''Purpose'''
+==
+`__init__.py`   || `irdata`            || Package marker or placeholder file
+==
+`cmd.py`        || `irdata.cmd`        || Command line option handling
+==
+`data.py`       || `irdata.data`       || Utilities for handling delimited files
+==
+`java.py`       || `irdata.java`       || Java serialisation support (for iRefScape)
+==
+`signatures.py` || `irdata.signatures` || Signature/digest/hash computation
+==
+`xmldata.py`    || `irdata.xmldata`    || XML parsing support (to read PSI-XML files)
+}}}
+
+== Manifest Descriptions ==
+
+The `manifests` directory holds information that assists the extraction and
+interpretation of release information from certain Web sites providing
+interaction data:
+
+ * `dateformats.txt` describes the different date formats used on Web sites,
+   thus helping to interpret dates and convert them to a standardised form
+
+ * The `irdata_manifest_*.txt` files describe how to extract data from Web
+   pages by providing XPath expressions for specific pieces of information;
+   they are read by the `irdata_manifest.py` tool
+
+== Packaging Resources ==
+
+The intention of the `packages` directory is to provide resources which enable
+the software to be packaged and distributed for certain operating system
+distributions. It is possible that these resources will be removed from the
+distribution in future, since certain distributions prefer such resources to
+be maintained separately from the code being packaged.
+
+== Reports and Summaries ==
+
+The SQL templates found in the `reports` directory access database tables
+constructed during the build process. Each template starts a new database
+transaction, creates temporary tables employing queries to populate each
+table, writes the contents of each table to a particular file, and then rolls
+back the transaction.
+
+The `irbuild` script should be consulted to see when each report may be safely
+used without error in the build database. Templates are evaluated using the
+`irdata_database_action.py` tool which uses the `psql` client to access the
+build database.
+
+== Scripts and High-Level Programs ==
+
+The `scripts` directory contains a number of directly executable programs
+written in the POSIX shell scripting language. Some programs have a very
+specific function; for example, the `argument-per-line` program is a trivial
+script that emits arguments to the program on separate lines:
+
+{{{
+$ argument-per-line The quick brown fox
+The
+quick
+brown
+fox
+}}}
+
+Other programs make use of the tools found in the `tools` directory to perform
+their work.
+
+The `README.txt` file describes the use of the following programs by the
+end-user: `irbuild`, `irdownload`, `irimport`, `irinit`, `irmanifest`,
+`irparse`, `irunpack`. These are used to carry out the iRefIndex release
+process.
+
+The `irdata-config` file contains the default configuration of the software
+and is typically copied and changed before the software is installed. It is
+read by many of the scripts.
+
+Most of the remaining programs have specific purposes that only make sense in
+the context of the build process, and the `irbuild` script should be consulted
+for details of how these programs are called. Those programs with the
+`-source` suffix are intended to perform a particular function for a single
+data source and are invoked by similarly named scripts without the suffix.
+
+The `irparallel` program is notable in that it provides a generic parallel
+execution capability for certain activities, particularly that of parsing
+data, by merely wrapping the `xargs` program in a slightly more convenient
+fashion. This ensures that the software can make full use of multiple CPU
+cores where available instead of using only one such core, leaving the others
+idle, and spending more time on a task than is actually necessary given the
+available resources.
+
+== SQL Templates for Processing Data ==
+
+The `sql` directory, in contrast to the `reports` directory, contains SQL
+templates that initialise a database, populate it with data, and process that
+data in order to produce the iRefIndex consolidated dataset. There are three
+principal types of template:
+
+ * Initialisation templates, prefixed with `init` (typically used by the
+   `irinit` program)
+
+ * Import templates, prefixed with `import` (used by a variety of programs,
+   mostly under the control of the `irimport` and `irbuild` programs)
+
+ * Deletion templates, prefixed with `drop` (not generally used except when
+   troubleshooting)
+
+As is the case with the contents of the `reports` directory, templates in the
+`sql` directory are evaluated using the `irdata_database_action.py` tool which
+uses the `psql` client to access the build database.
+
+Apart from SQL files, a selection of other files are provided to configure or
+augment various activities. For example, the `organisms.txt` file indicates
+which organisms are to have their own output data file for interactions
+involving that organism.
+
+== Tools and Accessory Programs ==
+
+The work of the high-level programs is largely delegated to a collection of
+programs found in the `tools` directory. These tools are not generally
+executable by the end-user, at least when building the iRefIndex dataset,
+although they can be used independently for certain tasks. Some tools are
+written in the POSIX shell scripting languages, whereas others are written in
+Python.
+
+Generally, the more involved and complicated tasks are performed using Python,
+whereas tasks that can be performed by combining programs are performed using
+the POSIX shell language. Where two tools exist and differ only by their
+filename extension, indicating that one is written in Python (`.py`) and the
+other in the shell language (`.sh`), the shell-based tool will be the
+higher-level tool that coordinates usage of the Python-based tool.
+
+For example, `irdata_parse_uniprot.sh` is the higher-level tool that
+coordinates UniProt parsing actually performed by `irdata_parse_uniprot.py`,
+where the latter program is written to deal with the complexity of the UniProt
+flat-file format: an activity that would be more challenging if written using
+the shell language.
+
+Various general tools are provided alongside the specific tools used to
+perform iRefIndex-related activities. For example, `irdata_split.py` is used
+to split text files into independent fragments that can be given to separate
+processes running in parallel.
