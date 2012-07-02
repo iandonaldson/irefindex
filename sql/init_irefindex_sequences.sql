@@ -10,7 +10,7 @@ create table irefindex_sequences (
     -- Sequence reference database information.
 
     reftaxid integer,
-    refsequence varchar,
+    refsequence varchar not null,
     refdate varchar
 
     -- Constraints are added after import.
