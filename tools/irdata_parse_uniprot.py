@@ -136,6 +136,15 @@ class Parser:
 
         "See: http://web.expasy.org/docs/userman.html#SQ_line"
 
+        # Get the molecular weight from the SQ line.
+
+        code, rest = line
+        stats = rest.split(";")
+        length_part, mw_part, crc_part, _empty = stats
+        mw = mw_part.strip().split()[0]
+
+        # Get the sequence from subsequent lines.
+
         sequence = []
         code, rest = self.next_line()
         while code == "  ":
@@ -143,7 +152,10 @@ class Parser:
             code, rest = self.next_line()
         else:
             self.save_line()
-        return "".join(sequence).replace(" ", "")
+
+        # Return the molecular weight and sequence.
+
+        return mw, "".join(sequence).replace(" ", "")
 
     def parse_pubmed(self, line):
 
@@ -237,7 +249,9 @@ class Parser:
 
     def write_record(self, record):
         record["AC1"] = record["AC"][0]
-        self.f_main.write("%(ID)s\t%(AC1)s\t%(DT)s\t%(OX)s\t%(SQ)s\n" % record)
+        record["MW"] = record["SQ"][0]
+        record["SQ"] = record["SQ"][1]
+        self.f_main.write("%(ID)s\t%(AC1)s\t%(DT)s\t%(OX)s\t%(MW)s\t%(SQ)s\n" % record)
 
         # Write accessions for each identifier.
 

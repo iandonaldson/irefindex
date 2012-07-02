@@ -34,6 +34,15 @@ class Parser:
     NULL = r"\N"
 
     def __init__(self, f, f_main, identifier_types, output_identifier_types):
+
+        """
+        Initialise the parser with the given input file object 'f', an output
+        file object 'f_main', a list of 'identifier_types' to be extracted, and
+        a list of 'output_identifier_types' to be produced (potentially
+        including types that are not provided in the data and will therefore be
+        null in the output).
+        """
+
         self.f = f
         self.f_main = f_main
         self.identifier_types = identifier_types
