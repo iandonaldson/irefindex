@@ -358,7 +358,8 @@ analyze irefindex_rogids;
 -- Database identifiers corresponding to ROG identifiers.
 -- Since the assignments table includes reference database and interaction
 -- database identifiers, it is used instead of the identifier sequences table
--- for a definitive mapping of known ROG identifiers to database identifiers.
+-- for a definitive mapping of known ROG identifiers to database identifiers
+-- actually used in the interaction data.
 
 insert into irefindex_rogid_identifiers
     select distinct rogid, dblabel, refvalue
@@ -368,6 +369,17 @@ insert into irefindex_rogid_identifiers
            (A.source, A.filename, A.entry, A.interactorid);
 
 analyze irefindex_rogid_identifiers;
+
+-- Make a more comprehensive table mapping ROG identifiers to identifiers,
+-- useful for various output products.
+
+insert into irefindex_all_rogid_identifiers
+    select distinct refsequence || reftaxid as rogid, dblabel, refvalue
+    from xml_xref_sequences
+    where refsequence is not null
+        and reftaxid is not null;
+
+analyze irefindex_all_rogid_identifiers;
 
 -- Determine the complete interactions.
 
