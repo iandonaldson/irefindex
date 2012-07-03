@@ -64,6 +64,7 @@ insert into uniprot_proteins
         on A.accession = B.accession
     where B.uniprotid is null;
 
+create index uniprot_proteins_uniprotid on uniprot_proteins(uniprotid);
 analyze uniprot_proteins;
 
 -- Add missing taxid information.
