@@ -206,6 +206,8 @@ create temporary table tmp_experiments as
 
 analyze tmp_experiments;
 
+
+
 -- At last, we can now combine the scored interaction details with experiment
 -- information and integer identifiers to produce the RIG attributes.
 
@@ -219,9 +221,9 @@ create temporary table tmp_rigid_attributes as
         || '||i.canonical_rig=>' || sourceid || '>>' || icrig.rig
 
         -- Interaction type information.
-        -- This does not replicate the type name used in previous iRefIndex
-        -- releases since a fairly complicated way of constructing descriptions
-        -- of interactions appears to have been used.
+        -- NOTE: This does not replicate the type name used in previous iRefIndex
+        -- NOTE: releases since a fairly complicated way of constructing descriptions
+        -- NOTE: of interactions appears to have been used.
 
         || case when interactiontype is not null or interactionname is not null then
                      '||i.type_name=>' || sourceid || '>>' || coalesce(interactiontypename, interactionname)
@@ -340,7 +342,7 @@ create temporary table tmp_canonicalrog2rogs as
 -- Specific and canonical ROG integer identifiers with taxonomy identifiers.
 
 create temporary table tmp_canonical_rogs as
-    select SI.rog || '|+|i.taxid=>' || substring(rogid from 28) || '|+|i.canonical_rog=>|' || CI.rog
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.canonical_rog=>|' || CI.rog
     from irefindex_rogids_canonical as R
     inner join irefindex_rog2rogid as SI
         on R.rogid = SI.rogid
@@ -349,16 +351,155 @@ create temporary table tmp_canonical_rogs as
 
 \copy tmp_canonical_rogs to '<directory>/_EXT__ROG__EXPORT_canonical_rog.irft'
 
--- Interaction references mapped to RIG identifiers.
+-- ROG integer identifiers and accessions with taxonomy identifiers.
 
-create temporary table tmp_interaction2rig as
-    select refvalue, rigid
-    from xml_xref_interactions as I
-    inner join irefindex_rigids as R
-        on (I.source, I.filename, I.entry, I.interactionid) = 
-           (R.source, R.filename, R.entry, R.interactionid);
+create temporary table tmp_rog_accessions as
+    select SI.rog || '|+|i.taxid=>' || S.reftaxid || '|+|i.xref=>|' || array_to_string(array_accum(dblabel || ':' || refvalue), '|') || '|'
+    from xml_xref_sequences as S
+    inner join irefindex_rog2rogid as SI
+        on S.refsequence || S.reftaxid = SI.rogid
+    group by SI.rog, S.reftaxid;
 
-\copy tmp_interaction2rig to '<directory>/_EXT__RIG_src_intxn_id.irft'
+\copy tmp_rog_accessions to '<directory>/_COL__ROG_xref.irft'
+
+-- ROG identifiers with taxonomy identifiers.
+
+create temporary table tmp_rogids as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.rogid=>|' || SI.rogid || '|'
+    from irefindex_rog2rogid as SI;
+
+\copy tmp_rogids to '<directory>/_ONE__EXT__ROG_ROGID.irft'
+
+-- ROG integer identifiers with taxonomy identifiers and a selection of names.
+-- NOTE: The names used do not necessarily replicate those found in previous
+-- NOTE: iRefIndex releases.
+
+create temporary table tmp_gene_synonym_rogids as
+    select distinct rogid, "synonym"
+    from irefindex_gene2rog as G
+    left outer join gene_synonyms as S
+        on G.geneid = S.geneid
+        and cast(substring(G.rogid from 28) as integer) = S.taxid;
+
+analyze tmp_gene_synonym_rogids;
+
+create temporary table tmp_rog_fullnames as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.interactor_description=>|'
+        || array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|') || '|'
+    from irefindex_rog2rogid as SI
+    inner join tmp_gene_synonym_rogids as S
+        on SI.rogid = S.rogid
+    group by SI.rog, SI.rogid;
+
+analyze tmp_rog_fullnames;
+
+\copy tmp_rog_fullnames to '<directory>/_ROG_fullname.irft'
+
+-- ROG integer identifiers mapped to display names.
+-- Names can be one of the following: UniProt identifiers, gene symbols, gene
+-- synonyms, locustags, UniProt accessions, other identifiers (GenBank, FlyBase,
+-- RefSeq), or ROG identifier.
+
+-- NOTE: Need to fully support the above list of identifier types.
+
+create temporary table tmp_uniprot_rogids as
+    select sequence || taxid as rogid, uniprotid
+    from uniprot_proteins
+    where taxid is not null;
+
+analyze tmp_uniprot_rogids;
+
+create temporary table tmp_gene_rogids as
+    select rogid, symbol
+    from irefindex_gene2rog as R
+    inner join gene_info as G
+        on R.geneid = G.geneid;
+
+analyze tmp_gene_rogids;
+
+create temporary table tmp_display_names as
+    select rog || '|+|i.displayLabel=>|' || upper(name)
+    from (
+        select SI.rog, coalesce(
+            U.uniprotid,
+            G.symbol,
+            array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|'),
+            I.dblabel || ':' || replace(I.refvalue, '|', '_')
+            ) as name
+        from irefindex_rog2rogid as SI
+        left outer join tmp_uniprot_rogids as U
+            on SI.rogid = U.rogid
+        left outer join tmp_gene_rogids as G
+            on SI.rogid = G.rogid
+        left outer join tmp_gene_synonym_rogids as S
+            on SI.rogid = S.rogid
+        inner join irefindex_all_rogid_identifiers as I
+            on SI.rogid = I.rogid
+        group by SI.rog, U.uniprotid, G.symbol, I.dblabel, I.refvalue
+        ) as X
+    group by rog, name;
+
+\copy tmp_display_names to '<directory>/_ROG_displaylabel.irft'
+
+-- ROG integer identifiers mapped to UniProt accessions with taxonomy details.
+
+create temporary table tmp_uniprot_accessions as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.UniProt_Ac=>|' || refvalue
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogid_identifiers as I
+        on SI.rogid = I.rogid
+        and dblabel = 'uniprotkb'
+    group by SI.rog, SI.rogid, refvalue;
+
+\copy tmp_uniprot_accessions to '<directory>/_ROG__EXT__EXPORT_UniProt_Ac.irft'
+
+-- ROG integer identifiers mapped to UniProt identifiers with taxonomy details.
+
+create temporary table tmp_uniprot_names as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.UniProt_ID=>|' || uniprotid
+    from irefindex_rog2rogid as SI
+    inner join tmp_uniprot_rogids as U
+        on SI.rogid = U.rogid
+    group by SI.rog, SI.rogid, uniprotid;
+
+\copy tmp_uniprot_names to '<directory>/_ROG__EXT__EXPORT_UniProt_ID.irft'
+
+-- ROG integer identifiers mapped to gene identifiers with taxonomy details.
+
+create temporary table tmp_geneids as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.geneID=>|' || geneid || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    group by SI.rog, SI.rogid, geneid;
+
+\copy tmp_geneids to '<directory>/_EXT__EXPORT__ROG_geneID.irft'
+
+-- ROG integer identifiers mapped to molecular weights with taxonomy details.
+
+create temporary table tmp_mw as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.mw=>|' || mw || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogid_identifiers as I
+        on SI.rogid = I.rogid
+    inner join uniprot_proteins as U
+        on I.refvalue = U.accession
+        and I.dblabel = 'uniprotkb'
+    group by SI.rog, SI.rogid, mw;
+
+\copy tmp_mw to '<directory>/_EXT__RANGE__ROG_mass.irft'
+
+-- ROG integer identifiers mapped to IPI identifiers with taxonomy details.
+
+create temporary table tmp_ipi as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.ipi=>|' || refvalue
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogid_identifiers as I
+        on SI.rogid = I.rogid
+        and dblabel = 'ipi'
+    group by SI.rog, SI.rogid, refvalue;
+
+\copy tmp_ipi to '<directory>/_ROG__EXPORT_ipi.irft'
 
 -- ROG integer identifiers mapped to RIG identifiers and other ROGs in an interaction.
 
@@ -380,6 +521,19 @@ create temporary table tmp_rog2rigid as
     group by R.rigid, I.rog;
 
 \copy tmp_rog2rigid to '<directory>/rog2rig.irfm'
+
+-- Interaction references mapped to RIG identifiers.
+
+create temporary table tmp_interaction2rig as
+    select refvalue, rigid
+    from xml_xref_interactions as I
+    inner join irefindex_rigids as R
+        on (I.source, I.filename, I.entry, I.interactionid) = 
+           (R.source, R.filename, R.entry, R.interactionid);
+
+\copy tmp_interaction2rig to '<directory>/_EXT__RIG_src_intxn_id.irft'
+
+
 
 -- A pairwise mapping of ROG integer identifiers for each interaction.
 -- This is processed by the irdata_convert_graph.py tool.
