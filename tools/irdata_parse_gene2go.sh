@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -23,14 +23,14 @@ else
     . 'irdata-config'
 fi
 
-OUTFILE='gene_history.txt'
+OUTFILE='gene2go.txt'
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME <output data directory> <filename>
 
-Process the gene_history file (typically gene_history.gz), producing data
-suitable for iRefIndex in a file called $OUTFILE in the output data directory.
+Process the gene2go file (typically gene2go.gz), producing data suitable for
+iRefIndex in a file called $OUTFILE in the output data directory.
 EOF
     exit 1
 fi
@@ -39,7 +39,7 @@ DATADIR=$1
 FILENAME=$2
 
 if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
-    echo "$PROGNAME: A data directory and an input filename or - must be specified." 1>&2
+    echo "$PROGNAME: A data directory and an input filename must be specified." 1>&2
     exit 1
 fi
 
@@ -51,11 +51,11 @@ else
     READER='cat "$FILENAME"'
 fi
 
-# Uncompress, remove the header, extract the taxid, geneid and symbol.
-# Then replace empty column values with null values.
+# Uncompress, remove the header, extract the taxid, geneid, goid, term and
+# category, remove duplicate lines.
 
   eval "$READER" \
 | tail -n +2 \
-| cut -f 1,2,3,4 \
-| sed -e 's/\t-\t/\t\\N\t/' \
+| cut -f 1,2,3,6,8 \
+| sort -u \
 > "$DATADIR/$OUTFILE"

@@ -29,3 +29,12 @@ create table gene_history (
     oldsymbol varchar not null,
     primary key(oldgeneid)
 );
+
+create table gene2go (
+    taxid integer not null,
+    geneid integer not null,
+    goid varchar not null,
+    term varchar not null,
+    category varchar not null,
+    primary key(geneid, goid)
+);
