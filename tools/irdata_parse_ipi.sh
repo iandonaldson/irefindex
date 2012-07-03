@@ -52,6 +52,14 @@ for FILENAME in $FILENAMES; do
             exit 1
         fi
 
+        # Read both compressed and uncompressed files.
+
+        if [ "$FILETYPE" = "gz" ]; then
+            READER='gunzip -c "$FILENAME"'
+        else
+            READER='cat "$FILENAME"'
+        fi
+
         # Get the accession mapping by extracting header lines and splitting the entries.
         # Remove the ">" marker.
         # Split using " " and extract the identifiers and taxid.
@@ -61,7 +69,8 @@ for FILENAME in $FILENAMES; do
         # Remove the redundant "IPI" label.
         # Transpose the identifiers where provided in a list.
 
-          grep -e '^>' "$FILENAME" \
+          eval "$READER" \
+        | grep -e '^>' \
         | cut -d '>' -f 2- \
         | cut -d ' ' -f 1,2 \
         | sed -e 's/ /|/g' \
