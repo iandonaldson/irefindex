@@ -522,6 +522,50 @@ create temporary table tmp_rog2rigid as
 
 \copy tmp_rog2rigid to '<directory>/rog2rig.irfm'
 
+-- ROG integer identifiers mapped to GO term names with taxonomy details.
+
+create temporary table tmp_go_functions as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.function=>|' || array_to_string(array_accum(distinct term), '|')
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    inner join gene2go as GG
+        on G.geneid = GG.geneid
+        and GG.category = 'Function'
+    group by SI.rog, SI.rogid;
+
+\copy tmp_go_functions to '<directory>/_EXT__ROG_Function.irft'
+
+create temporary table tmp_go_components as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.function=>|' || array_to_string(array_accum(distinct term), '|')
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    inner join gene2go as GG
+        on G.geneid = GG.geneid
+        and GG.category = 'Component'
+    group by SI.rog, SI.rogid;
+
+\copy tmp_go_functions to '<directory>/_EXT__ROG_Component.irft'
+
+create temporary table tmp_go_processes as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.function=>|' || array_to_string(array_accum(distinct term), '|')
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    inner join gene2go as GG
+        on G.geneid = GG.geneid
+        and GG.category = 'Process'
+    group by SI.rog, SI.rogid;
+
+\copy tmp_go_functions to '<directory>/_EXT__ROG_Process.irft'
+
 -- Interaction references mapped to RIG identifiers.
 
 create temporary table tmp_interaction2rig as
