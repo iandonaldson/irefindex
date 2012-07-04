@@ -11,11 +11,19 @@ create table gene_info (
     taxid integer not null,
     geneid integer not null,
     symbol varchar not null,
-    primary key(geneid, symbol)
+    locustag varchar,
+    chromosome varchar,
+    primary key(geneid)
+);
+
+create table gene_maplocations (
+    geneid integer not null,
+    position integer not null,
+    maplocation varchar not null,
+    primary key(geneid, position)
 );
 
 create table gene_synonyms (
-    taxid integer not null,
     geneid integer not null,
     position integer not null,
     "synonym" varchar not null,

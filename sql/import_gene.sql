@@ -19,6 +19,7 @@ begin;
 
 \copy gene2refseq from '<directory>/gene2refseq.txt'
 \copy gene_info from '<directory>/gene_info.txt'
+\copy gene_maplocations from '<directory>/gene_maplocations.txt'
 \copy gene_synonyms from '<directory>/gene_synonyms.txt'
 \copy gene_history from '<directory>/gene_history.txt'
 \copy gene2go from '<directory>/gene2go.txt'
@@ -27,6 +28,7 @@ delete from gene_synonyms where "synonym" = '-';
 
 analyze gene2refseq;
 analyze gene_info;
+analyze gene_maplocations;
 analyze gene_synonyms;
 analyze gene_history;
 analyze gene2go;

@@ -566,6 +566,51 @@ create temporary table tmp_go_processes as
 
 \copy tmp_go_functions to '<directory>/_EXT__ROG_Process.irft'
 
+-- ROG integer identifiers mapped to chromosome information with taxonomy details.
+
+create temporary table tmp_chromosomes as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.chromosome=>|' || chromosome || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    inner join gene_info as GI
+        on G.geneid = GI.geneid
+    group by SI.rog, SI.rogid, chromosome;
+
+\copy tmp_chromosomes to '<directory>/_ROG_chromosome.irft'
+
+-- ROG integer identifiers mapped to maplocation information with taxonomy details.
+
+create temporary table tmp_maplocations as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.maplocation=>|' || array_to_string(array_accum(maplocation), '|') || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    inner join gene_maplocations as GM
+        on G.geneid = GM.geneid
+    group by SI.rog, SI.rogid;
+
+\copy tmp_maplocations to '<directory>/_ROG_maplocation.irft'
+
+-- PubMed identifiers for RIG identifiers.
+
+create temporary table tmp_pmids as
+    select '|' || P.refvalue || '|+|' || rigid
+    from irefindex_rigids as I
+    inner join xml_experiments as E
+        on (I.source, I.filename, I.entry, I.interactionid) =
+           (E.source, E.filename, E.entry, E.interactionid)
+    inner join xml_xref_experiment_pubmed as P
+        on (E.source, E.filename, E.entry, E.experimentid) =
+           (P.source, P.filename, P.entry, P.experimentid)
+    group by P.refvalue, rigid;
+
+\copy tmp_pmids to '<directory>/_EXT__RIG_PMID.irft'
+
 -- Interaction references mapped to RIG identifiers.
 
 create temporary table tmp_interaction2rig as
