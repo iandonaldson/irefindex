@@ -126,3 +126,15 @@ create table xml_xref_interactor_sequences (
 
     -- Constraints are added after import.
 );
+
+-- Interactor names.
+
+create table xml_names_interactor_names (
+    source varchar not null,
+    filename varchar not null,
+    entry integer not null,
+    interactorid varchar not null,
+    nametype varchar not null,
+    name varchar not null,
+    primary key(source, filename, entry, interactorid, nametype, name)
+);

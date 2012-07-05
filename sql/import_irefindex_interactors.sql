@@ -119,4 +119,14 @@ insert into xml_xref_interactor_types
 
 analyze xml_xref_interactor_types;
 
+-- Get interactor names.
+
+insert into xml_names_interactor_names
+    select distinct source, filename, entry, parentid as interactorid, nametype, name
+    from xml_names
+    where scope = 'interactor'
+        and property = 'interactor';
+
+analyze xml_names_interactor_names;
+
 commit;
