@@ -623,6 +623,7 @@ create temporary table tmp_shortlabels as
     inner join xml_names_interactor_names as N
         on (R.source, R.filename, R.entry, R.interactorid) =
            (N.source, N.filename, N.entry, N.interactorid)
+        and nametype = 'shortLabel'
     group by SI.rog, SI.rogid;
 
 \copy tmp_shortlabels to '<directory>/_ROG_ShortLabel.irft'
