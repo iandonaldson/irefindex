@@ -51,13 +51,13 @@ create temporary table tmp_uniprot_rogids as
 
 analyze tmp_uniprot_rogids;
 
-create temporary table tmp_gene_rogids as
+create temporary table tmp_gene_symbol_rogids as
     select rogid, symbol
     from irefindex_gene2rog as R
     inner join gene_info as G
         on R.geneid = G.geneid;
 
-analyze tmp_gene_rogids;
+analyze tmp_gene_symbol_rogids;
 
 create temporary table tmp_gene_synonym_rogids as
     select distinct rogid, "synonym"
@@ -71,13 +71,13 @@ analyze tmp_gene_synonym_rogids;
 -- NOTE: less memory.
 
 create temporary table tmp_all_gene_synonym_rogids as
-    select rogid, "synonym"
+    select rogid, replace(replace(replace("synonym", '|', '_'), '/', '_'), E'\\', '_')
     from (
         select rogid, "synonym"
         from tmp_gene_synonym_rogids
         union
         select rogid, symbol as "synonym"
-        from tmp_gene_rogids
+        from tmp_gene_symbol_rogids
         union
         select rogid, uniprotid as "synonym"
         from tmp_uniprot_rogids
@@ -422,7 +422,7 @@ create temporary table tmp_rogids as
 
 create temporary table tmp_rog_fullnames as
     select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.interactor_description=>|'
-        || array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|') || '|'
+        || array_to_string(array_accum(upper("synonym")), '|') || '|'
     from irefindex_rog2rogid as SI
     inner join tmp_all_gene_synonym_rogids as S
         on SI.rogid = S.rogid
@@ -445,13 +445,13 @@ create temporary table tmp_display_names as
         select SI.rog, coalesce(
             U.uniprotid,
             G.symbol,
-            array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|'),
+            array_to_string(array_accum(upper("synonym")), '|'),
             I.dblabel || ':' || replace(I.refvalue, '|', '_')
             ) as name
         from irefindex_rog2rogid as SI
         left outer join tmp_uniprot_rogids as U
             on SI.rogid = U.rogid
-        left outer join tmp_gene_rogids as G
+        left outer join tmp_gene_symbol_rogids as G
             on SI.rogid = G.rogid
         left outer join tmp_all_gene_synonym_rogids as S
             on SI.rogid = S.rogid
@@ -658,7 +658,7 @@ create temporary table tmp_synonyms as
     select SI.rog
         || '|+|i.taxid=>' || substring(SI.rogid from 28)
         || '|+|i.interactor_synonims=>|'
-        || array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|')
+        || array_to_string(array_accum(upper("synonym")), '|')
         || '|'
     from irefindex_rog2rogid as SI
     inner join tmp_all_gene_synonym_rogids as S
