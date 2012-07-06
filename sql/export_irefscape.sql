@@ -668,6 +668,24 @@ create temporary table tmp_synonyms as
 
 \copy tmp_synonyms to '<directory>/_ROG_synonyms.irft'
 
+-- ROG integer identifiers mapped to interactor aliases with taxonomy details.
+
+create temporary table tmp_aliases as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.interactor_alias=>|'
+        || array_to_string(array_accum(distinct upper(name)), '|') || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogids as R
+        on SI.rogid = R.rogid
+    inner join xml_names_interactor_names as N
+        on (R.source, R.filename, R.entry, R.interactorid) =
+           (N.source, N.filename, N.entry, N.interactorid)
+        and nametype = 'alias'
+    group by SI.rog, SI.rogid;
+
+\copy tmp_aliases to '<directory>/_ROG_alias.irft'
+
 -- Interaction references mapped to RIG identifiers.
 
 create temporary table tmp_interaction2rig as
@@ -678,6 +696,31 @@ create temporary table tmp_interaction2rig as
            (R.source, R.filename, R.entry, R.interactionid);
 
 \copy tmp_interaction2rig to '<directory>/_EXT__RIG_src_intxn_id.irft'
+
+-- RIG identifier mapping.
+
+create temporary table tmp_rig2rigid as
+    select '|' || rig || '|+|' || rigid
+    from irefindex_rig2rigid;
+
+\copy tmp_rig2rigid to '<directory>/_ONE__EXT__RIG_RIGID.irft'
+
+-- Original references for ROG integer identifiers.
+
+create temporary table tmp_original_references as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.originalReferences=>|'
+        || array_to_string(array_accum(distinct originalrefvalue), '|')
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogids as R
+        on SI.rogid = R.rogid
+    inner join irefindex_assignments as A
+        on (R.source, R.filename, R.entry, R.interactorid) =
+           (A.source, A.filename, A.entry, A.interactorid)
+    group by SI.rog, SI.rogid;
+
+\copy tmp_original_references to '<directory>/_ROG_originalReference.irft'
 
 
 
