@@ -378,8 +378,7 @@ create temporary table tmp_gene_synonym_rogids as
     select distinct rogid, "synonym"
     from irefindex_gene2rog as G
     left outer join gene_synonyms as S
-        on G.geneid = S.geneid
-        and cast(substring(G.rogid from 28) as integer) = S.taxid;
+        on G.geneid = S.geneid;
 
 analyze tmp_gene_synonym_rogids;
 
@@ -610,6 +609,40 @@ create temporary table tmp_pmids as
     group by P.refvalue, rigid;
 
 \copy tmp_pmids to '<directory>/_EXT__RIG_PMID.irft'
+
+-- ROG integer identifiers mapped to interactor short labels with taxonomy details.
+
+create temporary table tmp_shortlabels as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.interactor_shortlbl=>|'
+        || array_to_string(array_accum(distinct upper(name)), '|') || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogids as R
+        on SI.rogid = R.rogid
+    inner join xml_names_interactor_names as N
+        on (R.source, R.filename, R.entry, R.interactorid) =
+           (N.source, N.filename, N.entry, N.interactorid)
+    group by SI.rog, SI.rogid;
+
+\copy tmp_shortlabels to '<directory>/_ROG_ShortLabel.irft'
+
+-- ROG integer identifiers mapped to interactor synonyms with taxonomy details.
+-- NOTE: Adopting the previous spelling of the attribute name.
+
+create temporary table tmp_synonyms as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.interactor_synonims=>|'
+        || array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|')
+        || '|'
+    from irefindex_rog2rogid as SI
+    inner join tmp_gene_synonym_rogids as S
+        on SI.rogid = S.rogid
+    group by SI.rog, SI.rogid
+    having count("synonym") > 0;
+
+\copy tmp_synonyms to '<directory>/_ROG_synonyms.irft'
 
 -- Interaction references mapped to RIG identifiers.
 
