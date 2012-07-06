@@ -41,6 +41,52 @@ create temporary table tmp_experiment_names as
 
 analyze tmp_experiment_names;
 
+-- Various gene-related lists of names, synonyms and symbols.
+-- This reproduces various operations in the previous iRefScape data preparation.
+
+create temporary table tmp_uniprot_rogids as
+    select sequence || taxid as rogid, uniprotid
+    from uniprot_proteins
+    where taxid is not null;
+
+analyze tmp_uniprot_rogids;
+
+create temporary table tmp_gene_rogids as
+    select rogid, symbol
+    from irefindex_gene2rog as R
+    inner join gene_info as G
+        on R.geneid = G.geneid;
+
+analyze tmp_gene_rogids;
+
+create temporary table tmp_gene_synonym_rogids as
+    select distinct rogid, "synonym"
+    from irefindex_gene2rog as G
+    inner join gene_synonyms as S
+        on G.geneid = S.geneid;
+
+analyze tmp_gene_synonym_rogids;
+
+-- NOTE: Using "union" instead of "distinct ... union all" seems to require
+-- NOTE: less memory.
+
+create temporary table tmp_all_gene_synonym_rogids as
+    select rogid, "synonym"
+    from (
+        select rogid, "synonym"
+        from tmp_gene_synonym_rogids
+        union
+        select rogid, symbol as "synonym"
+        from tmp_gene_rogids
+        union
+        select rogid, uniprotid as "synonym"
+        from tmp_uniprot_rogids
+        ) as X;
+
+analyze tmp_all_gene_synonym_rogids;
+
+
+
 -- Obtain participant role information.
 -- The participant method output is built here since making a string from an
 -- array of nulls results in an empty string that can be easily detected later.
@@ -374,19 +420,11 @@ create temporary table tmp_rogids as
 -- NOTE: The names used do not necessarily replicate those found in previous
 -- NOTE: iRefIndex releases.
 
-create temporary table tmp_gene_synonym_rogids as
-    select distinct rogid, "synonym"
-    from irefindex_gene2rog as G
-    left outer join gene_synonyms as S
-        on G.geneid = S.geneid;
-
-analyze tmp_gene_synonym_rogids;
-
 create temporary table tmp_rog_fullnames as
     select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.interactor_description=>|'
         || array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|') || '|'
     from irefindex_rog2rogid as SI
-    inner join tmp_gene_synonym_rogids as S
+    inner join tmp_all_gene_synonym_rogids as S
         on SI.rogid = S.rogid
     group by SI.rog, SI.rogid;
 
@@ -400,21 +438,6 @@ analyze tmp_rog_fullnames;
 -- RefSeq), or ROG identifier.
 
 -- NOTE: Need to fully support the above list of identifier types.
-
-create temporary table tmp_uniprot_rogids as
-    select sequence || taxid as rogid, uniprotid
-    from uniprot_proteins
-    where taxid is not null;
-
-analyze tmp_uniprot_rogids;
-
-create temporary table tmp_gene_rogids as
-    select rogid, symbol
-    from irefindex_gene2rog as R
-    inner join gene_info as G
-        on R.geneid = G.geneid;
-
-analyze tmp_gene_rogids;
 
 create temporary table tmp_display_names as
     select rog || '|+|i.displayLabel=>|' || upper(name)
@@ -430,7 +453,7 @@ create temporary table tmp_display_names as
             on SI.rogid = U.rogid
         left outer join tmp_gene_rogids as G
             on SI.rogid = G.rogid
-        left outer join tmp_gene_synonym_rogids as S
+        left outer join tmp_all_gene_synonym_rogids as S
             on SI.rogid = S.rogid
         inner join irefindex_all_rogid_identifiers as I
             on SI.rogid = I.rogid
@@ -638,7 +661,7 @@ create temporary table tmp_synonyms as
         || array_to_string(array_accum(upper(replace("synonym", '|', '_'))), '|')
         || '|'
     from irefindex_rog2rogid as SI
-    inner join tmp_gene_synonym_rogids as S
+    inner join tmp_all_gene_synonym_rogids as S
         on SI.rogid = S.rogid
     group by SI.rog, SI.rogid
     having count("synonym") > 0;
