@@ -41,25 +41,16 @@ if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
     exit 1
 fi
 
-TMPFILE="$DATADIR/_dig.txt"
+# The main file excludes the gene symbols.
 
-# Parse the file using the Python-based parser.
-
-  "$TOOLS/irdata_parse_dig.py" "$FILENAME" \
-> "$TMPFILE"
-
-# Then create different files for the parsed information.
-
-# The main file excludes the genes.
-
-  cut -f 1,2,3,4,5,7,8 "$TMPFILE" \
+  tail -n +2 "$FILENAME" \
+| cut -f 1,3,4,5,6,7,8,9 \
 > "$DATADIR/dig.txt"
 
 # The genes file maps DIG identifiers to genes.
 
-  cut -f 1,6 "$TMPFILE" \
-| "$TOOLS/irdata_text_transpose.py" -f 2 -w '|' - \
+  tail -n +2 "$FILENAME" \
+| cut -f 2,7 \
+| "$TOOLS/irdata_text_transpose.py" -f 1 -t 1 -w ', ' - \
 | sort -u \
 > "$DATADIR/dig_genes.txt"
-
-rm "$TMPFILE"

@@ -1,16 +1,16 @@
 create table dig_diseases (
-    digid integer not null,
     title varchar not null,
-    name varchar not null,
-    diseaseomimid integer,
-    diseasetag integer,
-    geneomimid integer not null,
     locus varchar not null,
-    primary key(digid)
+    diseaseomimid integer not null,
+    diseasetag varchar not null,
+    geneid integer not null,
+    digid integer not null,
+    name varchar not null,
+    geneomimid integer not null
 );
 
 create table dig_genes (
-    digid integer not null,
     symbol varchar not null,
+    digid integer not null,
     primary key(digid, symbol)
 );

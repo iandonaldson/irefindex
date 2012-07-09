@@ -221,13 +221,13 @@ CORUM_XML_FILE_PATTERN='*.xml'
 ############################################################
 # DIG
 
-#DIG_DOWNLOAD_FILES='morbidmap14062010.txt'
-DIG_DOWNLOAD_FILES='22112010morbidmap.txt'
+DIG_DOWNLOAD_FILES='morbidmap14062010.txt'
+#DIG_DOWNLOAD_FILES='22112010morbidmap.txt'
 DIG_MIRROR='file://'
 
-DIG_RELEASE_URL="$DIG_MIRROR/biotek/cnkeeper/donaldson3/morbidmap/"
+DIG_RELEASE_URL="$DIG_MIRROR/biotek/cnkeeper/donaldson3/data92/DIG/2011-10-03/"
 DIG_DIR_NAME="DIG"
-DIG_OTHER_FILE_PATTERN='*.txt'
+DIG_OTHER_FILE_PATTERN='morbidmap*.txt'
 DIG_PARSER='irdata_parse_dig.sh'
 DIG_SCHEMA='dig'
 
