@@ -169,7 +169,7 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 
 XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
 TABSOURCES="MPIDB"
-OTHERSOURCES="PSI_MI TAXONOMY BIND FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
+OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 # NOTE: To be completed and added below for parsing: SEGUID
@@ -217,6 +217,19 @@ CORUM_MIRROR='http://mips.gsf.de'
 CORUM_RELEASE_URL="$CORUM_MIRROR/genre/export/sites/default/corum/"
 CORUM_DIR_NAME="CORUM"
 CORUM_XML_FILE_PATTERN='*.xml'
+
+############################################################
+# DIG
+
+#DIG_DOWNLOAD_FILES='morbidmap14062010.txt'
+DIG_DOWNLOAD_FILES='22112010morbidmap.txt'
+DIG_MIRROR='file://'
+
+DIG_RELEASE_URL="$DIG_MIRROR/biotek/cnkeeper/donaldson3/morbidmap/"
+DIG_DIR_NAME="DIG"
+DIG_OTHER_FILE_PATTERN='*.txt'
+DIG_PARSER='irdata_parse_dig.sh'
+DIG_SCHEMA='dig'
 
 ############################################################
 # DIP
