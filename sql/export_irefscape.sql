@@ -722,6 +722,56 @@ create temporary table tmp_original_references as
 
 \copy tmp_original_references to '<directory>/_ROG_originalReference.irft'
 
+-- Disease groups data.
+
+create temporary table tmp_dig2rog as
+    select D.digid, rogid
+    from dig_diseases as D
+    inner join dig_genes as DG
+        on D.digid = DG.digid
+    inner join gene_info as G
+        on DG.symbol = G.symbol
+    inner join irefindex_gene2rog as R
+        on G.geneid = R.geneid;
+
+analyze tmp_dig2rog;
+
+create temporary table tmp_omim as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.omim=>|' || diseaseomimid
+    from irefindex_rog2rogid as SI
+    inner join tmp_dig2rog as R
+        on SI.rogid = R.rogid
+    inner join dig_diseases as D
+        on R.digid = D.digid
+    where diseaseomimid is not null;
+
+\copy tmp_omim to '<directory>/_EXT__ROG_omim.irft'
+
+create temporary table tmp_digid as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.digid=>|' || digid
+    from irefindex_rog2rogid as SI
+    inner join tmp_dig2rog as R
+        on SI.rogid = R.rogid;
+
+\copy tmp_digid to '<directory>/_EXT__ROG_digid.irft'
+
+create temporary table tmp_digtitle as
+    select SI.rog
+        || '|+|i.taxid=>' || substring(SI.rogid from 28)
+        || '|+|i.dig_title=>|' || title
+    from irefindex_rog2rogid as SI
+    inner join tmp_dig2rog as R
+        on SI.rogid = R.rogid
+    inner join dig_diseases as D
+        on R.digid = D.digid
+    group by SI.rog, SI.rogid, title;
+
+\copy tmp_digtitle to '<directory>/_ROG_dig_title.irft'
+
 
 
 -- A pairwise mapping of ROG integer identifiers for each interaction.

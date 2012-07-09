@@ -1,5 +1,6 @@
 create table dig_diseases (
     digid integer not null,
+    title varchar not null,
     name varchar not null,
     diseaseomimid integer,
     diseasetag integer,

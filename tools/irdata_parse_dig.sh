@@ -52,12 +52,12 @@ TMPFILE="$DATADIR/_dig.txt"
 
 # The main file excludes the genes.
 
-  cut -f 1,2,3,4,6,7 "$TMPFILE" \
+  cut -f 1,2,3,4,5,7,8 "$TMPFILE" \
 > "$DATADIR/dig.txt"
 
 # The genes file maps DIG identifiers to genes.
 
-  cut -f 1,5 "$TMPFILE" \
+  cut -f 1,6 "$TMPFILE" \
 | "$TOOLS/irdata_text_transpose.py" -f 2 -w '|' - \
 | sort -u \
 > "$DATADIR/dig_genes.txt"

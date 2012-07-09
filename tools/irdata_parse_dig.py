@@ -71,7 +71,7 @@ if __name__ == "__main__":
             name = title[:name_end].strip(", ")
 
             genes = "|".join([geneid.strip() for geneid in genes.split(",")])
-            writer.append(map(bulkstr, [_digid + 1, name, disease_omimid, tag, genes, gene_omimid, locus]))
+            writer.append(map(bulkstr, [_digid + 1, title, name, disease_omimid, tag, genes, gene_omimid, locus]))
 
     finally:
         writer.close()
