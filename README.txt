@@ -97,7 +97,11 @@ sorting/ordering of textual data, it is essential that the database be
 initialised in a "cluster" with a locale that employs the ordering defined for
 ASCII character values. Such a cluster can be defined as follows:
 
-  initdb -D /home/irefindex/data --no-locale
+  initdb -D /home/irefindex/pgdata --no-locale
+
+Note that the cluster's data directory is different from the data directory
+employed by this software to collect source data and to deposit processed
+data.
 
 A database can then be created using the usual PostgreSQL tools:
 
@@ -107,6 +111,26 @@ If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
 be used by employing various explicit "collate" declarations in certain column
 declarations or in various SQL statements where ROG identifiers are being
 retrieved in a particular order. This is not currently supported.
+
+Configuring the Database
+------------------------
+
+PostgreSQL configuration can be challenging. An example configuration can be
+found in the docs directory in the form of the postgresql.conf file. Although
+the settings have been known to change from one release of PostgreSQL to the
+next, the following appear to be crucial:
+
+  shared_buffers
+  work_mem
+  maintenance_work_mem
+  wal_buffers
+  checkpoint_segments
+  effective_cache_size
+  default_statistics_target
+
+For non-interactive systems, the autovacuum feature can be switched off. This
+helps to avoid contention due to table locking performed by the autovacuum
+daemon.
 
 Initialising the Database
 -------------------------
