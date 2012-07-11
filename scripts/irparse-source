@@ -138,7 +138,7 @@ for FILEPATTERN in $FILEPATTERNS; do
 
     # Make sure there are valid files and none explicitly failed.
 
-    if [[ ! "$HAVEFILES" || "$FAILED" ]]; then
+    if [ ! "$HAVEFILES" ] || [ "$FAILED" ]; then
         continue
     fi
 
@@ -162,7 +162,7 @@ for FILEPATTERN in $FILEPATTERNS; do
     HAVEDATA='yes'
 done
 
-if [[ "$HAVEDATA" && ! "$FAILED" ]]; then
+if [ "$HAVEDATA" ] && [ ! "$FAILED" ]; then
     echo $SOURCE
 elif [ "$FAILED" ]; then
     echo "$PROGNAME: Source $SOURCE had invalid data." 1>&2

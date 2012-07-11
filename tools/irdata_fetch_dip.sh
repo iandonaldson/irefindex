@@ -37,7 +37,7 @@ if [ "$1" = '--check' ]; then
     shift 1
 fi
 
-if [[ "$1" = '-v' || "$1" = '--verbose' ]]; then
+if [ "$1" = '-v' ] || [ "$1" = '--verbose' ]; then
     VERBOSE=$1
     shift 1
 fi

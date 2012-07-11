@@ -91,7 +91,7 @@ fi
 
 SYSDATA="$SYSPREFIX/var/lib/irdata/data"
 
-if [[ "$DATA" && -e "$DATA" ]]; then
+if [ "$DATA" ] && [ -e "$DATA" ]; then
     :
 elif [ -e "$SCRIPTS/../data" ]; then
     DATA=`normpath "$SCRIPTS/../data"`

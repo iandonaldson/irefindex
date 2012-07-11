@@ -290,7 +290,7 @@ if [ "$BUILD" ]; then
 
     # Import integer identifiers from a previous release.
 
-    if [[ -e "$DATA/rig2rigid" && -e "$DATA/rog2rogid" ]] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_integer_identifiers.sql" "$DATA" ; then
+    if [ -e "$DATA/rig2rigid" ] && [ -e "$DATA/rog2rogid" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_integer_identifiers.sql" "$DATA" ; then
         echo "$PROGNAME: Could not import integer identifiers from the previous release." 1>&2
         exit 1
     fi

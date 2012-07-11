@@ -69,7 +69,7 @@ else
         DATADIR="$DATA/$SOURCEDIR"
 
         for ARCHIVETYPE in $ARCHIVETYPES; do
-            if [[ "$ARCHIVETYPE" = 'gz' && ! "$INCLUDE_GZIP" ]]; then
+            if [ "$ARCHIVETYPE" = 'gz' ] && [ ! "$INCLUDE_GZIP" ]; then
                 continue
             fi
 

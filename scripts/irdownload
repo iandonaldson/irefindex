@@ -45,7 +45,7 @@ if [ "$1" = '--check' ]; then
     shift 1
 fi
 
-if [[ "$1" = '-v' || "$1" = '--verbose' ]]; then
+if [ "$1" = '-v' ] || [ "$1" = '--verbose' ]; then
     VERBOSE=$1
     shift 1
 fi
@@ -119,7 +119,7 @@ for SOURCE in $SOURCES; do
                     # For patterns, if files do not exist, the variables will also be the same.
                     # For patterns, if files do exist, the variables will be different.
 
-                    if [[ "$DOWNLOADEDFILE" = "$DOWNLOADED" && ! -e "$DOWNLOADEDFILE" ]]; then
+                    if [ "$DOWNLOADEDFILE" = "$DOWNLOADED" ] && [ ! -e "$DOWNLOADEDFILE" ]; then
                         echo "$PROGNAME: Want to download file: $DOWNLOAD" 1>&2
 
                     # Output available files, either single files or patterns.

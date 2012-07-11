@@ -49,7 +49,7 @@ for FILENAME in $FILENAMES; do
 
     # Parse the FASTA files.
 
-    if [[ "$FILETYPE" = 'fasta' || "$FILETYPE" = 'fasta.gz' ]]; then
+    if [ "$FILETYPE" = 'fasta' ] || [ "$FILETYPE" = 'fasta.gz' ]; then
         if ! "$TOOLS/irdata_parse_fasta.py" "$DATADIR" 'sp,acc,id' 'id,acc,date,taxid,mw' "$FILENAME" ; then
             echo "$PROGNAME: FASTA parsing of $FILENAME failed." 1>&2
             exit 1
@@ -57,7 +57,7 @@ for FILENAME in $FILENAMES; do
 
     # Parse the data files.
 
-    elif [[ "$FILETYPE" = 'dat' || "$FILETYPE" = 'dat.gz' ]]; then
+    elif [ "$FILETYPE" = 'dat' ] || [ "$FILETYPE" = 'dat.gz' ]; then
 
         # Unpack any gzip archives since the slicing of these files is not
         # efficient if done repeatedly.
