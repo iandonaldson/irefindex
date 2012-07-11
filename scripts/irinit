@@ -32,10 +32,10 @@ EOF
     exit 1
 fi
 
-if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init.sql" \
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml.sql" \
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_mitab.sql" \
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_manifest.sql" \
+if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init.sql" $PSQL_OPTIONS \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_psixml.sql" $PSQL_OPTIONS \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_mitab.sql" $PSQL_OPTIONS \
+    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_manifest.sql" $PSQL_OPTIONS \
     ) ; then
     echo "$PROGNAME: Could not initialise the database schema." 1>&2
     exit 1
@@ -47,7 +47,7 @@ for SOURCE in $ALLSOURCES ; do
     eval SCHEMA='$'"$SOURCE"_SCHEMA
 
     if [ "$SCHEMA" ]; then
-        if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_${SCHEMA}.sql" ; then
+        if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_${SCHEMA}.sql" $PSQL_OPTIONS ; then
             echo "$PROGNAME: Could not initialise schema for $SOURCE." 1>&2
             exit 1
         fi
@@ -56,62 +56,62 @@ done
 
 # Initialise the different build tables.
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_sequences.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_sequences.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the consolidated sequence information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_archived.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_archived.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the archived sequence information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactors.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactors.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the interactor information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_gene_mappings.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_gene_mappings.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the gene-to-protein mappings schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_canonical.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_canonical.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the canonical interactor information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_assignments.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_assignments.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the assignment information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_rigids.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_rigids.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the interaction information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_integer_identifiers.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_integer_identifiers.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the integer identifier mappings schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactions.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_interactions.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the additional interaction information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_experiments.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_experiments.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the additional experiment information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_participants.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_participants.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the additional participant information schema." 1>&2
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_confidence.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/init_irefindex_confidence.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the confidence score schema." 1>&2
     exit 1
 fi

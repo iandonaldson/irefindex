@@ -44,7 +44,7 @@ fi
 
 cp "$SQL/organisms.txt" "$DATA"
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" "$DATA" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" "$DATA" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not generate MITAB data." 1>&2
     exit 1
 fi
@@ -70,7 +70,7 @@ echo 'other' >> "$DATA/organisms.txt"
 
 # Generate the iRefScape output.
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not generate iRefScape data." 1>&2
     exit 1
 fi

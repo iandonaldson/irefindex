@@ -72,7 +72,7 @@ fi
 # Import XML sources using a common template.
 
 if [ "$XMLFILEPATTERN" ]; then
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_psixml.sql" "$IMPORTDATADIR" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_psixml.sql" "$IMPORTDATADIR" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Import failed for XML files from $SOURCE." 1>&2
         exit 1
     fi
@@ -83,7 +83,7 @@ else
     schema=${SCHEMA:-$source}
     TEMPLATE=${TEMPLATE:-"import_$schema.sql"}
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/$TEMPLATE" "$IMPORTDATADIR" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/$TEMPLATE" "$IMPORTDATADIR" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Import failed for data files from $SOURCE." 1>&2
         exit 1
     fi

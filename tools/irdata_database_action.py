@@ -22,13 +22,14 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os, tempfile
+import subprocess
 
 def substitute(s, defs):
     for name, value in defs.items():
         s = s.replace("<%s>" % name, value)
     return s
 
-def execute_command(cmd, database_name):
+def execute_command(cmd, database_name, psql_options=None):
     fd, cmd_filename = tempfile.mkstemp()
     try:
         fc = os.fdopen(fd, "w")
@@ -36,7 +37,8 @@ def execute_command(cmd, database_name):
             fc.write(cmd)
         finally:
             fc.close()
-        if os.system("""psql -v ON_ERROR_STOP=true -f %s %s""" % (cmd_filename, database_name)):
+        if subprocess.call(["psql"] + (psql_options or []) +
+            ["-v", "ON_ERROR_STOP=true", "-f", cmd_filename, database_name]):
             sys.exit(1)
     finally:
         os.remove(cmd_filename)
@@ -50,6 +52,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print >>sys.stderr, "Usage: %s ( <database> | --output-command )" \
             " <template> [ <data_directory> ]" \
+            " [ --psql-options ... ]" \
             " [ --defs ( <name> <value> ) ... ]" % progname
         sys.exit(1)
 
@@ -59,14 +62,24 @@ if __name__ == "__main__":
     output_command = database_name == "--output-command"
 
     try:
+        psql_options_start = sys.argv.index("--psql-options")
+    except ValueError:
+        psql_options_start = None
+
+    try:
         defs_start = sys.argv.index("--defs")
     except ValueError:
         defs_start = None
 
-    if len(sys.argv) > 3 and defs_start != 3:
+    if len(sys.argv) > 3 and defs_start != 3 and psql_options_start != 3:
         data_directory = sys.argv[3]
     else:
         data_directory = "data"
+
+    if psql_options_start is not None:
+        psql_options = sys.argv[psql_options_start+1:defs_start]
+    else:
+        psql_options = []
 
     defs = {}
     if defs_start is not None:
@@ -82,7 +95,7 @@ if __name__ == "__main__":
         if output_command:
             print cmd
         else:
-            execute_command(cmd, database_name)
+            execute_command(cmd, database_name, psql_options)
     finally:
         f.close()
 

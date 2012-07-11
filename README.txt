@@ -99,13 +99,24 @@ ASCII character values. Such a cluster can be defined as follows:
 
   initdb -D /home/irefindex/pgdata --no-locale
 
+On Debian-based systems, a cluster can be defined using a special command, in
+the following example specifying a PostgreSQL version of 8.2 and a cluster
+name of irdata:
+
+  pg_createcluster --locale=C 8.2 irdata
+
 Note that the cluster's data directory is different from the data directory
 employed by this software to collect source data and to deposit processed
 data.
 
-A database can then be created using the usual PostgreSQL tools:
+Once the cluster has been started, a database can then be created using the
+usual PostgreSQL tools:
 
   createdb irdata
+
+See the documentation for PostgreSQL and the various tools (createdb, psql)
+for details of connecting to a specific cluster. Any connection options must
+be given in the configuration of this software using the PSQL_OPTIONS setting.
 
 If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
 be used by employing various explicit "collate" declarations in certain column

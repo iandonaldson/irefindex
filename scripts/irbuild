@@ -66,70 +66,70 @@ if [ "$BUILD" ]; then
 
     # Import any manifest information.
 
-    if [ -e "$DATA/irefindex_manifest" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_manifest.sql" "$DATA" ; then
+    if [ -e "$DATA/irefindex_manifest" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_manifest.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Manifest information could not be imported." 1>&2
         exit 1
     fi
 
     # Convert MITAB-based data to an XML-compatible representation.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/mitab_to_xml.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not convert MITAB data to the common data representation." 1>&2
         exit 1
     fi
 
     # Finalise the XML-based data.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_constraints.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_constraints.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Constraints could not be applied to the common data representation." 1>&2
         exit 1
     fi
 
     # Import archived identifiers from a previous release.
 
-    if [ -e "$DATA/sequences_archived" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_archived.sql" "$DATA" ; then
+    if [ -e "$DATA/sequences_archived" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_archived.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not import archived identifiers from the previous release." 1>&2
         exit 1
     fi
 
     # Build a sequence archive for the release.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_sequences.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_sequences.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not build a sequence archive from the imported data." 1>&2
         exit 1
     fi
 
     # Identify the interactors.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactors.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactors.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not build interactor information from the imported data." 1>&2
         exit 1
     fi
 
     # Establish gene-to-protein mappings.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_gene_mappings.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_gene_mappings.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not create gene-to-protein mappings." 1>&2
         exit 1
     fi
 
     # Map identifiers to sequences in current databases.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" --defs sequences irefindex_sequences linkprefix '' ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" $PSQL_OPTIONS --defs sequences irefindex_sequences linkprefix '' ; then
         echo "$PROGNAME: Could not build sequence information from the imported data." 1>&2
         exit 1
     fi
 
     # Map identifiers to sequences in archived databases.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" --defs sequences irefindex_sequences_archived linkprefix 'archived/' ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_identifier_sequences.sql" $PSQL_OPTIONS --defs sequences irefindex_sequences_archived linkprefix 'archived/' ; then
         echo "$PROGNAME: Could not build sequence information from archived data." 1>&2
         exit 1
     fi
 
     # Map interactors to sequences.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactor_sequences.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactor_sequences.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not map interactors to sequences." 1>&2
         exit 1
     fi
@@ -146,14 +146,14 @@ if [ "$MAKE_REPORTS" ]; then
 
     # Make a tidied up manifest report.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/manifest.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/manifest.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report manifest information." 1>&2
         exit 1
     fi
 
     # Make an interactor report.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactors_by_source.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactors_by_source.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report source interactor information." 1>&2
         exit 1
     fi
@@ -172,7 +172,7 @@ if [ "$BUILD" ]; then
 
     # Assign definitive sequence information to interactors.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_assignments.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_assignments.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not build assignment information from the imported data." 1>&2
         exit 1
     fi
@@ -182,17 +182,17 @@ if [ "$MAKE_REPORTS" ]; then
 
     # Make assigned interactor reports, if requested.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/assignments_by_source.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/assignments_by_source.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report sequence assignment information." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_source.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_source.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report ROG identifier assignment information." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_score.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rogids_by_score.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report ROG identifier scoring information." 1>&2
         exit 1
     fi
@@ -204,7 +204,7 @@ if [ "$BUILD" ]; then
 
     # Export ROG information for RIG identifier calculation, make and import RIG identifiers.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not export ROG identifiers for assigned sequences." 1>&2
         exit 1
     fi
@@ -214,14 +214,14 @@ if [ "$BUILD" ]; then
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not import the generated RIG identifiers." 1>&2
         exit 1
     fi
 
     # Make canonical interaction information.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids_canonical.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_rogids_canonical.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not export canonical ROG identifiers." 1>&2
         exit 1
     fi
@@ -231,7 +231,7 @@ if [ "$BUILD" ]; then
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids_canonical.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_rigids_canonical.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not import the generated canonical RIG identifiers." 1>&2
         exit 1
     fi
@@ -241,17 +241,17 @@ if [ "$MAKE_REPORTS" ]; then
 
     # Make an interactions report, if requested.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_source.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_source.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report RIG identifier assignment information." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_taxonomy.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/rigids_by_taxonomy.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report RIG identifier taxonomy statistics." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactions_by_source.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$REPORTS/interactions_by_source.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not report interaction statistics." 1>&2
         exit 1
     fi
@@ -268,29 +268,29 @@ if [ "$BUILD" ]; then
 
     # Make convenient representations for other entity types.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactions.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_interactions.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not build interaction information from the imported data." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_experiments.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_experiments.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not build experiment information from the imported data." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_participants.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_participants.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not build participant information from the imported data." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_confidence.sql" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_confidence.sql" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not generate confidence score information." 1>&2
         exit 1
     fi
 
     # Import integer identifiers from a previous release.
 
-    if [ -e "$DATA/rig2rigid" ] && [ -e "$DATA/rog2rogid" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_integer_identifiers.sql" "$DATA" ; then
+    if [ -e "$DATA/rig2rigid" ] && [ -e "$DATA/rog2rogid" ] && ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_integer_identifiers.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not import integer identifiers from the previous release." 1>&2
         exit 1
     fi

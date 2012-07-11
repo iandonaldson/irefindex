@@ -55,19 +55,19 @@ if [ "$PGSQL" ]; then
 
     # Export identifiers from a PostgreSQL database.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_integer_rigids.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_integer_rigids.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not export integer RIG identifiers from the previous database." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_integer_rogids.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_integer_rogids.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not export integer ROG identifiers from the previous database." 1>&2
         exit 1
     fi
 
     # Export archived identifiers from a PostgreSQL database.
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_archived.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_archived.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not export archived identifiers from the previous database." 1>&2
         exit 1
     fi

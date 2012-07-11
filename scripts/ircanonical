@@ -33,14 +33,14 @@ EOF
     exit 1
 fi
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not initialise the canonical schema." 1>&2
     exit 1
 fi
 
 # Combine groups of genes until no more updates can be made.
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_iteration.sql" "$DATA" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_iteration.sql" "$DATA" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not update the canonical schema." 1>&2
     exit 1
 fi
@@ -48,14 +48,14 @@ fi
 while [ `cat "$DATA/canonical_updates"` != '0' ]; do
     echo "$PROGNAME: Updating the canonical schema..." 1>&2
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_iteration.sql" "$DATA" ; then
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_iteration.sql" "$DATA" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not update the canonical schema." 1>&2
         exit 1
     fi
 
 done
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_final.sql" ; then
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_irefindex_canonical_final.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not define the canonical representative interactors." 1>&2
     exit 1
 fi
