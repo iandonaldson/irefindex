@@ -9,7 +9,7 @@ DATABASE=irdata                             # database name
 DATA=${DATA:-}                              # user defined data directory location
 WIKIFORMAT=MediaWiki                        # format for generated Wiki pages
 WGET_WAIT=2                                 # time to wait between wget requests
-PSQL_OPTIONS=                               # --psql-options <psql connection options>
+PSQL_OPTIONS=                               # "--psql-options <psql connection options>"
 
 
 
