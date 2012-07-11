@@ -51,7 +51,9 @@ Using the Software
 Once the prerequisites have been installed, the software can be run from the
 distribution directory. Alternatively, a system-wide installation can be
 performed or prepared using the setup.py script provided. Such an installation
-can then be used by making sure that the PATH can find the installed programs.
+can then be used by making sure that the PATH can find the installed programs
+and that the PYTHONPATH can find the irdata directory containing the Python
+module files supplied in this distribution.
 
 Configuring an Installation of the Software
 -------------------------------------------
@@ -60,7 +62,7 @@ If a system-wide installation is to reside in a directory hierarchy other than
 the conventional system root (that being /, with programs situated in
 /usr/bin, and so on), the configuration script should be copied from the
 scripts directory into this software's distribution directory (normally
-containing this file) and modified:
+containing this README.txt file) and modified:
 
   cp scripts/irdata-config .
 
@@ -117,6 +119,10 @@ usual PostgreSQL tools:
 See the documentation for PostgreSQL and the various tools (createdb, psql)
 for details of connecting to a specific cluster. Any connection options must
 be given in the configuration of this software using the PSQL_OPTIONS setting.
+For example, for a cluster listening on port 5433 the following could be used
+in the configuration file:
+
+  PSQL_OPTIONS="--psql-options -p 5433"
 
 If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
 be used by employing various explicit "collate" declarations in certain column

@@ -17,7 +17,7 @@ setup(
         "irdata",
         # Add new modules here.
         ],
-    # Install a modified irdata-config file in the current directory, if present.
+    # Install a modified irdata-config file from the current directory, if present.
     scripts = glob(join("scripts", "*")) + \
               glob(join("tools", "*.py")) + \
               glob(join("tools", "*.sh")) + \

@@ -28,9 +28,12 @@ PROGNAME=`basename "$0"`
 SCRIPTS=`dirname "$0"`
 
 # Fix the scripts directory if this file was read by one of the tools.
+# Or if this file does not reside with the other scripts.
 
 if [ `basename "$SCRIPTS"` = 'tools' ]; then
     SCRIPTS=`dirname "$SCRIPTS"`/scripts
+elif [ ! -e "$SCRIPTS/irbuild" ] && [ -e "$SCRIPTS/scripts/irbuild" ]; then
+    SCRIPTS="$SCRIPTS/scripts"
 fi
 
 # Allow directories to be created.
