@@ -111,7 +111,9 @@ fi
 
       # Add the non-manifest information.
 
-      printf "%s\t%s\t%s\n" "$SOURCE" 'RELEASE_URL' "$RELEASE_URL"
+      if [ "$RELEASE_URL" ]; then
+          printf "%s\t%s\t%s\n" "$SOURCE" 'RELEASE_URL' "$RELEASE_URL"
+      fi
       if [ "$DOWNLOAD_FILES" ]; then
           printf "%s\t%s\t%s\n" "$SOURCE" 'DOWNLOAD_FILES' "$DOWNLOAD_FILES"
       fi
@@ -127,7 +129,7 @@ cp "$MANIFESTS/dateformats.txt" "$DATA"
 
 FAILED=
 for SOURCE in $SOURCES ; do
-    if ! grep -e "^$SOURCE"$'\t' "$MANIFEST_OUTPUT" > /dev/null 2>&1 ; then
+    if ! ( cut -f 1 "$MANIFEST_OUTPUT" | grep -e "$SOURCE" > /dev/null 2>&1 ) ; then
         FAILED="${FAILED}${FAILED:+ }$SOURCE"
     fi
 done
