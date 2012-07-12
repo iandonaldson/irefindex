@@ -40,19 +40,21 @@ if [ ! "$FILENAME" ]; then
 fi
 
 # Look for "Release 9999_99" and emit that as the version.
+# NOTE: Tab character used in the final command.
 
-PATTERN=$'[[:digit:]]\{4\}_[[:digit:]]\{2\}'
+PATTERN='[[:digit:]]\{4\}_[[:digit:]]\{2\}'
 
   grep -e "$PATTERN" "$FILENAME" \
 | sed -e "s/.*Release \($PATTERN\).*/\\1/" \
 | head -n 1 \
-| sed -e $'s/\(.*\)/VERSION\t\\1/'
+| sed -e 's/\(.*\)/VERSION	\\1/'
 
 # Look for "99-ZZZ-9999" and emit that as the date.
+# NOTE: Tab character used in the final command.
 
-PATTERN=$'[[:digit:]]\{2\}-[[:alpha:]]\{3\}-[[:digit:]]\{4\}'
+PATTERN='[[:digit:]]\{2\}-[[:alpha:]]\{3\}-[[:digit:]]\{4\}'
 
   grep -e "$PATTERN" "$FILENAME" \
 | sed -e "s/.* of \($PATTERN\)/\\1/" \
 | head -n 1 \
-| sed -e $'s/\(.*\)/DATE\t\\1/'
+| sed -e 's/\(.*\)/DATE	\\1/'

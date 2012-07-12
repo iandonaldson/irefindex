@@ -48,9 +48,10 @@ fi
 
 # Concatenate the output data, isolating the organism name from the organism
 # column.
+# NOTE: Tab character used in the final command.
 
   cat "$DATADIR"/*_proteins.txt \
-| sed -e $'s/\(.*\)\t\(.*\)\t\(.*\)\t.*\[\(.*\)\]\t\(.*\)/\\1\t\\2\t\\3\t\\4\t\\5/' \
+| sed -e 's/\(.*\)	\(.*\)	\(.*\)	.*\[\(.*\)\]	\(.*\)/\\1	\\2	\\3	\\4	\\5/' \
 > "$DATADIR/genpept_proteins.txt"
 
 "$TOOLS/irdata_process_signatures.sh" "$DATADIR"

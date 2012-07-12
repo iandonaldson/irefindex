@@ -44,8 +44,9 @@ if [ ! "$DATADIR" ] || [ ! $FILENAME ]; then
 fi
 
 # Convert the bizarre format to a plain tab-separated format.
+# NOTE: Tab character used in the command.
 
-  sed $'s/\t|\t/\t/g;s/\t|$//;' "$FILENAME" \
+  sed 's/	|	/	/g;s/	|$//;' "$FILENAME" \
 > "$DATADIR/$OUTFILE"
 
 exit $?
