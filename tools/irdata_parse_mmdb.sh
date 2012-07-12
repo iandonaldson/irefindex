@@ -45,10 +45,11 @@ fi
 
 # Remove comment lines, convert the field delimiters, extract the PDB accession,
 # chain, gi and taxid.
-# NOTE: Tab character used in the second sed command.
+# Tab character used in the sed command.
+TAB=`printf '\t'`
 
   grep -v -e '^#' "$FILENAME" \
 | sed 's/^ *//' \
-| sed 's/ \{2,\}/	/'g \
+| sed "s/ \{2,\}/${TAB}/"g \
 | cut -f 2,3,4,5 \
 > "$DATADIR/$OUTFILE"

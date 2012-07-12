@@ -39,22 +39,23 @@ if [ ! "$FILENAME" ]; then
     exit 1
 fi
 
+# Tab character used in the sed commands.
+TAB=`printf '\t'`
+
 # Look for "Release: 9999_99 of 99-ZZZ-9999" and emit that as the version and date.
-# NOTE: Tab character used in the final command.
 
 PATTERN='[[:digit:]]\{4\}_[[:digit:]]\{2\}'
 
   grep -e '^Release:' "$FILENAME" \
 | head -n 1 \
 | sed -e "s/.*\($PATTERN\).*/\\1/" \
-| sed -e 's/\(.*\)/VERSION	\\1/'
+| sed -e "s/\(.*\)/VERSION${TAB}\\1/"
 
 # Look for "99-ZZZ-9999" and emit that as the date.
-# NOTE: Tab character used in the final command.
 
 PATTERN='[[:digit:]]\{2\}-[[:alpha:]]\{3\}-[[:digit:]]\{4\}'
 
   grep -e '^Release:' "$FILENAME" \
 | head -n 1 \
 | sed -e "s/.*\($PATTERN\).*/\\1/" \
-| sed -e 's/\(.*\)/DATE	\\1/'
+| sed -e "s/\(.*\)/DATE${TAB}\\1/"
