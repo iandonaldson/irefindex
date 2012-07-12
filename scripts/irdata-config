@@ -418,7 +418,7 @@ PDB_SCHEMA='pdb'
 PSI_MI_DOWNLOAD_FILES="psi-mi25.obo"
 PSI_MI_MIRROR='http://psidev.sourceforge.net'
 
-PSI_MI_RELEASE_URL="$PSI_MI_MIRROR/mi/rel25/data/"
+PSI_MI_RELEASE_URL="$PSI_MI_MIRROR/viewvc/psidev/psi/mi/rel25/data/"
 PSI_MI_DIR_NAME="PSI-MI"
 PSI_MI_OTHER_FILE_PATTERN='*.obo'
 PSI_MI_PARSER='irdata_parse_obo.py'
