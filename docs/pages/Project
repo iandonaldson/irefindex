@@ -14,21 +14,21 @@ The irdata source distribution provides a number of different directories:
 `irdata`        || A Python package providing common functionality
 ==
 `manifests`     || Resources for accessing and interpreting source database Web
-                   sites in order to gather release/version information
+                .. sites in order to gather release/version information
 ==
 `packages`      || Operating system distribution packaging resources
 ==
 `reports`       || SQL templates producing reports and summaries for an
-                   iRefIndex release
+                .. iRefIndex release
 ==
 `scripts`       || The high-level programs used to perform the iRefIndex release
-                   process (written as POSIX shell scripts)
+                .. process (written as POSIX shell scripts)
 ==
 `sql`           || SQL templates performing processing operations on interaction
-                   and sequence data
+                .. and sequence data
 ==
 `tools`         || Tools that support the iRefIndex release process (written as
-                   POSIX shell scripts and Python programs)
+                .. POSIX shell scripts and Python programs)
 }}}
 
 In addition, there are some top-level files:
@@ -94,11 +94,11 @@ interpretation of release information from certain Web sites providing
 interaction data:
 
  * `dateformats.txt` describes the different date formats used on Web sites,
-   thus helping to interpret dates and convert them to a standardised form
+ thus helping to interpret dates and convert them to a standardised form
 
  * The `irdata_manifest_*.txt` files describe how to extract data from Web
-   pages by providing XPath expressions for specific pieces of information;
-   they are read by the `irdata_manifest.py` tool
+ pages by providing XPath expressions for specific pieces of information;
+ they are read by the `irdata_manifest.py` tool
 
 == Packaging Resources ==
 
@@ -170,13 +170,13 @@ data in order to produce the iRefIndex consolidated dataset. There are three
 principal types of template:
 
  * Initialisation templates, prefixed with `init` (typically used by the
-   `irinit` program)
+ `irinit` program)
 
  * Import templates, prefixed with `import` (used by a variety of programs,
-   mostly under the control of the `irimport` and `irbuild` programs)
+ mostly under the control of the `irimport` and `irbuild` programs)
 
  * Deletion templates, prefixed with `drop` (not generally used except when
-   troubleshooting)
+ troubleshooting)
 
 As is the case with the contents of the `reports` directory, templates in the
 `sql` directory are evaluated using the `irdata_database_action.py` tool which

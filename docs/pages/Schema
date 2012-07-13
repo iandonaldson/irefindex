@@ -12,13 +12,13 @@ The following table types are provided in the database schema:
 mitab        || MITAB-originating source data
 ==
 xml          || PSI-XML-originating source data together with converted MITAB
-                data
+             .. data
 ==
 xml_xref     || Data specifically providing cross-references such as identifiers
 ==
 xml_names    || Data specifically providing name information such as short
-                labels and full names
+             .. labels and full names
 ==
 irefindex    || Information derived from the common XML schema and sequence
-                databases for the build process
+             .. databases for the build process
 }}}

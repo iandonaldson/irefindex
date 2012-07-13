@@ -41,10 +41,10 @@ collected information, some sources connect the fundamental concepts of
 interaction data in different ways:
 
 {{{#!table
-   Experiments grouped by interaction (many experiments per interaction)
+.. Experiments grouped by interaction (many experiments per interaction)
 || !BioGrid, !IntAct, MINT, MPACT
 ==
-   Interactions grouped by experiment (many interactions per experiment)
+.. Interactions grouped by experiment (many interactions per experiment)
 || BIND Translation, CORUM, DIP, HPRD, MPI-IMEX, MPI-LIT, OPHID
 }}}
 
@@ -96,7 +96,7 @@ Experiment   || Retain identifiers
 Interaction  || Retain identifiers
 ==
 Interactor   || Retain explicit interactor identifiers;
-                assign unique identifiers for implicit interactors
+             .. assign unique identifiers for implicit interactors
 ==
 Participant  || Assign unique identifiers
 }}}
@@ -125,12 +125,12 @@ Generally, identifier locality restrictions are not prominently specified or
 adhered to.
 
   * For version 1.0, the `xs:ID` type is used for `id` attributes, but sources
-    like OPHID repeat values of such attributes.
+  like OPHID repeat values of such attributes.
 
   * For version 2.5, the `xs:int` type is used for `id` attributes, and it is
-    noted that these refer to distinct entities throughout a file. However,
-    participant identifiers are effectively local and may not have any meaning
-    at all.
+  noted that these refer to distinct entities throughout a file. However,
+  participant identifiers are effectively local and may not have any meaning
+  at all.
 
 MIPS and OPHID use version 1.0 of the specification and need to provide values
 using different elements, although these elements correspond directly to
