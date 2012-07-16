@@ -36,6 +36,10 @@ for a data source are complete.
 The sources are configured to be the following when --all is specified:
 
 $ALLSOURCES
+
+Sources that are to be excluded are defined to be the following:
+
+$EXCLUDEDSOURCES
 EOF
     exit 1
 fi
@@ -64,6 +68,15 @@ fi
 FAILED=
 
 for SOURCE in $SOURCES; do
+
+    # Skip excluded sources.
+
+    if isin "$SOURCE" $EXCLUDEDSOURCES ; then
+        continue
+    fi
+
+    # Determine how to download the source data.
+
     eval DOWNLOAD_SCRIPT='$'"$SOURCE"_DOWNLOAD_SCRIPT
     eval RELEASE_URL='$'"$SOURCE"_RELEASE_URL
     eval DOWNLOAD_FILES='$'"$SOURCE"_DOWNLOAD_FILES

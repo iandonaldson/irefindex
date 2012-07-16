@@ -176,6 +176,8 @@ TABSOURCES="MPIDB"
 OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
+EXCLUDEDSOURCES=""
+
 # NOTE: To be completed and added below for parsing: SEGUID
 
 ############################################################
@@ -520,3 +522,21 @@ EFETCH_URL="$EUTILS_URL/efetch.fcgi"
 
 EUTILS_TOOL='irdata'
 EUTILS_EMAIL="$EMAIL"
+
+
+
+############################################################
+# Utility function.
+
+isin() {
+    ITEM=$1
+    shift 1
+    while [ "$1" ] && [ "$ITEM" != "$1" ]; do
+        shift 1
+    done
+    if [ "$1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}

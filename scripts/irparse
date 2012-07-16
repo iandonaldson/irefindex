@@ -31,6 +31,10 @@ Parse or just check data from the different sources. These are configured to be
 the following when --all is specified:
 
 $ALLSOURCES
+
+Sources that are to be excluded are defined to be the following:
+
+$EXCLUDEDSOURCES
 EOF
     exit 1
 fi
@@ -54,7 +58,17 @@ elif [ ! "$SOURCES" ]; then
     exit 1
 fi
 
+# Exclude sources.
+
+PARSESOURCES=
+
+for SOURCE in $SOURCES ; do
+    if ! isin "$SOURCE" $EXCLUDEDSOURCES ; then
+        PARSESOURCES="${PARSESOURCES}${PARSESOURCES:+ }$SOURCE"
+    fi
+done
+
 # The pipeline.
 
-  "$SCRIPTS/argument-per-line" $SOURCES \
+  "$SCRIPTS/argument-per-line" $PARSESOURCES \
 | "$SCRIPTS/irparallel" "\"$SCRIPTS/irparse-source\" $CHECK $NO_PARSE {}"

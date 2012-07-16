@@ -35,6 +35,10 @@ $ALLSOURCES
 If --xml is specified, only the following XML-based sources will be imported:
 
 $XMLSOURCES
+
+Sources that are to be excluded are defined to be the following:
+
+$EXCLUDEDSOURCES
 EOF
     exit 1
 fi
@@ -51,5 +55,10 @@ elif [ ! "$SOURCES" ]; then
 fi
 
 for SOURCE in $SOURCES ; do
-    "$SCRIPTS/irimport-source" "$SOURCE"
+
+    # Skip excluded sources.
+
+    if ! isin "$SOURCE" $EXCLUDEDSOURCES ; then
+        "$SCRIPTS/irimport-source" "$SOURCE"
+    fi
 done

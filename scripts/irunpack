@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2011 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -33,6 +33,10 @@ uncompress .gz files that do not appear to be archives.
 The sources are configured to be the following when --all is specified:
 
 $ALLSOURCES
+
+Sources that are to be excluded are defined to be the following:
+
+$EXCLUDEDSOURCES
 EOF
     exit 1
 fi
@@ -64,6 +68,15 @@ else
     ARCHIVETYPES=$("$SCRIPTS/irunpack-archive" --show-types)
 
     for SOURCE in $SOURCES; do
+
+        # Skip excluded sources.
+
+        if isin "$SOURCE" $EXCLUDEDSOURCES ; then
+            continue
+        fi
+
+        # Find out how and where to unpack the source data.
+
         eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
 
         DATADIR="$DATA/$SOURCEDIR"
