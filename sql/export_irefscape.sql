@@ -71,7 +71,7 @@ analyze tmp_gene_synonym_rogids;
 -- NOTE: less memory.
 
 create temporary table tmp_all_gene_synonym_rogids as
-    select rogid, replace(replace(replace("synonym", '|', '_'), '/', '_'), E'\\', '_')
+    select rogid, replace(replace(replace("synonym", '|', '_'), '/', '_'), E'\\', '_') as "synonym"
     from (
         select rogid, "synonym"
         from tmp_gene_synonym_rogids
@@ -725,50 +725,45 @@ create temporary table tmp_original_references as
 -- Disease groups data.
 
 create temporary table tmp_dig2rog as
-    select D.digid, rogid
+    select D.digid, rogid, diseaseomimid, title
     from dig_diseases as D
-    inner join dig_genes as DG
-        on D.digid = DG.digid
-    inner join gene_info as G
-        on DG.symbol = G.symbol
     inner join irefindex_gene2rog as R
-        on G.geneid = R.geneid;
+        on D.geneid = R.geneid;
 
 analyze tmp_dig2rog;
 
 create temporary table tmp_omim as
     select SI.rog
         || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.omim=>|' || diseaseomimid
+        || '|+|i.omim=>|' || array_to_string(array_accum(distinct diseaseomimid), '|')
     from irefindex_rog2rogid as SI
     inner join tmp_dig2rog as R
         on SI.rogid = R.rogid
-    inner join dig_diseases as D
-        on R.digid = D.digid
-    where diseaseomimid is not null;
+    where diseaseomimid <> 0
+    group by SI.rog, SI.rogid;
 
 \copy tmp_omim to '<directory>/_EXT__ROG_omim.irft'
 
 create temporary table tmp_digid as
     select SI.rog
         || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.digid=>|' || digid
+        || '|+|i.digid=>|' || array_to_string(array_accum(distinct digid), '|')
     from irefindex_rog2rogid as SI
     inner join tmp_dig2rog as R
-        on SI.rogid = R.rogid;
+        on SI.rogid = R.rogid
+    where digid <> 0
+    group by SI.rog, SI.rogid;
 
 \copy tmp_digid to '<directory>/_EXT__ROG_digid.irft'
 
 create temporary table tmp_digtitle as
     select SI.rog
         || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.dig_title=>|' || title
+        || '|+|i.dig_title=>|' || array_to_string(array_accum(distinct title), '|')
     from irefindex_rog2rogid as SI
     inner join tmp_dig2rog as R
         on SI.rogid = R.rogid
-    inner join dig_diseases as D
-        on R.digid = D.digid
-    group by SI.rog, SI.rogid, title;
+    group by SI.rog, SI.rogid;
 
 \copy tmp_digtitle to '<directory>/_ROG_dig_title.irft'
 
