@@ -25,6 +25,7 @@ begin;
 \copy gene2go from '<directory>/gene2go.txt'
 
 delete from gene_synonyms where "synonym" = '-';
+delete from gene_maplocations where maplocation = '-';
 
 analyze gene2refseq;
 analyze gene_info;
