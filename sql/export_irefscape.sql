@@ -486,6 +486,31 @@ create temporary table tmp_uniprot_names as
 
 \copy tmp_uniprot_names to '<directory>/_ROG__EXT__EXPORT_UniProt_ID.irft'
 
+-- ROG integer identifiers mapped to gene symbols with taxonomy details.
+
+create temporary table tmp_gene_symbols as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.geneSymbol=>|' || symbol
+    from irefindex_rog2rogid as SI
+    inner join irefindex_gene2rog as G
+        on SI.rogid = G.rogid
+    inner join gene_info as I
+        on G.geneid = I.geneid
+    group by SI.rog, SI.rogid, symbol;
+
+\copy tmp_gene_symbols to '<directory>/_ROG__EXT__EXPORT__TAX_geneSymbol.irft'
+
+-- ROG integer identifiers mapped to RefSeq accessions with taxonomy details.
+
+create temporary table tmp_refseq as
+    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.RefSeq_Ac=>|' || refvalue
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogid_identifiers as R
+        on SI.rogid = R.rogid
+        and dblabel = 'refseq'
+    group by SI.rog, SI.rogid, refvalue;
+
+\copy tmp_refseq to '<directory>/_ROG__EXT__EXPORT_RefSeq_Ac.irft'
+
 -- ROG integer identifiers mapped to gene identifiers with taxonomy details.
 
 create temporary table tmp_geneids as
