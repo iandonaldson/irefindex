@@ -103,6 +103,8 @@ analyze tmp_preferred;
 -- Define aliases for each ROG identifier.
 -- Any | characters will be replaced since the identifiers will be used in
 -- pipe-separated lists.
+-- Gene symbols are prefixed with "hgnc" in order to avoid confusion with gene
+-- identifiers which are prefixed with "entrezgene/locuslink".
 
 create temporary table tmp_aliases as
     select rogid, array_accum(distinct dblabel || ':' || replace(refvalue, '|', '_')) as aliases
@@ -113,7 +115,7 @@ create temporary table tmp_aliases as
             on dblabel = 'uniprotkb'
             and refvalue = accession
         union all
-        select rogid, dblabel, symbol as refvalue
+        select rogid, 'hgnc' as dblabel, symbol as refvalue
         from irefindex_rogid_identifiers
         inner join gene_info
             on dblabel = 'entrezgene/locuslink'
