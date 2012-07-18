@@ -60,7 +60,7 @@ create temporary table tmp_rogids_unique_to_sources as
 
 create temporary table tmp_rogids_shared_as_grid as
 
-    -- Make a header.
+    -- Make a header containing a blank entry (encoded with '-') and source names.
 
     select array_to_string(array_cat(array[cast('-' as varchar)], array_accum(source)), ',')
     from tmp_rogids_by_source
@@ -88,7 +88,7 @@ create temporary table tmp_rogids_shared_as_grid as
 
     -- Make a row with unique identifier totals.
 
-    select array_to_string(array_cat(array[cast('-' as varchar)], array_accum(coalesce(cast(total as varchar), '-'))), ',')
+    select array_to_string(array_cat(array[cast('(Exclusive to source)' as varchar)], array_accum(coalesce(cast(total as varchar), '-'))), ',')
     from tmp_rogids_unique_to_sources;
 
 \copy tmp_rogids_shared_as_grid to '<directory>/rogids_shared_as_grid'

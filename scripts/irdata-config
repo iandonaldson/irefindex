@@ -166,8 +166,9 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 # in an alphabetical order.
 #
 # The BIND and OPHID data is not publicly available. If not
-# available locally, these sources can be respectively
-# removed from the XMLSOURCES and OTHERSOURCES lists below.
+# available locally, these sources can be added to the
+# EXCLUDEDSOURCES list below.
+#
 # If available, review the BIND_MIRROR, BIND_RELEASE_URL,
 # OPHID_MIRROR and OPHID_RELEASE_URL settings below.
 
@@ -176,7 +177,11 @@ TABSOURCES="MPIDB"
 OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
-EXCLUDEDSOURCES=""
+# Excluded sources are those not to be downloaded, parsed,
+# imported or processed. Even requesting operations on "all"
+# sources will ignore these sources.
+
+EXCLUDEDSOURCES="GENPEPT"
 
 # NOTE: To be completed and added below for parsing: SEGUID
 
