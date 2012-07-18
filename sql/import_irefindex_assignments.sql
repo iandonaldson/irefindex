@@ -372,10 +372,12 @@ analyze irefindex_rogid_identifiers;
 
 -- Make a more comprehensive table mapping ROG identifiers to identifiers,
 -- useful for various output products.
+-- NOTE: This is rather time consuming and is only really useful for iRefScape
+-- NOTE: export data.
 
 insert into irefindex_all_rogid_identifiers
     select distinct refsequence || reftaxid as rogid, dblabel, refvalue
-    from xml_xref_sequences
+    from irefindex_sequences
     where refsequence is not null
         and reftaxid is not null;
 
