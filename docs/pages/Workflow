@@ -1,0 +1,655 @@
+## This file uses a syntax notation compatible with MoinMoin and the
+## ImprovedTableParser extension. It can be deployed in a MoinMoin Wiki or read
+## in a text editor.
+##
+## This file is not likely to be very readable in a text editor, unfortunately,
+## since much of the content is tabular and graphical.
+
+= iRefIndex Workflow =
+
+<<TableOfContents(2)>>
+
+The general top-level iRefIndex workflow is as follows:
+
+{{{{#!table
+<rowspan=8 style="border: 0" tablestyle="border-collapse: separate; border-spacing: 5px">
+
+{{{#!dot
+//format=svg
+digraph workflow {
+  node [shape="box",fontsize="15"];
+
+  subgraph {
+    rank=same;
+    "XML data" [color="#ff3333"];
+    "MITAB data" [color="#ff3333"];
+    "BIND data" [color="#ff3333"];
+  }
+
+  "common interaction data" [color="#33bb33"];
+
+  "XML data" -> "common interaction data";
+  "MITAB data" -> "common interaction data";
+  "BIND data" -> "common interaction data";
+
+  subgraph {
+    rank=same;
+    "interactors" [color="#3333ff"];
+    "interactions" [color="#3333ff"];
+    "sequence information" [color="#3333ff"];
+    "archived sequence information" [color="#3333ff"];
+  }
+
+  "identifier sequence digests" [color="#bbbb33"];
+
+  subgraph {
+    rank=same;
+    "gene-to-protein mappings" [color="#ff33ff"];
+    "interactor sequence digests" [color="#ff33ff"];
+  }
+
+  subgraph {
+    rank=same;
+    "canonical sequence groups" [color="#33bbbb"];
+    "ROG identifiers" [color="#33bbbb"];
+    "complete interactions" [color="#33bbbb"];
+  }
+
+  subgraph {
+    rank=same;
+    "canonical ROG identifiers" [color="#ff6633"];
+    "RIG identifiers" [color="#ff6633"];
+  }
+
+  "canonical RIG identifiers" [color="#33ff66"];
+
+  "common interaction data" -> interactions -> "complete interactions" -> "RIG identifiers";
+  "common interaction data" -> interactors -> "identifier sequence digests" -> "interactor sequence digests" -> "ROG identifiers" -> "RIG identifiers";
+  "sequence information" -> "identifier sequence digests";
+  "archived sequence information" -> "identifier sequence digests";
+  "identifier sequence digests" -> "canonical sequence groups" -> "canonical ROG identifiers";
+  "gene-to-protein mappings" -> "canonical sequence groups";
+  "ROG identifiers" -> "canonical ROG identifiers";
+  "ROG identifiers" -> "complete interactions";
+  "canonical ROG identifiers" -> "canonical RIG identifiers";
+  "complete interactions" -> "canonical RIG identifiers";
+}
+}}}
+
+|| <style="border: 0; border-left: 2px solid #f33;">
+
+Interaction data originates from PSI-MI XML, MITAB and BIND text format.
+<<BR>>
+~-Tables: mitab_*, bind_*-~
+
+== <style="border: 0; border-left: 2px solid #3b3;">
+
+To simplify processing, a common representation is used to retain the
+accumulated interaction data.
+<<BR>>
+~-Tables: xml_experiments, xml_interactors, xml_names, xml_organisms, xml_sequences, xml_xref-~
+
+== <style="border: 0; border-left: 2px solid #33f;">
+
+Supported interaction and interactor identifiers are collected. Sequence
+information is collected from existing data source versions and from a previous
+iRefIndex release.
+<<BR>>
+~-Tables: xml_xref_interactors, xml_xref_interactions, irefindex_sequences, irefindex_sequences_archived-~
+
+== <style="border: 0; border-left: 2px solid #bb3;">
+
+Identifier sequence digests map identifiers/accessions to sequence digests
+<<BR>>
+~-Tables: xml_xref_sequences-~
+
+== <style="border: 0; border-left: 2px solid #f3f;">
+
+Interactor sequence digests connect interactor instances to sequence digests
+via the identifiers employed to describe each interactor in its interaction
+record. Gene-to-protein mappings are established using Entrez Gene and
+<<Verbatim(UniProt/RefSeq)>> data.
+<<BR>>
+~-Tables: xml_xref_interactor_sequences, irefindex_gene2uniprot, irefindex_gene2refseq-~
+
+== <style="border: 0; border-left: 2px solid #3bb;">
+
+ROG identifiers combine sequence digests with taxonomy information for each interactor.
+<<BR>>A complete interaction is an interaction where all participants can be mapped to sequences.
+<<BR>>Canonical sequence groups are deduced from an analysis of the proteins associated with groups of related genes.
+<<BR>>
+~-Tables: irefindex_rogids, irefindex_interactions_complete, irefindex_rgg_rogids, irefindex_rgg_rogids_canonical-~
+
+== <style="border: 0; border-left: 2px solid #f63;">
+
+RIG identifiers are only generated for complete interactions.
+<<BR>>Canonical ROG identifiers are mapped to those ROG identifiers present in the interaction data, making use of the canonical sequence groups.
+<<BR>>
+~-Tables: irefindex_rogids_canonical, irefindex_rigids-~
+
+== <style="border: 0; border-left: 2px solid #3f6;">
+
+Canonical RIG identifiers are generated from canonical ROG identifiers.
+<<BR>>
+~-Tables: irefindex_rigids_canonical-~
+
+}}}}
+
+== Finding Identifiers and Sequences for Interactors ==
+
+For interactors, a process of sequence assignment must take place:
+
+{{{{#!table
+<rowspan=7 style="border: 0">
+
+{{{#!dot
+//format=svg
+digraph workflow {
+  node [shape="box",fontsize="15"];
+
+  "all references" [label="all references\n(primary/secondary xrefs for interactors)"];
+  "usable references" [label="usable references\n(xrefs using supported databases)"];
+  "unknown sequences" [label="unknown sequences\n(xrefs not providing sequences)"];
+  unarchive [label="check archived sequences",shape="ellipse"];
+  fetch [label="fetch missing sequences",shape="ellipse"];
+  "identifier sequences" [label="sequences for identifiers"];
+  "interactor sequences" [label="sequences for interactors"];
+
+  xrefs -> "all references" -> "usable references" -> "identifier sequences" -> "interactor sequences";
+  "usable references" -> "unknown sequences" -> fetch -> "identifier sequences";
+  "unknown sequences" -> unarchive -> "identifier sequences";
+}
+}}}
+
+||
+<style="border: 0"> Cross-references refer to many kinds of entities.
+==
+<style="border: 0"> All references related to interactors are obtained.
+==
+<style="border: 0"> Usable references are then identified by selecting only
+those referring to supported databases and only specific kinds of references
+that are likely to indicate an interactor identity (as opposed to peripheral
+information).
+==
+<style="border: 0"> Identifiers referring to proteins whose sequences are
+unknown in current sequence database versions are first compared against
+archived information from a previous iRefIndex release, with remaining unknown
+identifiers being exported so that this missing information can be obtained
+from other sources.
+==
+<style="border: 0"> A separate program communicates with Entrez Utilities and
+obtains any information that may still be available about the unknown proteins.
+==
+<style="border: 0"> A mapping from identifiers to sequences should now exist
+for as many identifiers as possible.
+==
+<style="border: 0"> The correspondence between identifiers and sequences is now
+applied to the interactors in context, thus identifying them.
+}}}}
+
+== Mapping Identifiers to Sequences ==
+
+Interaction records use identifiers to describe interactors:
+
+{{{#!dot
+//format=svg
+digraph identifier_usage {
+  rankdir=LR;
+  node [shape="box",fontsize="15"];
+
+  identifier1 [label="DB00123"];
+  identifier2 [label="DB00456"];
+  sequence1 [label="sequence: ..."];
+  sequence21 [label="sequence: ..."];
+  sequence22 [label="sequence: ..."];
+
+  interaction -> interactor1;
+  interaction -> interactor2;
+  interactor1 -> identifier1 [label="primaryRef"];
+  identifier1 -> sequence1;
+  interactor2 -> identifier2 [label="primaryRef"];
+  identifier2 -> sequence21;
+  identifier2 -> sequence22;
+}
+}}}
+
+Such identifiers should correspond to the identity of a particular interactor
+and thus a particular protein sequence (or collection of sequences). Moreover,
+a particular identifier should always correspond to the same protein sequence
+(or sequences).
+
+To find sequences for identifiers, the following procedure is employed:
+
+{{{#!dot
+//format=svg
+digraph identifier_mapping {
+  node [shape="box",fontsize="15"];
+  rankdir=LR;
+
+  subgraph interactions {
+    rank=same;
+    interaction;
+  }
+
+  subgraph xrefs {
+    rank=same;
+    uniprot_xref [label="UniProt xref"];
+    refseq_xref [label="RefSeq xref"];
+    gene_xref [label="Entrez Gene xref"];
+    pdb_xref [label="PDB xref"];
+    ipi_xref [label="IPI xref"];
+    flybase_xref [label="FlyBase xref"];
+    sgd_xref [label="SGD xref"];
+    gi_xref [label="GenBank identifier (gi) xref"];
+    genbank_xref [label="GenBank xref"];
+  }
+
+  gene_info [label="Entrez Gene",shape="Mrecord"];
+
+  subgraph accessions {
+    node [shape="Mrecord"];
+    rank=same;
+    uniprot_isoforms [label="UniProt isoforms"];
+    uniprot_gene_names [label="UniProt gene names"];
+    gene2refseq [label="Entrez Gene to RefSeq mapping"];
+    refseq_nucleotides [label="RefSeq nucleotide-related accessions"];
+    pdb_accessions [label="PDB accessions"];
+    ipi_accessions [label="IPI accessions"];
+    ipi_shortforms [label="IPI shortforms"];
+    flybase_accessions [label="FlyBase accessions"];
+    sgd_accessions [label="SGD accessions"];
+    genpept_accessions [label="GenPept accessions"];
+    genpept_shortforms [label="GenPept shortforms"];
+  }
+
+  subgraph versions {
+    node [shape="Mrecord"];
+    rank=same;
+
+    uniprot_identifiers [label="UniProt identifiers"];
+    uniprot_accessions [label="UniProt accessions"];
+    refseq_accessions [label="RefSeq accessions"];
+    refseq_versions [label="RefSeq accession versions"];
+    refseq_gi [label="RefSeq gi references"];
+    genpept_gi [label="GenPept gi references"];
+  }
+
+  subgraph databases {
+    node [shape="Mrecord"];
+    rank=same;
+    uniprot [label="UniProt"];
+    refseq [label="RefSeq"];
+    pdb [label="PDB"];
+    ipi [label="IPI"];
+    genbank [label="GenBank/GenPept"];
+  }
+
+  subgraph sequences {
+    rank=same;
+    uniprot_sequence [label="UniProt sequence"];
+    refseq_sequence [label="RefSeq sequence"];
+    pdb_sequence [label="PDB sequence"];
+    ipi_sequence [label="IPI sequence"];
+    genbank_sequence [label="GenBank sequence"];
+  }
+
+  interaction -> uniprot_xref;
+  interaction -> refseq_xref;
+  interaction -> gene_xref;
+  interaction -> pdb_xref;
+  interaction -> ipi_xref;
+  interaction -> flybase_xref;
+  interaction -> sgd_xref;
+  interaction -> gi_xref;
+  interaction -> genbank_xref;
+
+  uniprot_xref -> uniprot_accessions;
+  uniprot_xref -> uniprot_isoforms -> uniprot_accessions;
+  uniprot_accessions -> uniprot [label="primary"];
+  uniprot_identifiers -> uniprot;
+
+  refseq_xref -> refseq_accessions;
+  refseq_xref -> refseq_versions;
+  refseq_xref -> refseq_nucleotides;
+  refseq_nucleotides -> refseq_accessions;
+  refseq_accessions -> refseq_versions;
+  refseq_versions -> refseq;
+
+  gene_xref -> gene_info -> uniprot_gene_names -> uniprot;
+  gene_xref -> gene2refseq -> refseq;
+
+  pdb_xref -> pdb_accessions -> pdb;
+
+  ipi_xref -> ipi_accessions -> ipi;
+  ipi_xref -> ipi_shortforms -> ipi_accessions;
+
+  flybase_xref -> flybase_accessions;
+  flybase_accessions -> uniprot_accessions [label="primary"];
+  flybase_accessions -> uniprot_identifiers [label="non-primary"];
+
+  sgd_xref -> sgd_accessions;
+  sgd_accessions -> uniprot_accessions [label="primary"];
+  sgd_accessions -> uniprot_identifiers [label="non-primary"];
+
+  gi_xref -> refseq_gi -> refseq;
+  gi_xref -> genpept_gi -> genbank;
+  gi_xref -> genpept_accessions [label="bad gi"];
+  gi_xref -> genpept_shortforms [label="bad gi"];
+  genbank_xref -> genpept_accessions;
+  genbank_xref -> genpept_shortforms;
+  genpept_shortforms -> genpept_accessions;
+  genpept_accessions -> genbank;
+
+  uniprot -> uniprot_sequence;
+  refseq -> refseq_sequence;
+  pdb -> pdb_sequence;
+  ipi -> ipi_sequence;
+  genbank -> genbank_sequence;
+}
+}}}
+
+=== Use of Archived Sequence Information ===
+
+As new versions of sequence databases become available, it is possible that
+some records will expire and be omitted from a database, just as new records
+are introduced and are thus added to the database in its current state. Since
+interaction database identifiers may refer to expired sequence records, it is
+useful to consult archived sequence database records before other sources (such
+as the Entrez Utilities service), since this will effectively replicate the
+activity required to match an identifier to a sequence in a previous iRefIndex
+release or had the activity been carried out at an earlier time.
+
+== Mapping Interactors to Sequences ==
+
+Even where the mapping of identifiers to sequences is largely unambiguous,
+there is still a possibility of ambiguity when associating interactors with
+sequences since each interactor may be described by a number of references:
+
+{{{#!dot
+//format=svg
+digraph interactor_mapping {
+  rankdir=LR;
+  node [shape="box",fontsize="15"];
+
+  identifier1 [label="DB00456"];
+  identifier2 [label="XR500"];
+  identifier3 [label="PROT990"];
+  sequence11 [label="sequence: ..."];
+  sequence12 [label="sequence: ..."];
+  sequence2 [label="sequence: ..."];
+  sequence3 [label="sequence: ..."];
+
+  interaction -> interactor1;
+  interactor1 -> identifier1 [label="primaryRef"];
+  identifier1 -> sequence11;
+  identifier1 -> sequence12;
+  interactor1 -> identifier2 [label="secondaryRef"];
+  identifier2 -> sequence2;
+  interactor1 -> identifier3 [label="secondaryRef"];
+  identifier3 -> sequence3;
+}
+}}}
+
+The structure of the data resembles the following:
+
+{{{{#!table
+<colspan=2> '''Interaction record'''                                                            || '''Sequence record'''
+==
+<rowspan=7> Primary   || <style="background-color: #dfd"> Interaction record sequence           ||<rowspan=2> Null primary<<BR>>(no primary reference)
+==
+                      .. <style="background-color: #fdd"> No sequence
+==
+                      .. ''Sequence unimportant''                                               || <style="background-color: #dfd"> Unambiguous primary
+==
+                      .. <style="background-color: #dfd"> Matching interaction record sequence  || <rowspan=2> Ambiguous primary (many sequences)
+==
+                      .. <style="background-color: #ffd"> No matching sequence
+==
+                      .. <style="background-color: #dfd"> Matching taxonomy for single sequence || <rowspan=2> Ambiguous primary (many organisms)
+==
+                      .. <style="background-color: #ffd"> No matching sequence
+==
+<rowspan=7> Secondary || <style="background-color: #dfd"> Interaction record sequence           ||<rowspan=2> Null secondary<<BR>>(no secondary reference)
+==
+                      .. <style="background-color: #fdd"> No sequence
+==
+                      .. ''Sequence unimportant''                                               || <style="background-color: #dfd"> Unambiguous secondary
+==
+                      .. <style="background-color: #dfd"> Matching interaction record sequence  || <rowspan=2> Ambiguous primary (many sequences)
+==
+                      .. <style="background-color: #ffd"> No matching sequence
+==
+                      .. <style="background-color: #dfd"> Matching taxonomy for single sequence || <rowspan=2> Ambiguous primary (many organisms)
+==
+                      .. <style="background-color: #ffd"> No matching sequence
+}}}}
+
+The procedure to resolve potential ambiguity involves first trying to use a
+primary reference, then trying to use a secondary reference. In the above
+table, the primary region would be investigated first, and the relevant
+situation would need to be identified with regard to the availability of
+sequence and taxonomy information. Where no obvious assignment can be performed
+for the primary reference, the secondary region would be investigated, and in
+the situation where no obvious assignment is possible, arbitrary assignment
+would be considered first for the primary references and then for the secondary
+references.
+
+For arbitrary assignment, one of the sequences proposed for an interactor is
+chosen without making any judgement on whether that sequence is the most
+appropriate. Currently, this is done by sorting the sequences according to the
+ASCII values of the characters in the sequences and choosing the one with the
+highest value (the last in a low-to-high ordering).
+
+=== Workflow and Preferred Assignments ===
+
+Assignment is therefore the identification of a single sequence for each
+interactor. However, with a collection of database references all referring to
+the same sequence for an interactor, although a sequence can be assigned, the
+nature of that sequence's discovery can itself be ambiguous since many
+different "links" to the sequence database information are able to support the
+assignment. It can be useful to choose a specific reference in order to
+eliminate this ambiguity and make a definitive statement about the preferred or
+"best" reference that supports the assignment.
+
+{{{{#!table
+<rowspan=3 style="border: 0">
+
+{{{#!dot
+//format=svg
+digraph assignment_workflow {
+  node [shape="box",fontsize="15"];
+
+  "interactor sequences" [label="sequences for interactors"];
+  "assignments" [label="sequence per interactor assignments"];
+  "preferred identifier types";
+  "preferred assignments";
+
+  "interactor sequences" -> "assignments" -> "preferred assignments";
+  "preferred identifier types" -> "preferred assignments";
+}
+}}}
+
+||
+<style="border: 0"> Each interactor may be associated with many sequences.
+==
+<style="border: 0"> Where possible, a single sequence is chosen for interactors.
+==
+<style="border: 0"> Even for a single sequence, there can have been many ways
+to discover this sequence using the identifiers provided. To simplify the
+assessment of the assignment process, a preferred method of discovery is
+chosen.
+}}}}
+
+=== Scoring Assignments ===
+
+With the preferred assignments defined, a scoring process can then be used to
+assess the nature of the assignments and to describe the operations involved in
+making the assignment. The nature of the assignment is based on such
+information as the "path" to the sequence database record chosen to describe an
+interactor, whether the interaction and sequence database records agree on
+certain details of the interactor such as the organism involved, the kind of
+reference used in the interaction database record, and whether transformations
+were required on the interaction database details to be able to retrieve an
+appropriate sequence database record.
+
+== Producing ROG Identifiers ==
+
+In order to make a ROG identifier for an interactor, a sequence and a taxonomy
+identifier must be available for that interactor. Then, the following procedure
+is used to produce the ROG identifier (expressed in Python-like pseudo-code):
+
+{{{#!python numbers=disable
+rogid = base64(sha1(sequence))[:-1]
+}}}
+
+Here, the sequence is assumed to be a string consisting only of upper-case
+letters corresponding to the constituent amino acids. The final character of
+the output of the `base64` encoding function is removed to yield the final
+representation since this final character is always the same, hence the use of
+the `[:-1]` slicing notation.
+
+== Producing RIG Identifiers ==
+
+RIG identifiers are generated by combining all ROG identifiers corresponding to
+participants in an interaction, duplicating ROG identifiers where distinct
+participants refer to interactors with the same identity, as follows:
+
+{{{#!python numbers=disable
+rigid = base64(sha1(concat(sort(rogids))))[:-1]
+}}}
+
+Here, the ROG identifiers are sorted according to the lexicographical ordering
+employing ASCII character values (`sort`), then concatenated to make a single
+character string (`concat`), and then digested using the SHA-1 algorithm
+(`sha1`) and encoded using the base-64 algorithm (`base64`) before finally
+having the redundant final character removed (`[:-1]`).
+
+Where ROG identifiers are not available for interactors, a RIG identifier
+should not be generated, since the "true" identifier for the complete
+interaction will be completely different from any identifier for an incomplete
+interaction.
+
+=== Sorting and Locales ===
+
+In order to be able to correctly sort ROG identifiers or to choose the last
+identifier in a collection, where the locale settings affect the sorting of
+strings the "C" locale should be in force. Otherwise, ROG identifiers may be
+sorted alphabetically such that an identifier starting with "c" appears before
+one starting with "D", whereas according to an ASCII-based ordering, an
+identifier starting with "c" should appear after one starting with "D" because
+the numerical value of "c" is greater than "D" in ASCII.
+
+== Canonicalisation ==
+
+The process of canonicalisation involves taking information about the proteins
+associated with genes, determining which genes are associated with the same
+proteins and thus "share" proteins, and thus deducing genes which can be said
+to be related to each other via these "shared" proteins. This is illustrated
+using the following example:
+
+{{{#!dot
+//format=svg
+digraph canonicalisation_example {
+  node [fontsize="15"];
+
+  subgraph {
+    node [shape="box"];
+    "9VN..." [style="filled",fillcolor="#ff9999"];
+    "X03..." [color="#999999"];
+    "Xkh..." [style="filled",fillcolor="#99ff99"];
+    "uNn..." [style="filled",fillcolor="#9999ff"];
+    "5M7..." [color="#999999"];
+  }
+
+  "31081" [style="filled",fillcolor="#ff9999"];
+  "31082" [style="filled",fillcolor="#99ff99"];
+  "31083" [style="filled",fillcolor="#9999ff"];
+
+  "31081" -> "9VN...";
+  "31081" -> "X03...";
+  "31082" -> "Xkh...";
+  "31083" -> "uNn...";
+  "45973" -> "9VN...";
+  "45973" -> "Xkh...";
+  "45973" -> "uNn...";
+  "45973" -> "5M7...";
+}
+}}}
+
+Here, the four genes (31081, 31082, 31083, 45973) are said to be related
+because they share a set of proteins (coloured in the diagram).
+
+Once the redundant (or related) gene groups have been identified, a collection
+of proteins associated with all genes in the group can be defined, and a
+canonical representative may then be chosen by taking the protein with the
+longest sequence that is described by a canonical !UniProt record. Failure to
+find such a protein will result in the protein with the longest sequence being
+chosen, where such a protein will be described by another kind of record.
+
+=== Expanding the Selection of Interactors and Interactions ===
+
+Note that canonical interactors may be derived from sequences not selected when
+assigning interactors to the identifiers appearing in interaction database
+records. Consequently, some canonical interactors will not belong to the set of
+existing interactors, and the resulting canonical interactions will therefore
+not belong to the set of existing interactions.
+
+=== Assignment Improvements ===
+
+In some cases, an arbitrary protein from many alternatives is chosen to
+represent a particular database identifier, typically where a gene identifier
+has been specified in the interaction data. Instead of an arbitrary choice, it
+might be preferable to assign the canonical representative of the larger group
+of proteins associated with the gene. Where many genes are involved, some kind
+of resolution mechanism might be required to select the best canonical
+representative from the many gene groups potentially involved.
+
+== Producing Output and Summaries ==
+
+The principal summary of iRefIndex data is the MITAB output file. This file
+attempts to label interactors with source database identifiers using a
+consistent policy where certain source databases are preferred over others.
+Consequently, a mechanism is required to select these preferred identifiers and
+apply them to interactors which were potentially described using less desirable
+identifier types.
+
+{{{{#!table
+<rowspan=3 style="border: 0">
+
+{{{#!dot
+//format=svg
+digraph output {
+  node [shape="box",fontsize="15"];
+
+  rogids [label="ROG identifiers"];
+  assignments [label="sequences and identifiers for interactors"];
+  identifiers [label="database identifiers for ROG identifiers"];
+  preferred [label="preferred identifiers"];
+  alternative [label="alternative identifiers"];
+  uniprot [label="UniProt accessions/identifiers"];
+  aliases [label="aliases"];
+
+  rogids -> identifiers;
+  assignments -> identifiers;
+  identifiers -> preferred;
+  identifiers -> alternative;
+  identifiers -> aliases;
+  uniprot -> aliases;
+}
+}}}
+
+||
+<style="border: 0"> ROG identifiers and a collection of assignments of
+sequences and identifiers for individual interactors have already been
+produced.
+==
+<style="border: 0"> The ROG identifiers are combined with identifier details
+using common information about which interactors provided both kinds of
+information.
+==
+<style="border: 0"> A single preferred identifier is used to describe each
+interactor in columns 1 and 2 of the MITAB data. Alternative identifiers are
+used to describe each interactor in columns 3 and 4. Aliases may require
+additional database identifier information to describe an interactor; they
+appear in columns 5 and 6.
+}}}}

@@ -21,6 +21,8 @@ The irdata source distribution provides a number of different directories:
 `reports`       || SQL templates producing reports and summaries for an
                 .. iRefIndex release
 ==
+`resources`     || Resources used to produce iRefScape output archives
+==
 `scripts`       || The high-level programs used to perform the iRefIndex release
                 .. process (written as POSIX shell scripts)
 ==
@@ -61,7 +63,11 @@ python moinsetup.py -m install_page_package irdata_pages.zip
 }}}
 
 It may be necessary to perform this latter action as a privileged user,
-depending on how you have deployed your Wiki.
+depending on how you have deployed your Wiki. For example:
+
+{{{
+sudo -u apache python moinsetup.py -m install_page_package irdata_pages.zip
+}}}
 
 == The irdata Python Package ==
 
@@ -204,7 +210,7 @@ other in the shell language (`.sh`), the shell-based tool will be the
 higher-level tool that coordinates usage of the Python-based tool.
 
 For example, `irdata_parse_uniprot.sh` is the higher-level tool that
-coordinates UniProt parsing actually performed by `irdata_parse_uniprot.py`,
+coordinates !UniProt parsing actually performed by `irdata_parse_uniprot.py`,
 where the latter program is written to deal with the complexity of the UniProt
 flat-file format: an activity that would be more challenging if written using
 the shell language.

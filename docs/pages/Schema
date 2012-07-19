@@ -4,7 +4,7 @@
 
 = Database Schema Details for iRefIndex =
 
-The following table types are provided in the database schema:
+The following principal table types are provided in the database schema:
 
 {{{#!table
 '''Prefix''' || '''Role'''
@@ -21,4 +21,74 @@ xml_names    || Data specifically providing name information such as short
 ==
 irefindex    || Information derived from the common XML schema and sequence
              .. databases for the build process
+}}}
+
+In addition, the following source-related table types are used:
+
+{{{#!table
+'''Prefix''' || '''Source details'''               || '''Destination'''
+==
+bind         || BIND (flat text format)            || xml, xml_xref, xml_names
+==
+dig          || Disease Groups (DIG)               || ''iRefScape data''
+==
+fly          || !FlyBase                           || irefindex_sequences
+==
+gene         || Entrez Gene                        || ''gene mappings, iRefScape data''
+==
+genpept      || !GenPept                           || irefindex_sequences
+==
+ipi          || IPI                                || irefindex_sequences
+==
+mmdb         || MMDB                               || irefindex_sequences
+==
+pdb          || PDB                                || irefindex_sequences
+==
+psicv        || PSI-MI controlled vocabulary terms || ''MITAB, iRefScape data; BIND conversion''
+==
+refseq       || !RefSeq                            || irefindex_sequences
+==
+taxonomy     || Entrez Taxonomy                    || ''MITAB data; !GenPept conversion''
+==
+uniprot      || !UniProt                           || irefindex_sequences
+==
+yeast        || Yeast                              || irefindex_sequences
+}}}
+
+The above data sources are typically delivered in non-XML and generally
+unstandardised formats, meaning that their data must be processed before being
+merged with other data. Only BIND tables contribute to the sum of interaction
+data in the system.
+
+== iRefIndex Table Reference ==
+
+The [[Workflow|workflow]] documentation describes the population of tables,
+and the following reference indicates where specific kinds of information can
+be found.
+
+{{{#!table
+'''Entity type''' || '''Table'''                     || '''Properties'''
+==
+<rowspan="3">
+Interactors       || irefindex_rogids                || Only "active" interactors described by
+                                                     .. interaction data; source details provided
+==
+                  .. irefindex_rogid_identifiers     || Identifiers for "active" interactors
+==
+                  .. irefindex_all_rogid_identifiers || Identifiers for all possible interactors
+                                                     .. described by sequence data
+==
+<rowspan="4">
+Interactions      || irefindex_interactions_complete || Source details for "active", complete
+                                                     .. interactions where all interactors have been
+                                                     .. identified
+==
+                  .. irefindex_rigids                || Only "active" interactions described by
+                                                     .. interaction data; source details provided
+==
+                  .. irefindex_interactions          || "Active" interactions with interactor and
+                                                     .. source details
+==
+                  .. irefindex_distinct_interactions || A simple correspondence between "active"
+                                                     .. interactions and interactors
 }}}
