@@ -27,6 +27,7 @@ setup(
         (join("share", "irdata", "sql", "mysql"), glob(join("sql", "mysql", "*.sql"))),
         (join("share", "irdata", "reports"), glob(join("reports", "*.sql"))),
         (join("share", "irdata", "manifests"), glob(join("manifests", "*.txt"))),
+        (join("share", "irdata", "resources"), glob(join("resources", "*.irct"))),
         ]
     )
 

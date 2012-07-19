@@ -7,9 +7,24 @@ SYSPREFIX=                                  # system-wide installation root
 EMAIL=                                      # e-mail address for anonymous FTP logins
 DATABASE=irdata                             # database name
 DATA=${DATA:-}                              # user defined data directory location
-WIKIFORMAT=MediaWiki                        # format for generated Wiki pages
+WIKIFORMAT=MoinMoin                         # format for generated Wiki pages
 WGET_WAIT=2                                 # time to wait between wget requests
 PSQL_OPTIONS=                               # "--psql-options <psql connection options>"
+
+
+
+############################################################
+# Output and publication options.
+
+RELEASE=10.0                                # iRefIndex release identifier
+
+# Information provided with the iRefScape data.
+
+IREFINDEX_RELEASE_SITE='ftp.no.embnet.org'
+IREFINDEX_RELEASE_PATH='/irefindex/Cytoscape/plugin/archive/release10'
+IREFINDEX_RELEASE_USER=anonymous
+IREFINDEX_RELEASE_PASSWORD=
+IREFINDEX_PROPRIETARY_DATA=FALSE
 
 
 
@@ -88,6 +103,17 @@ elif [ -e "$SYSMANIFESTS" ]; then
     MANIFESTS="$SYSMANIFESTS"
 else
     echo "Cannot locate the irdata manifests directory." 1>&2
+    exit 1
+fi
+
+SYSRESOURCES="$SYSPREFIX/usr/share/irdata/resources"
+
+if [ -e "$SCRIPTS/../resources" ]; then
+    RESOURCES=`normpath "$SCRIPTS/../resources"`
+elif [ -e "$SYSRESOURCES" ]; then
+    RESOURCES="$SYSRESOURCES"
+else
+    echo "Cannot locate the irdata resources directory." 1>&2
     exit 1
 fi
 

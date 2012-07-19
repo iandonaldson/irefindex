@@ -14,6 +14,7 @@ The following software is required to use this distribution:
   * cmdsyntax (command option processing)
   * libxml2dom (HTML parsing for the manifest generation)
   * libxml2 (required by libxml2dom)
+  * The jar utility (required to package iRefScape data)
 
 Most Unix-based operating systems will provide the necessary commands for the
 high-level scripts, but these commands may be provided separately or

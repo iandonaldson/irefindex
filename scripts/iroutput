@@ -40,6 +40,8 @@ EOF
     exit 1
 fi
 
+
+
 # Generate the complete MITAB output.
 
 cp "$SQL/organisms.txt" "$DATA"
@@ -75,5 +77,10 @@ TAB=`printf '\t'`
 
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not generate iRefScape data." 1>&2
+    exit 1
+fi
+
+if ! "$TOOLS/irdata_archive_irefscape.sh" "$DATA" "$DATA" ; then
+    echo "$PROGNAME: Could not package iRefScape data in an archive." 1>&2
     exit 1
 fi
