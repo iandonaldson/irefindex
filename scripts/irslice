@@ -25,12 +25,15 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME <filename> ( - | <start> [ <length> ] )
+Usage: $PROGNAME <filename> [ --lines ] ( - | <start> [ <length> ] )
 
 Extract the content of the file with the given filename, starting at the
 specified starting byte offset (which is a 1-based offset) and reading a slice
 of the given length. If no length is given, the remainder of the file will be
 read as the slice.
+
+If the optional --lines flag is given, the start and length parameters will be
+interpreted as a line offset and number of lines respectively.
 
 If - is given instead of start and length arguments, then the start and length
 values will be read from standard input. Again, the length argument can be
@@ -51,11 +54,20 @@ if [ ! -e "$FILENAME" ]; then
     exit 1
 fi
 
-if [ "$2" = '-' ]; then
+shift 1
+
+if [ "$1" = '--lines' ]; then
+    SLICEOPTS=-n
+    shift 1
+else
+    SLICEOPTS=-c
+fi
+
+if [ "$1" = '-' ]; then
     read -r START LENGTH
 else
-    START=$2
-    LENGTH=$3
+    START=$1
+    LENGTH=$2
 fi
 
 if [ ! "$START" ]; then
@@ -63,11 +75,13 @@ if [ ! "$START" ]; then
     exit 1
 fi
 
+# NOTE: head with the -c option is not standard.
+
 if [ "$LENGTH" ]; then
-    SLICER="head -c \"$LENGTH\""
+    SLICER="head $SLICEOPTS $LENGTH"
 else
     SLICER="tee"
 fi
 
-  tail -c +"$START" "$FILENAME" \
+  tail $SLICEOPTS +"$START" "$FILENAME" \
 | eval "$SLICER"
