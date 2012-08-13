@@ -177,7 +177,7 @@ create temporary table tmp_scored_interactions as
     select I.source, I.filename, I.entry, I.interactionid, I.rigid,
         baits, rogs, partmethods, partmethodnames,
         sourceid, refvalue, interactiontype, interactiontypename, interactionname,
-        array_to_string(array_accum('||i.score_' || scoretype || '=>' || sourceid || '>>' || score), '') as scores
+        scoretype, array_array_accum(array[[cast(sourceid as varchar), cast(score as varchar)]]) as scores
 
     -- Interaction identifiers.
 
@@ -196,7 +196,8 @@ create temporary table tmp_scored_interactions as
 
     group by I.source, I.filename, I.entry, I.interactionid, I.rigid,
         baits, rogs, partmethods, partmethodnames,
-        sourceid, refvalue, interactiontype, interactiontypename, interactionname;
+        sourceid, refvalue, interactiontype, interactiontypename, interactionname,
+        scoretype;
 
 analyze tmp_scored_interactions;
 
@@ -256,107 +257,141 @@ analyze tmp_experiments;
 
 -- At last, we can now combine the scored interaction details with experiment
 -- information and integer identifiers to produce the RIG attributes.
+-- Here, we create records unlike previous iRefIndex releases since this file
+-- itself is only used to create others with the given format.
 
 create temporary table tmp_rigid_attributes as
-    select I.rigid
+    select rigid
 
-        -- Integer identifiers for ROGs, RIGs.
-
-        || '||i.rog=>' || array_to_string(rogs, '|')
-        || '||i.rig=>' || sourceid || '>>' || irig.rig
-        || '||i.canonical_rig=>' || sourceid || '>>' || icrig.rig
-
-        -- Interaction type information.
-        -- NOTE: This does not replicate the type name used in previous iRefIndex
-        -- NOTE: releases since a fairly complicated way of constructing descriptions
-        -- NOTE: of interactions appears to have been used.
-
-        || case when interactiontype is not null or interactionname is not null then
-                     '||i.type_name=>' || sourceid || '>>' || coalesce(interactiontypename, interactionname)
-                else ''
-           end
-        || case when interactiontype is not null then
-                     '||i.type_cv=>' || sourceid || '>>' || interactiontype
-                else ''
-           end
-
-        -- Article information.
-
-        || case when pmid is not null then
-                     '||i.PMID=>' || sourceid || '>>' || pmid
-                else ''
-           end
-
-        -- Host organism information.
-
-        || case when taxid is not null then
-                     '||i.host_taxid=>' || sourceid || '>>' || taxid
-                else ''
-           end
-
-        -- Data source and interaction identifier details.
-
-        || '||i.src_intxn_db=>' || sourceid || '>>' || lower(I.source)
-        || '||i.src_intxn_id=>' || sourceid || '>>' || coalesce(I.refvalue, 'NA')
-
-        -- Interaction detection and participant identification methods.
-
-        || case when expmethodname is not null then
-                     '||i.method_name=>' || sourceid || '>>' || expmethodname
-                else ''
-           end
-        || case when expmethod is not null then
-                     '||i.method_cv=>' || sourceid || '>>' || expmethod
-                else ''
-           end
-        || case when partmethodnames <> '' then
-                     '||i.participant_identification=>' || sourceid || '>>' || partmethodnames
-                else ''
-           end
-        || case when partmethods <> '' then
-                     '||i.participant_identification_cv=>' || sourceid || '>>' || partmethods
-                else ''
-           end
-
-        -- Author information.
-
-        || case when author is not null then
-                     '||i.experiment=>' || sourceid || '>>' || author
-                else ''
-           end
-
-        -- Number of bait interactors (non-distinct).
-
-        || case when baits <> 0 then
-                     '||i.bait=>' || sourceid || '>>' || baits
-                else ''
-           end
+        ||                                      '|++|i.src_intxn_id=>'                  || array_to_string(srcintxnid, '|')
+        ||                                      '|+|i.rog=>'                            || rogs
+        ||                                      '||i.rig=>'                             || rig
+        ||                                      '||i.canonical_rig=>'                   || canonicalrig
+        || case when typename <> '' then        '||i.type_name=>'                       || array_to_string(typename, '|')
+           else '' end
+        || case when typecv <> '' then          '||i.type_cv=>'                         || array_to_string(typecv, '|')
+           else '' end
+        || case when pmid <> '' then            '||i.PMID=>'                            || array_to_string(pmid, '|')
+           else '' end
+        || case when taxid <> '' then           '||i.host_taxid=>'                      || array_to_string(taxid, '|')
+           else '' end
+        ||                                      '||i.src_intxn_db=>'                    || array_to_string(srcintxndb, '|')
+        || case when expmethodname <> '' then   '||i.method_name=>'                     || array_to_string(expmethodname, '|')
+           else '' end
+        || case when expmethod <> '' then       '||i.method_cv=>'                       || array_to_string(expmethod, '|')
+           else '' end
+        || case when partmethodnames <> '' then '||i.participant_identification=>'      || array_to_string(partmethodnames, '|')
+           else '' end
+        || case when partmethods <> '' then     '||i.participant_identification_cv=>'   || array_to_string(partmethods, '|')
+           else '' end
+        || case when author <> '' then          '||i.experiment=>'                      || array_to_string(author, '|')
+           else '' end
+        || case when baits <> '' then           '||i.bait=>'                            || array_to_string(baits, '|')
+           else '' end
 
         -- NOTE: Need a description of these fields.
 
-        || '||i.target_protein=>' || sourceid || '>>-1'
-        || '||i.source_protein=>' || sourceid || '>>-1'
+        ||                                      '||i.target_protein=>'                  || array_to_string(targetprotein, '|')
+        ||                                      '||i.source_protein=>'                  || array_to_string(sourceprotein, '|')
 
         -- Confidence scores.
 
-        || scores
+        ||                                      array_to_string(array_accum('||i.score_' || scoretype || '=>' || scores), '')
 
-    from tmp_scored_interactions as I
-    inner join tmp_experiments as E
-        on (I.source, I.filename, I.entry, I.interactionid) =
-           (E.source, E.filename, E.entry, E.interactionid)
+        -- End of record.
 
-    -- Canonical interactions.
+        || '||'
 
-    inner join irefindex_rigids_canonical as C
-        on I.rigid = C.rigid
+    from (
 
-    -- Integer identifiers.
+        -- Get source interactions grouped by interaction and score type.
 
-    inner join irefindex_rig2rigid as irig
-        on I.rigid = irig.rigid
-    inner join irefindex_rig2rigid as icrig
-        on C.crigid = icrig.rigid;
+        select rigid, srcintxnid, srcintxndb, rogs, rig, canonicalrig, typename, typecv,
+            pmid, taxid, expmethodname, expmethod, partmethodnames, partmethods, author,
+            baits, targetprotein, sourceprotein, scoretype,
+            array_to_string(array_accum(sourceid || '>>' || score), '|') as scores
+
+        from (
+
+            -- Get details for source interactions.
+
+            select I.rigid,
+                sourceid || '>>' || coalesce(I.refvalue, 'NA') as srcintxnid,
+                sourceid || '>>' || lower(I.source) as srcintxndb,
+
+                -- Integer identifiers for ROGs, RIGs.
+
+                array_to_string(rogs, '|') as rogs,
+                sourceid || '>>' || irig.rig as rig,
+                sourceid || '>>' || icrig.rig as canonicalrig,
+
+                -- Interaction type information.
+
+                -- NOTE: This does not replicate the type name used in previous iRefIndex
+                -- NOTE: releases since a fairly complicated way of constructing descriptions
+                -- NOTE: of interactions appears to have been used.
+
+                case when interactiontype is not null or interactionname is not null then
+                          sourceid || '>>' || coalesce(interactiontypename, interactionname)
+                     else ''
+                end as typename,
+                case when interactiontype is not null then
+                          sourceid || '>>' || interactiontype
+                     else ''
+                end as typecv,
+
+                -- Article information.
+
+                case when pmid is not null then sourceid || '>>' || pmid else '' end as pmid,
+
+                -- Host organism information.
+
+                case when taxid is not null then sourceid || '>>' || taxid else '' end as taxid,
+
+                -- Interaction detection and participant identification methods.
+
+                case when expmethodname is not null then sourceid || '>>' || expmethodname else '' end as expmethodname,
+                case when expmethod is not null then sourceid || '>>' || expmethod else '' end as expmethod,
+                case when partmethodnames <> '' then sourceid || '>>' || partmethodnames else '' end as partmethodnames,
+                case when partmethods <> '' then sourceid || '>>' || partmethods else '' end as partmethods,
+
+                -- Author information.
+
+                case when author is not null then sourceid || '>>' || author else '' end as author,
+
+                -- Number of bait interactors (non-distinct).
+
+                case when baits <> 0 then sourceid || '>>' || baits else '' end as baits,
+                scoretype, scores,
+                sourceid || '>>-1' as targetprotein,
+                sourceid || '>>-1' as sourceprotein
+
+            from tmp_scored_interactions as I
+            inner join tmp_experiments as E
+                on (I.source, I.filename, I.entry, I.interactionid) =
+                   (E.source, E.filename, E.entry, E.interactionid)
+
+            -- Canonical interactions.
+
+            inner join irefindex_rigids_canonical as C
+                on I.rigid = C.rigid
+
+            -- Integer identifiers.
+
+            inner join irefindex_rig2rigid as irig
+                on I.rigid = irig.rigid
+            inner join irefindex_rig2rigid as icrig
+                on C.crigid = icrig.rigid
+
+            ) as X
+
+        group by rigid, srcintxnid, srcintxndb, rogs, rig, canonicalrig, typename, typecv,
+            pmid, taxid, expmethodname, expmethod, partmethodnames, partmethods, author,
+            baits, targetprotein, sourceprotein, scoretype
+
+        ) as Y
+
+    group by rigid, rogs, rig, canonicalrig;
 
 \copy tmp_rigid_attributes to '<directory>/rigAtributes.irfi'
 
@@ -828,7 +863,7 @@ create temporary table tmp_digtitle as
 
 
 -- A pairwise mapping of ROG integer identifiers for each interaction.
--- This is processed by the irdata_convert_graph.py tool.
+-- This can then be processed by the irdata_convert_graph.py tool.
 
 create temporary table tmp_graph as
     select I.rog as rogA, I2.rog as rogB
@@ -848,10 +883,6 @@ create temporary table tmp_graph as
 
     where I.rog < I2.rog
     group by I.rog, I2.rog;
-
--- NOTE: Perhaps this isn't needed because the graph is typically processed by
--- NOTE: some Java tools that reproduce the ROG graph-related queries elsewhere
--- NOTE: in this file.
 
 \copy tmp_graph to '<directory>/graph'
 
