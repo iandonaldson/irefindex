@@ -94,11 +94,38 @@ analyze tmp_all_gene_synonym_rogids;
 create temporary table tmp_participants as
     select I.source, I.filename, I.entry, I.interactionid, I.rigid,
         count(roleP.refvalue) as baits,
-        array_accum(rog) as rogs,
-        array_to_string(array_accum(methodP.refvalue), '|') as partmethods,
-        array_to_string(array_accum(methodnameP.name), '|') as partmethodnames
+        rogs,
+        array_to_string(array_accum(distinct methodP.refvalue), '|') as partmethods,
+        array_to_string(array_accum(distinct methodnameP.name), '|') as partmethodnames
+    from (
 
-    from irefindex_interactions as I
+        -- Get ordered ROG integer identifiers for specific interactions.
+
+        select source, filename, entry, interactionid, rigid, array_accum(rog) as rogs
+        from (
+
+            select I.source, I.filename, I.entry, I.interactionid, I.rigid, rog
+
+            from irefindex_interactions as I
+
+            -- Integer identifiers.
+
+            inner join irefindex_rog2rogid as irog
+                on I.rogid = irog.rogid
+
+            -- Accumulate ROG, participant and bait details.
+
+            order by I.source, I.filename, I.entry, I.interactionid, I.rigid, rog
+
+            ) as X
+
+        group by source, filename, entry, interactionid, rigid
+
+        ) as Y
+
+    inner join irefindex_interactions as I
+        on (Y.source, Y.filename, Y.entry, Y.interactionid) =
+           (I.source, I.filename, I.entry, I.interactionid)
 
     -- Participant roles.
 
@@ -107,11 +134,6 @@ create temporary table tmp_participants as
            (roleP.source, roleP.filename, roleP.entry, roleP.participantid)
         and roleP.property = 'experimentalRole'
         and roleP.refvalue = 'MI:0496' -- bait
-
-    -- Integer identifiers.
-
-    inner join irefindex_rog2rogid as irog
-        on I.rogid = irog.rogid
 
     -- Participant identification methods.
 
@@ -126,9 +148,7 @@ create temporary table tmp_participants as
         on methodP.refvalue = methodnameP.code
         and methodnameP.nametype = 'preferred'
 
-    -- Accumulate ROG, participant and bait details.
-
-    group by I.source, I.filename, I.entry, I.interactionid, I.rigid;
+    group by I.source, I.filename, I.entry, I.interactionid, I.rigid, rogs;
 
 analyze tmp_participants;
 
@@ -170,14 +190,12 @@ create temporary table tmp_interactions as
 analyze tmp_interactions;
 
 -- Combine interaction information together with score data.
--- Note that we build the eventual string for the output here because we need to
--- combine the sourceid with the score details when formatting the output.
 
 create temporary table tmp_scored_interactions as
     select I.source, I.filename, I.entry, I.interactionid, I.rigid,
         baits, rogs, partmethods, partmethodnames,
         sourceid, refvalue, interactiontype, interactiontypename, interactionname,
-        scoretype, array_array_accum(array[[cast(sourceid as varchar), cast(score as varchar)]]) as scores
+        scoretype, score
 
     -- Interaction identifiers.
 
@@ -192,12 +210,7 @@ create temporary table tmp_scored_interactions as
     -- Confidence scores.
 
     left outer join irefindex_confidence as confI
-        on I.rigid = confI.rigid
-
-    group by I.source, I.filename, I.entry, I.interactionid, I.rigid,
-        baits, rogs, partmethods, partmethodnames,
-        sourceid, refvalue, interactiontype, interactiontypename, interactionname,
-        scoretype;
+        on I.rigid = confI.rigid;
 
 analyze tmp_scored_interactions;
 
@@ -263,36 +276,46 @@ analyze tmp_experiments;
 create temporary table tmp_rigid_attributes as
     select rigid
 
-        ||                                      '|++|i.src_intxn_id=>'                  || array_to_string(srcintxnid, '|')
-        ||                                      '|+|i.rog=>'                            || rogs
+        ||                                      '|++|i.src_intxn_id=>'                  || array_to_string(array_accum(distinct srcintxnid), '|')
+        ||                                      '|+|i.rog=>'                            || array_to_string(array_accum(distinct rogs), '|')
         ||                                      '||i.rig=>'                             || rig
-        ||                                      '||i.canonical_rig=>'                   || canonicalrig
-        || case when typename <> '' then        '||i.type_name=>'                       || array_to_string(typename, '|')
+        ||                                      '||i.canonical_rig=>'                   || array_to_string(array_accum(distinct canonicalrig), '|')
+        || case when array_length(array_accum(typename), 1) <> 0 then
+                                                '||i.type_name=>'                       || array_to_string(array_accum(distinct typename), '|')
            else '' end
-        || case when typecv <> '' then          '||i.type_cv=>'                         || array_to_string(typecv, '|')
+        || case when array_length(array_accum(typecv), 1) <> 0 then
+                                                '||i.type_cv=>'                         || array_to_string(array_accum(distinct typecv), '|')
            else '' end
-        || case when pmid <> '' then            '||i.PMID=>'                            || array_to_string(pmid, '|')
+        || case when array_length(array_accum(pmid), 1) <> 0 then
+                                                '||i.PMID=>'                            || array_to_string(array_accum(distinct pmid), '|')
            else '' end
-        || case when taxid <> '' then           '||i.host_taxid=>'                      || array_to_string(taxid, '|')
+        || case when array_length(array_accum(taxid), 1) <> 0 then
+                                                '||i.host_taxid=>'                      || array_to_string(array_accum(distinct taxid), '|')
            else '' end
-        ||                                      '||i.src_intxn_db=>'                    || array_to_string(srcintxndb, '|')
-        || case when expmethodname <> '' then   '||i.method_name=>'                     || array_to_string(expmethodname, '|')
+        ||                                      '||i.src_intxn_db=>'                    || array_to_string(array_accum(distinct srcintxndb), '|')
+        || case when array_length(array_accum(expmethodname), 1) <> 0 then
+                                                '||i.method_name=>'                     || array_to_string(array_accum(distinct expmethodname), '|')
            else '' end
-        || case when expmethod <> '' then       '||i.method_cv=>'                       || array_to_string(expmethod, '|')
+        || case when array_length(array_accum(expmethod), 1) <> 0 then
+                                                '||i.method_cv=>'                       || array_to_string(array_accum(distinct expmethod), '|')
            else '' end
-        || case when partmethodnames <> '' then '||i.participant_identification=>'      || array_to_string(partmethodnames, '|')
+        || case when array_length(array_accum(partmethodnames), 1) <> 0 then
+                                                '||i.participant_identification=>'      || array_to_string(array_accum(distinct partmethodnames), '|')
            else '' end
-        || case when partmethods <> '' then     '||i.participant_identification_cv=>'   || array_to_string(partmethods, '|')
+        || case when array_length(array_accum(partmethods), 1) <> 0 then
+                                                '||i.participant_identification_cv=>'   || array_to_string(array_accum(distinct partmethods), '|')
            else '' end
-        || case when author <> '' then          '||i.experiment=>'                      || array_to_string(author, '|')
+        || case when array_length(array_accum(author), 1) <> 0 then
+                                                '||i.experiment=>'                      || array_to_string(array_accum(distinct author), '|')
            else '' end
-        || case when baits <> '' then           '||i.bait=>'                            || array_to_string(baits, '|')
+        || case when array_length(array_accum(baits), 1) <> 0 then
+                                                '||i.bait=>'                            || array_to_string(array_accum(distinct baits), '|')
            else '' end
 
         -- NOTE: Need a description of these fields.
 
-        ||                                      '||i.target_protein=>'                  || array_to_string(targetprotein, '|')
-        ||                                      '||i.source_protein=>'                  || array_to_string(sourceprotein, '|')
+        ||                                      '||i.target_protein=>'                  || array_to_string(array_accum(distinct targetprotein), '|')
+        ||                                      '||i.source_protein=>'                  || array_to_string(array_accum(distinct sourceprotein), '|')
 
         -- Confidence scores.
 
@@ -306,23 +329,25 @@ create temporary table tmp_rigid_attributes as
 
         -- Get source interactions grouped by interaction and score type.
 
-        select rigid, srcintxnid, srcintxndb, rogs, rig, canonicalrig, typename, typecv,
+        select rigid, srcintxnid, srcintxndb, rogs, rig, outputrig, canonicalrig, typename, typecv,
             pmid, taxid, expmethodname, expmethod, partmethodnames, partmethods, author,
             baits, targetprotein, sourceprotein, scoretype,
-            array_to_string(array_accum(sourceid || '>>' || score), '|') as scores
+            array_to_string(array_accum(score), '|') as scores
 
         from (
 
             -- Get details for source interactions.
 
             select I.rigid,
+                sourceid,
                 sourceid || '>>' || coalesce(I.refvalue, 'NA') as srcintxnid,
                 sourceid || '>>' || lower(I.source) as srcintxndb,
 
                 -- Integer identifiers for ROGs, RIGs.
 
                 array_to_string(rogs, '|') as rogs,
-                sourceid || '>>' || irig.rig as rig,
+                irig.rig as rig,
+                sourceid || '>>' || irig.rig as outputrig,
                 sourceid || '>>' || icrig.rig as canonicalrig,
 
                 -- Interaction type information.
@@ -362,7 +387,8 @@ create temporary table tmp_rigid_attributes as
                 -- Number of bait interactors (non-distinct).
 
                 case when baits <> 0 then sourceid || '>>' || baits else '' end as baits,
-                scoretype, scores,
+                scoretype,
+                sourceid || '>>' || score as score,
                 sourceid || '>>-1' as targetprotein,
                 sourceid || '>>-1' as sourceprotein
 
@@ -385,15 +411,17 @@ create temporary table tmp_rigid_attributes as
 
             ) as X
 
-        group by rigid, srcintxnid, srcintxndb, rogs, rig, canonicalrig, typename, typecv,
+        group by rigid, sourceid, srcintxnid, srcintxndb, rogs, rig, outputrig, canonicalrig, typename, typecv,
             pmid, taxid, expmethodname, expmethod, partmethodnames, partmethods, author,
             baits, targetprotein, sourceprotein, scoretype
 
         ) as Y
 
-    group by rigid, rogs, rig, canonicalrig;
+    group by rigid, rig;
 
 \copy tmp_rigid_attributes to '<directory>/rigAtributes.irfi'
+
+
 
 -- Specific ROG integer identifiers mapped to canonical ROG integer identifiers.
 
