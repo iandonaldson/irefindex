@@ -44,6 +44,8 @@ fi
 
 # Generate the complete MITAB output.
 
+echo $DATESTAMP > "$DATA/mitab_date.txt"
+
 cp "$SQL/organisms.txt" "$DATA"
 
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" "$DATA" $PSQL_OPTIONS ; then

@@ -21,7 +21,7 @@ RELEASE=10.0                                # iRefIndex release identifier
 # Information provided with the iRefScape data.
 
 IREFINDEX_RELEASE_SITE='ftp.no.embnet.org'
-IREFINDEX_RELEASE_PATH='/irefindex/Cytoscape/plugin/archive/release10'
+IREFINDEX_RELEASE_PATH="/irefindex/Cytoscape/plugin/archive/release_$RELEASE"
 IREFINDEX_RELEASE_USER=anonymous
 IREFINDEX_RELEASE_PASSWORD=
 IREFINDEX_PROPRIETARY_DATA=FALSE

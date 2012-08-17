@@ -55,7 +55,10 @@ fi
 
 # NOTE: Using legacy date format.
 
-ARCHIVE="$ARCHIVEDIR/iRefDATA_`date +%m%d%Y`.irfz"
+DATESTAMP=`date +%m%d%Y`
+ARCHIVE="$ARCHIVEDIR/iRefDATA_$DATESTAMP.irfz"
+
+echo $DATESTAMP > "$DATADIR/irefscape_date.txt"
 
 cat > "$DATADIR/RELEASE" <<EOF
 #irefindex.uio.no

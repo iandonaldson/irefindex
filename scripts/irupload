@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Original author: Paul Boddie <paul.boddie@biotek.uio.no>
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME <location> [ --update-current ]
+
+Upload output files to a specified location. Currently, only filesystem
+locations are supported. For example:
+
+/var/www/irefindex
+
+If --update-current is specified, a symbolic link will be updated to point to
+the release directory containing the uploaded data.
+EOF
+    exit 1
+fi
+
+SITELOCATION=$1
+UPDATELINK=$2
+
+if [ ! "$SITELOCATION" ]; then
+    echo "$PROGNAME: A site location must be specified." 1>&2
+    exit 1
+fi
+
+
+
+# Utility function.
+
+makeoutputdir() {
+
+    # In the given site location, update the given section, adding the specified
+    # subdirectories and, if requested, updating the "current" symbolic link.
+
+    SITELOCATION=$1
+    UPDATELINK=$2
+    SECTION=$3
+    shift 3
+    SUBDIRS=$*
+
+    # Each release's data resides in a directory resembling "release_10.0".
+
+    RELEASEDIR="$SITELOCATION/$SECTION/archive/release_$RELEASE"
+
+    if [ ! -e "$RELEASEDIR" ]; then
+        mkdir -p "$RELEASEDIR"
+    fi
+
+    for SUBDIR in $SUBDIRS ; do
+        if [ ! -e "$RELEASEDIR/$SUBDIR" ]; then
+            mkdir -p "$RELEASEDIR/$SUBDIR"
+        fi
+    done
+
+    # Update the symbolic link if appropriate.
+
+    CURRENT="$SITELOCATION/$SECTION/current"
+
+    if [ "$UPDATELINK" ]; then
+        if [ -e "$CURRENT" ]; then
+            rm "$CURRENT"
+        fi
+        ln -s "archive/release_$RELEASE" "$CURRENT"
+    fi
+}
+
+
+
+# Upload the MITAB data.
+# NOTE: Mapping files need to be added.
+
+makeoutputdir "$SITELOCATION" "$UPDATELINK" "data" "psi_mitab/MITAB2.6"
+
+# Copy the MITAB files.
+
+MITABDATE=`cat "$DATA/mitab_date.txt"`
+cp "$DATA/"*".mitab.$MITABDATE.txt" "$SITELOCATION/data/archive/release_$RELEASE/psi_mitab/MITAB2.6"
+
+# Upload the Cytoscape data.
+
+makeoutputdir "$SITELOCATION" "$UPDATELINK" "Cytoscape/plugin"
+
+# Copy the iRefScape archive.
+
+IREFSCAPEDATE=`cat "$DATA/irefscape_date.txt"`
+cp "$DATA/iRefDATA_$IREFSCAPEDATE.irfz" "$SITELOCATION/Cytoscape/plugin/archive/release_$RELEASE/"
