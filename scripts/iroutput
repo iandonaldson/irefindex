@@ -29,7 +29,7 @@ MITAB_ORGANISM_OUTPUT="$DATA/{}.mitab.$DATESTAMP.txt"
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME
+Usage: $PROGNAME [ --mitab-only | --irefscape-only ]
 
 Generate the complete MITAB output file...
 
@@ -40,49 +40,63 @@ EOF
     exit 1
 fi
 
+if [ "$1" = '--mitab-only' ]; then
+    MITAB_ONLY=$1
+elif [ "$1" = '--irefscape-only' ]; then
+    IREFSCAPE_ONLY=$1
+fi
+
 
 
 # Generate the complete MITAB output.
 
-echo $DATESTAMP > "$DATA/mitab_date.txt"
+if [ ! "$IREFSCAPE_ONLY" ]; then
 
-cp "$SQL/organisms.txt" "$DATA"
+    echo $DATESTAMP > "$DATA/mitab_date.txt"
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" "$DATA" $PSQL_OPTIONS ; then
-    echo "$PROGNAME: Could not generate MITAB data." 1>&2
-    exit 1
+    cp "$SQL/organisms.txt" "$DATA"
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_mitab.sql" "$DATA" $PSQL_OPTIONS ; then
+        echo "$PROGNAME: Could not generate MITAB data." 1>&2
+        exit 1
+    fi
+
+    # Add the header to the complete file.
+
+      cat "$SQL/mitab_header.txt" "$DATA/mitab_all" \
+    > "$MITAB_COMPLETE_OUTPUT"
+
+    # Use the organisms file to produce separate specific files.
+    # Select the header line and lines containing each taxonomy identifier, removing
+    # the taxonomy column.
+
+    echo 'other' >> "$DATA/organisms.txt"
+
+    # Put the header in each generated file.
+    # Append the actual content to the header.
+
+    # Tab character used in the xargs shell command.
+    TAB=`printf '\t'`
+
+      cat "$DATA/organisms.txt" \
+    | xargs $XARGS_I'{}' sh -c "cp \"$SQL/mitab_header.txt\" \"$MITAB_ORGANISM_OUTPUT\" && grep -e \"^{}${TAB}\" \"$DATA/mitab_all_organisms\" | cut -f 2- >> \"$MITAB_ORGANISM_OUTPUT\""
+
 fi
-
-# Add the header to the complete file.
-
-  cat "$SQL/mitab_header.txt" "$DATA/mitab_all" \
-> "$MITAB_COMPLETE_OUTPUT"
-
-# Use the organisms file to produce separate specific files.
-# Select the header line and lines containing each taxonomy identifier, removing
-# the taxonomy column.
-
-echo 'other' >> "$DATA/organisms.txt"
-
-# Put the header in each generated file.
-# Append the actual content to the header.
-
-# Tab character used in the xargs shell command.
-TAB=`printf '\t'`
-
-  cat "$DATA/organisms.txt" \
-| xargs $XARGS_I'{}' sh -c "cp \"$SQL/mitab_header.txt\" \"$MITAB_ORGANISM_OUTPUT\" && grep -e \"^{}${TAB}\" \"$DATA/mitab_all_organisms\" | cut -f 2- >> \"$MITAB_ORGANISM_OUTPUT\""
 
 
 
 # Generate the iRefScape output.
 
-if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" $PSQL_OPTIONS ; then
-    echo "$PROGNAME: Could not generate iRefScape data." 1>&2
-    exit 1
-fi
+if [ ! "$MITAB_ONLY" ]; then
 
-if ! "$TOOLS/irdata_archive_irefscape.sh" "$DATA" "$DATA" ; then
-    echo "$PROGNAME: Could not package iRefScape data in an archive." 1>&2
-    exit 1
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" $PSQL_OPTIONS ; then
+        echo "$PROGNAME: Could not generate iRefScape data." 1>&2
+        exit 1
+    fi
+
+    if ! "$TOOLS/irdata_archive_irefscape.sh" "$DATA" "$DATA" ; then
+        echo "$PROGNAME: Could not package iRefScape data in an archive." 1>&2
+        exit 1
+    fi
+
 fi
