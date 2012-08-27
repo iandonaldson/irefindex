@@ -192,25 +192,31 @@ analyze tmp_interactions;
 -- Combine interaction information together with score data.
 
 create temporary table tmp_scored_interactions as
-    select I.source, I.filename, I.entry, I.interactionid, I.rigid,
-        baits, rogs, partmethods, partmethodnames,
-        sourceid, refvalue, interactiontype, interactiontypename, interactionname,
-        scoretype, score
+    select rigid, array_to_string(array_accum(case when scores <> '' then 'i.score_' || scoretype || '=>' || scores else '' end), '||') as scores
+    from (
 
-    -- Interaction identifiers.
+        select I.rigid, scoretype, array_to_string(array_accum(sourceid || '>>' || score), '|') as scores
 
-    from tmp_interactions as I
+        -- Interaction identifiers.
 
-    -- Get arbitrary interaction identifiers.
+        from tmp_interactions as I
 
-    inner join tmp_arbitrary as A
-        on (I.source, I.filename, I.entry, I.interactionid) =
-           (A.source, A.filename, A.entry, A.interactionid)
+        -- Get arbitrary interaction identifiers.
 
-    -- Confidence scores.
+        inner join tmp_arbitrary as A
+            on (I.source, I.filename, I.entry, I.interactionid) =
+               (A.source, A.filename, A.entry, A.interactionid)
 
-    left outer join irefindex_confidence as confI
-        on I.rigid = confI.rigid;
+        -- Confidence scores.
+
+        left outer join irefindex_confidence as confI
+            on I.rigid = confI.rigid
+
+        group by I.rigid, scoretype
+
+        ) as X
+
+    group by rigid;
 
 analyze tmp_scored_interactions;
 
@@ -276,50 +282,41 @@ analyze tmp_experiments;
 create temporary table tmp_rigid_attributes as
     select rigid
 
-        ||                                      '|++|i.src_intxn_id=>'                  || array_to_string(array_accum(distinct srcintxnid), '|')
-        ||                                      '|+|i.rog=>'                            || array_to_string(array_accum(distinct rogs), '|')
+        ||                                      '|++|i.src_intxn_id=>'                  || srcintxnids
+        ||                                      '|+|i.rog=>'                            || rogs
         ||                                      '||i.rig=>'                             || rig
-        ||                                      '||i.canonical_rig=>'                   || array_to_string(array_accum(distinct canonicalrig), '|')
-        || case when array_length(array_accum(typename), 1) <> 0 then
-                                                '||i.type_name=>'                       || array_to_string(array_accum(distinct typename), '|')
+        ||                                      '||i.canonical_rig=>'                   || canonicalrigs
+        || case when typenames <> '' then       '||i.type_name=>'                       || typenames
            else '' end
-        || case when array_length(array_accum(typecv), 1) <> 0 then
-                                                '||i.type_cv=>'                         || array_to_string(array_accum(distinct typecv), '|')
+        || case when typecvs <> '' then         '||i.type_cv=>'                         || typecvs
            else '' end
-        || case when array_length(array_accum(pmid), 1) <> 0 then
-                                                '||i.PMID=>'                            || array_to_string(array_accum(distinct pmid), '|')
+        || case when pmids <> '' then           '||i.PMID=>'                            || pmids
            else '' end
-        || case when array_length(array_accum(taxid), 1) <> 0 then
-                                                '||i.host_taxid=>'                      || array_to_string(array_accum(distinct taxid), '|')
+        || case when taxids <> '' then          '||i.host_taxid=>'                      || taxids
            else '' end
-        ||                                      '||i.src_intxn_db=>'                    || array_to_string(array_accum(distinct srcintxndb), '|')
-        || case when array_length(array_accum(expmethodname), 1) <> 0 then
-                                                '||i.method_name=>'                     || array_to_string(array_accum(distinct expmethodname), '|')
+        ||                                      '||i.src_intxn_db=>'                    || srcintxndbs
+        || case when expmethodnames <> '' then  '||i.method_name=>'                     || expmethodnames
            else '' end
-        || case when array_length(array_accum(expmethod), 1) <> 0 then
-                                                '||i.method_cv=>'                       || array_to_string(array_accum(distinct expmethod), '|')
+        || case when expmethods <> '' then      '||i.method_cv=>'                       || expmethods
            else '' end
-        || case when array_length(array_accum(partmethodnames), 1) <> 0 then
-                                                '||i.participant_identification=>'      || array_to_string(array_accum(distinct partmethodnames), '|')
+        || case when partmethodnames <> '' then '||i.participant_identification=>'      || partmethodnames
            else '' end
-        || case when array_length(array_accum(partmethods), 1) <> 0 then
-                                                '||i.participant_identification_cv=>'   || array_to_string(array_accum(distinct partmethods), '|')
+        || case when partmethods <> '' then     '||i.participant_identification_cv=>'   || partmethods
            else '' end
-        || case when array_length(array_accum(author), 1) <> 0 then
-                                                '||i.experiment=>'                      || array_to_string(array_accum(distinct author), '|')
+        || case when authors <> '' then         '||i.experiment=>'                      || authors
            else '' end
-        || case when array_length(array_accum(baits), 1) <> 0 then
-                                                '||i.bait=>'                            || array_to_string(array_accum(distinct baits), '|')
+        || case when baits <> '' then           '||i.bait=>'                            || baits
            else '' end
 
         -- NOTE: Need a description of these fields.
 
-        ||                                      '||i.target_protein=>'                  || array_to_string(array_accum(distinct targetprotein), '|')
-        ||                                      '||i.source_protein=>'                  || array_to_string(array_accum(distinct sourceprotein), '|')
+        ||                                      '||i.target_protein=>'                  || targetproteins
+        ||                                      '||i.source_protein=>'                  || sourceproteins
 
         -- Confidence scores.
 
-        ||                                      array_to_string(array_accum('||i.score_' || scoretype || '=>' || scores), '')
+        || case when scores <> '' then          '||'                                    || scores
+           else '' end
 
         -- End of record.
 
@@ -327,19 +324,31 @@ create temporary table tmp_rigid_attributes as
 
     from (
 
-        -- Get source interactions grouped by interaction and score type.
-
-        select rigid, srcintxnid, srcintxndb, rogs, rig, outputrig, canonicalrig, typename, typecv,
-            pmid, taxid, expmethodname, expmethod, partmethodnames, partmethods, author,
-            baits, targetprotein, sourceprotein, scoretype,
-            array_to_string(array_accum(score), '|') as scores
+        select rigid,
+            array_to_string(array_accum(distinct srcintxnid), '|') as srcintxnids,
+            array_to_string(array_accum(distinct rogs), '|') as rogs,
+            rig,
+            array_to_string(array_accum(distinct canonicalrig), '|') as canonicalrigs,
+            array_to_string(array_accum(distinct typename), '|') as typenames,
+            array_to_string(array_accum(distinct typecv), '|') as typecvs,
+            array_to_string(array_accum(distinct pmid), '|') as pmids,
+            array_to_string(array_accum(distinct taxid), '|') as taxids,
+            array_to_string(array_accum(distinct srcintxndb), '|') as srcintxndbs,
+            array_to_string(array_accum(distinct expmethodname), '|') as expmethodnames,
+            array_to_string(array_accum(distinct expmethod), '|') as expmethods,
+            array_to_string(array_accum(distinct partmethodnames), '|') as partmethodnames,
+            array_to_string(array_accum(distinct partmethods), '|') as partmethods,
+            array_to_string(array_accum(distinct author), '|') as authors,
+            array_to_string(array_accum(distinct baits), '|') as baits,
+            array_to_string(array_accum(distinct targetprotein), '|') as targetproteins,
+            array_to_string(array_accum(distinct sourceprotein), '|') as sourceproteins,
+            scores
 
         from (
 
             -- Get details for source interactions.
 
             select I.rigid,
-                sourceid,
                 sourceid || '>>' || coalesce(I.refvalue, 'NA') as srcintxnid,
                 sourceid || '>>' || lower(I.source) as srcintxndb,
 
@@ -387,12 +396,31 @@ create temporary table tmp_rigid_attributes as
                 -- Number of bait interactors (non-distinct).
 
                 case when baits <> 0 then sourceid || '>>' || baits else '' end as baits,
-                scoretype,
-                sourceid || '>>' || score as score,
+
+                -- Score information for general interactions is already available here.
+
+                scores,
+
+                -- NOTE: Fields set to constant values.
+
                 sourceid || '>>-1' as targetprotein,
                 sourceid || '>>-1' as sourceprotein
 
-            from tmp_scored_interactions as I
+            from tmp_interactions as I
+
+            -- Get arbitrary interaction identifiers.
+
+            inner join tmp_arbitrary as A
+                on (I.source, I.filename, I.entry, I.interactionid) =
+                   (A.source, A.filename, A.entry, A.interactionid)
+
+            -- RIG-oriented scores.
+
+            inner join tmp_scored_interactions as SI
+                on I.rigid = SI.rigid
+
+            -- Experiment details for specific interactions.
+
             inner join tmp_experiments as E
                 on (I.source, I.filename, I.entry, I.interactionid) =
                    (E.source, E.filename, E.entry, E.interactionid)
@@ -411,15 +439,11 @@ create temporary table tmp_rigid_attributes as
 
             ) as X
 
-        group by rigid, sourceid, srcintxnid, srcintxndb, rogs, rig, outputrig, canonicalrig, typename, typecv,
-            pmid, taxid, expmethodname, expmethod, partmethodnames, partmethods, author,
-            baits, targetprotein, sourceprotein, scoretype
+        group by rigid, rig, scores
 
-        ) as Y
+        ) as Y;
 
-    group by rigid, rig;
-
-\copy tmp_rigid_attributes to '<directory>/rigAtributes.irfi'
+\copy tmp_rigid_attributes to '<directory>/rigAttributes.irfi'
 
 
 
@@ -462,12 +486,19 @@ create temporary table tmp_canonical_rogs as
 
 -- ROG integer identifiers and accessions with taxonomy identifiers.
 
-create temporary table tmp_rog_accessions as
-    select SI.rog || '|+|i.taxid=>' || S.reftaxid || '|+|i.xref=>|' || array_to_string(array_accum(dblabel || ':' || refvalue), '|') || '|'
+create temporary table tmp_rog_accession_mapping as
+    select SI.rog, S.reftaxid as taxid, array_to_string(array_accum(dblabel || ':' || refvalue), '|') as accessions
     from xml_xref_sequences as S
     inner join irefindex_rog2rogid as SI
         on S.refsequence || S.reftaxid = SI.rogid
     group by SI.rog, S.reftaxid;
+
+analyze tmp_rog_accession_mapping;
+
+create temporary table tmp_rog_accessions as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.xref=>|' || accessions || '|'
+    from tmp_rog_accession_mapping
+    where accessions <> '';
 
 \copy tmp_rog_accessions to '<directory>/_COL__ROG_xref.irft'
 
@@ -500,6 +531,8 @@ analyze tmp_rog_fullnames;
 
 \copy tmp_rog_fullnames to '<directory>/_ROG_fullname.irft'
 
+
+
 -- ROG integer identifiers mapped to display names.
 -- Names can be one of the following: UniProt identifiers, gene symbols, gene
 -- synonyms, locustags, UniProt accessions, other identifiers (GenBank, FlyBase,
@@ -507,41 +540,88 @@ analyze tmp_rog_fullnames;
 
 -- NOTE: Need to fully support the above list of identifier types.
 
+create temporary table tmp_uniprot_combined as
+    select SI.rog,
+        array_to_string(array_accum(U.uniprotid), '|') as uniprotids
+    from irefindex_rog2rogid as SI
+    left outer join tmp_uniprot_rogids as U
+        on U.rogid = SI.rogid
+    group by SI.rog;
+
+analyze tmp_uniprot_combined;
+
+create temporary table tmp_gene_symbols_combined as
+    select SI.rog,
+        array_to_string(array_accum(G.symbol), '|') as symbols
+    from irefindex_rog2rogid as SI
+    left outer join tmp_gene_symbol_rogids as G
+        on G.rogid = SI.rogid
+    group by SI.rog;
+
+analyze tmp_gene_symbols_combined;
+
+create temporary table tmp_all_gene_synonyms_combined as
+    select SI.rog,
+        array_to_string(array_accum(S.synonym), '|') as synonyms
+    from irefindex_rog2rogid as SI
+    left outer join tmp_all_gene_synonym_rogids as S
+        on S.rogid = SI.rogid
+    group by SI.rog;
+
+analyze tmp_all_gene_synonyms_combined;
+
+create temporary table tmp_all_identifiers_combined as
+    select SI.rog,
+        array_to_string(array_accum(I.dblabel || ':' || replace(I.refvalue, '|', '_')), '|') as identifiers
+    from irefindex_rog2rogid as SI
+    left outer join irefindex_all_rogid_identifiers as I
+        on I.rogid = SI.rogid
+    group by SI.rog;
+
+analyze tmp_all_identifiers_combined;
+
+create temporary table tmp_display_name_mapping as
+    select I.rog, case
+        when uniprotids <> '' then uniprotids
+        when symbols <> '' then symbols
+        when synonyms <> '' then synonyms
+        else identifiers
+        end as name
+    from tmp_all_identifiers_combined as I
+    left outer join tmp_uniprot_combined as U
+        on U.rog = I.rog
+    left outer join tmp_gene_symbols_combined as G
+        on G.rog = I.rog
+    left outer join tmp_all_gene_synonyms_combined as S
+        on S.rog = I.rog;
+
+analyze tmp_display_name_mapping;
+
 create temporary table tmp_display_names as
     select rog || '|+|i.displayLabel=>|' || upper(name)
-    from (
-        select SI.rog, coalesce(
-            U.uniprotid,
-            G.symbol,
-            array_to_string(array_accum(upper("synonym")), '|'),
-            I.dblabel || ':' || replace(I.refvalue, '|', '_')
-            ) as name
-        from irefindex_rog2rogid as SI
-        inner join irefindex_rogids as R
-            on SI.rogid = R.rogid
-        left outer join tmp_uniprot_rogids as U
-            on SI.rogid = U.rogid
-        left outer join tmp_gene_symbol_rogids as G
-            on SI.rogid = G.rogid
-        left outer join tmp_all_gene_synonym_rogids as S
-            on SI.rogid = S.rogid
-        inner join irefindex_all_rogid_identifiers as I
-            on SI.rogid = I.rogid
-        group by SI.rog, U.uniprotid, G.symbol, I.dblabel, I.refvalue
-        ) as X
-    group by rog, name;
+    from tmp_display_name_mapping
+    where name <> '';
 
 \copy tmp_display_names to '<directory>/_ROG_displaylabel.irft'
 
+
+
 -- ROG integer identifiers mapped to UniProt accessions with taxonomy details.
 
-create temporary table tmp_uniprot_accessions as
-    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.UniProt_Ac=>|' || refvalue
+create temporary table tmp_uniprot_accessions_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(refvalue), '|') as accessions
     from irefindex_rog2rogid as SI
     inner join irefindex_rogid_identifiers as I
         on SI.rogid = I.rogid
         and dblabel = 'uniprotkb'
-    group by SI.rog, SI.rogid, refvalue;
+    group by SI.rog, SI.rogid;
+
+analyze tmp_uniprot_accessions_mapping;
+
+create temporary table tmp_uniprot_accessions as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.UniProt_Ac=>|' || accessions
+    from tmp_uniprot_accessions_mapping
+    where accessions <> '';
 
 \copy tmp_uniprot_accessions to '<directory>/_ROG__EXT__EXPORT_UniProt_Ac.irft'
 
@@ -575,13 +655,19 @@ create temporary table tmp_gene_symbols as
 
 -- ROG integer identifiers mapped to RefSeq accessions with taxonomy details.
 
-create temporary table tmp_refseq as
-    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.RefSeq_Ac=>|' || refvalue
+create temporary table tmp_refseq_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(refvalue), '|') as accessions
     from irefindex_rog2rogid as SI
     inner join irefindex_rogid_identifiers as R
         on SI.rogid = R.rogid
         and dblabel = 'refseq'
-    group by SI.rog, SI.rogid, refvalue;
+    group by SI.rog, SI.rogid;
+
+analyze tmp_refseq_mapping;
+
+create temporary table tmp_refseq as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.RefSeq_Ac=>|' || accessions
+    from tmp_refseq_mapping;
 
 \copy tmp_refseq to '<directory>/_ROG__EXT__EXPORT_RefSeq_Ac.irft'
 
@@ -931,5 +1017,52 @@ create temporary table tmp_graph_degree_index as
     group by rogA;
 
 \copy tmp_graph_degree_index to '<directory>/_EXT__ROG_overall_degree.irft'
+
+
+
+-- All the ROG information is actually combined to make the records stored
+-- inside the ROG archives.
+
+create temporary table tmp_rog_details as
+    select SI.rog
+        ||                                              '|++|i.taxid=>' || substring(SI.rogid from 28)
+        || case when S.accessions is not null then      '|+|i.xref=>|' || S.accessions else '' end                  || '|'
+        || case when CI.rog is not null then            '|+|i.canonical_rog=>|' || CI.rog else '' end
+        || case when GS.synonyms is not null then       '|+|i.interactor_description=>|' || GS.synonyms else '' end || '|'
+        || case when DN.name is not null then           '|+|i.displayLabel=>|' || DN.name else '' end
+        || case when UA.accessions is not null then     '|+|i.UniProt_Ac=>|' || UA.accessions else '' end
+        || case when U.uniprotids is not null then      '|+|i.UniProt_ID=>|' || U.uniprotids else '' end
+        || case when G.symbols is not null then         '|+|i.geneSymbol=>|' || G.symbols else '' end
+        || case when RA.accessions is not null then     '|+|i.RefSeq_Ac=>|' || RA.accessions else '' end
+        ||                                              '|+|i.rogid=>|' || SI.rogid                                 || '|'
+        || '|'
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogids_canonical as CR
+        on SI.rogid = CR.rogid
+    inner join irefindex_rog2rogid as CI
+        on CR.crogid = CI.rogid
+    left outer join tmp_rog_accession_mapping as S
+        on SI.rog = S.rog
+        and S.accessions <> ''
+    left outer join tmp_uniprot_combined as U
+        on SI.rog = U.rog
+        and U.uniprotids <> ''
+    left outer join tmp_gene_symbols_combined as G
+        on SI.rog = G.rog
+        and G.symbols <> ''
+    left outer join tmp_all_gene_synonyms_combined as GS
+        on SI.rog = GS.rog
+        and GS.synonyms <> ''
+    inner join tmp_display_name_mapping as DN
+        on SI.rog = DN.rog
+        and DN.name <> ''
+    left outer join tmp_uniprot_accessions_mapping as UA
+        on SI.rog = UA.rog
+        and UA.accessions <> ''
+    left outer join tmp_refseq_mapping as RA
+        on SI.rog = RA.rog
+        and RA.accessions <> '';
+
+\copy tmp_rog_details to '<directory>/rogAttributes.irfi'
 
 rollback;
