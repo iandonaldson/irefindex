@@ -51,6 +51,10 @@ if [ ! -e "$WORKDIR" ]; then
     mkdir "$WORKDIR"
 fi
 
+# Trap any unforeseen exits, removing the working directory and its files.
+
+trap 'rm "$WORKDIR"/*.irfd ; rmdir "$WORKDIR" ; exit 1' INT TERM EXIT
+
 # For each line...
 
 read -r LINE
@@ -67,7 +71,11 @@ done
 
 cd "$WORKDIR" && jar cf "$OUTFILE" *.irfd
 
-# Finally, remove the working directory and its files.
+# Remove traps.
+
+trap - INT TERM EXIT
+
+# Remove the working directory and its files.
 
 rm "$WORKDIR"/*.irfd
 rmdir "$WORKDIR"

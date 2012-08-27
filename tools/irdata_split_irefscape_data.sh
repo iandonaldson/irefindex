@@ -27,8 +27,8 @@ if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME <filename> <output directory> <output prefix>
 
-Process the given filename, typically rigAtributes.irfi, making a collection of
-individual index files in the specified output directory.
+Process the given filename, typically rigAttributes.irfi or rogAttributes.irfi,
+making a collection of individual index files in the specified output directory.
 EOF
     exit 1
 fi
@@ -58,7 +58,14 @@ INTERVAL=20000
 
 if [ ! -e "$WORKDIR" ]; then
     mkdir "$WORKDIR"
+else
+    echo "$PROGNAME: Removing spurious working directory contents: $WORKDIR" 1>&2
+    rm -r "$WORKDIR/"*
 fi
+
+# Trap any unforeseen exits, removing the working directory.
+
+trap 'rmdir "$WORKDIR" ; exit 1' INT TERM EXIT
 
 # Identify pieces of the input file each having INTERVAL lines.
 # Present the start line and INTERVAL to a pipeline that slices the file into
@@ -67,6 +74,8 @@ fi
 
   seq 1 $INTERVAL `wc -l "$FILENAME" | cut -f 1 -d ' '` \
 | "$SCRIPTS/irparallel" "echo {} $INTERVAL | \"$SCRIPTS/irslice\" \"$FILENAME\" --lines - | \"$TOOLS/irdata_archive_irefscape_bundle.sh\" \"$WORKDIR/{}\" \"$OUTPUTDIR/${ARCHIVEBASE}_{}.irfj\""
+
+trap - INT TERM EXIT
 
 # Finally, remove the working directory.
 

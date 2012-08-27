@@ -89,12 +89,18 @@ fi
 
 if [ ! "$MITAB_ONLY" ]; then
 
-    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA" $PSQL_OPTIONS ; then
+    if [ ! -e "$DATA/iRefScape" ]; then
+        mkdir "$DATA/iRefScape"
+    else
+        rm "$DATA/iRefScape/"*
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefscape.sql" "$DATA/iRefScape" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not generate iRefScape data." 1>&2
         exit 1
     fi
 
-    if ! "$TOOLS/irdata_archive_irefscape.sh" "$DATA" "$DATA" ; then
+    if ! "$TOOLS/irdata_archive_irefscape.sh" "$DATA/iRefScape" "$DATA" ; then
         echo "$PROGNAME: Could not package iRefScape data in an archive." 1>&2
         exit 1
     fi

@@ -48,8 +48,8 @@ fi
 
 # Make the separate RIG and ROG indexes.
 
-"$TOOLS/irdata_split_irefscape_data.sh" "$DATA/rigAtributes.irfi" "$DATA" rigs
-"$TOOLS/irdata_split_irefscape_data.sh" "$DATA/_COL__ROG_xref.irft" "$DATA" rogs
+"$TOOLS/irdata_split_irefscape_data.sh" "$DATADIR/rigAttributes.irfi" "$DATADIR" rigs
+"$TOOLS/irdata_split_irefscape_data.sh" "$DATADIR/rogAttributes.irfi" "$DATADIR" rogs
 
 
 
