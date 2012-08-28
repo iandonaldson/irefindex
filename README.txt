@@ -26,6 +26,8 @@ Amongst the commands used are the following:
 In addition, where a previous release resides in a database system such as
 MySQL, the MySQL client program, mysql, must be installed.
 
+See the "Resources" section for download information.
+
 Technical Documentation
 -----------------------
 
@@ -46,37 +48,66 @@ A configuration script called irdata-config is located in the scripts
 directory of this distribution. It may be edited or copied to another location
 on the PATH of any user running the software.
 
-Using the Software
-------------------
+Before continuing, enter the distribution directory (normally containing this
+README.txt file) and copy the irdata-config file into the current directory as
+follows:
 
-Once the prerequisites have been installed, the software can be run from the
-distribution directory. Alternatively, a system-wide installation can be
-performed or prepared using the setup.py script provided. Such an installation
-can then be used by making sure that the PATH can find the installed programs
-and that the PYTHONPATH can find the irdata directory containing the Python
-module files supplied in this distribution.
+  cp scripts/irdata-config .
+
+The details in the file can now be reviewed and edited. If an installation is
+performed, any edits after installation can be incorporated into that
+installation by once again running the command given in "Performing an
+Installation" in the distribution directory.
 
 Configuring an Installation of the Software
 -------------------------------------------
 
+Once the prerequisites have been installed, the software can be run from the
+distribution directory. Alternatively, a system-wide installation can be
+performed or prepared using the setup.py script provided.
+
 If a system-wide installation is to reside in a directory hierarchy other than
 the conventional system root (that being /, with programs situated in
-/usr/bin, and so on), the configuration script should be copied from the
-scripts directory into this software's distribution directory (normally
-containing this README.txt file) and modified:
+/usr/bin, and so on), the irdata-config file should be modified to reflect
+this by changing the SYSPREFIX setting. For example:
 
-  cp scripts/irdata-config .
+  SYSPREFIX=/home/irefindex                   # system-wide installation root
 
-The SYSPREFIX setting should then be changed to state the directory at the top
-of the desired hierarchy. The setup.py script can then be run:
+This setting states the directory at the top of the desired hierarchy. Even
+if a system-wide installation ends up with inappropriate settings, such
+settings can be overridden as described in "Configuring the Software".
+
+Performing an Installation
+--------------------------
+
+With the irdata-config file modified, the setup.py script can then be run:
 
   python setup.py install --prefix=/home/irefindex/usr
 
 Note that SYSPREFIX will be /home/irefindex in this case: the setup.py script
 needs the additional "/usr" to know where to install programs and resources.
 
-Even if a system-wide installation ends up with inappropriate settings, such
-settings can be overridden as described in "Configuring the Software".
+Setting PATH and PYTHONPATH
+---------------------------
+
+With a SYSPREFIX other than / (the conventional system root), such as
+/home/irefindex, the PATH and PYTHONPATH variables in the environment need to
+be modified so that the shell can find the installed programs and libraries.
+
+To obtain suggested definitions of these variables, run the following command
+in the distribution directory of this software:
+
+  scripts/irdata-show-settings --suggested
+
+The output should provide output resembling the following for a SYSPREFIX of
+/home/irefindex:
+
+  export PATH=/home/irefindex/usr/bin:$PATH
+  export PYTHONPATH=/home/irefindex/usr/lib/python2.6/site-packages:$PYTHONPATH
+
+These definitions can be executed in the shell, and they can also saved in the
+appropriate shell configuration file, such as in .profile, .bashrc,
+.bash_profile or any other appropriate file in a user's home directory.
 
 Reserving a Location for Data
 -----------------------------
@@ -85,15 +116,18 @@ Before any operations can be performed using the software installation,
 various data and resource locations must be initialised. This can be done as
 follows:
 
-  irdata-config --make-system-dirs
+  irdata-show-settings --make-dirs
 
-If the software is being run from the distribution directory, the following
-command must be run:
+Any required directories that are not already present will be reported as
+being created.
 
-  mkdir data
+Creating a Database Cluster
+---------------------------
 
-Creating the Database
----------------------
+On systems that already provide databases, it may not be necessary to create a
+database cluster. Nevertheless, it can be worth checking to see if any
+existing database cluster is appropriately configured, and this is described
+below.
 
 Due to limitations with PostgreSQL and the interaction between locales and the
 sorting/ordering of textual data, it is essential that the database be
@@ -112,8 +146,11 @@ Note that the cluster's data directory is different from the data directory
 employed by this software to collect source data and to deposit processed
 data.
 
-Once the cluster has been started, a database can then be created using the
-usual PostgreSQL tools:
+Creating the Database
+---------------------
+
+Once a database cluster has been started, a database can then be created using
+the usual PostgreSQL tools:
 
   createdb irdata
 
@@ -307,3 +344,20 @@ paul.boddie@biotek.uio.no
 
 Copyright and licence information can be found in the docs directory - see
 docs/COPYING.txt and docs/gpl-3.0.txt for more information.
+
+Resources
+---------
+
+The following locations provide the prerequisites for this system:
+
+  PostgreSQL    http://www.postgresql.org/
+  Python        http://www.python.org/
+  cmdsyntax     http://www.boddie.org.uk/david/Projects/Python/CMDSyntax/
+  libxml2dom    http://www.boddie.org.uk/python/libxml2dom.html
+  libxml2       http://www.xmlsoft.org/
+  jar           http://www.oracle.com/technetwork/java/javase/downloads/index.html
+                (jar should be provided by the JDK)
+
+The intention is that operating system packages should provide such
+prerequisites, but there remains a possibility that not all prerequisites will
+be packaged for all operating system distributions.

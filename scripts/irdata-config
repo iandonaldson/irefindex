@@ -39,8 +39,12 @@ DIP_PASSWORD=
 ############################################################
 # Program and resource locations.
 
+alias abspath="python -c 'import os, sys; print os.path.abspath(sys.argv[1])'"
+alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
+
 PROGNAME=`basename "$0"`
 SCRIPTS=`dirname "$0"`
+SCRIPTS=`normpath "$SCRIPTS"`
 
 # Fix the scripts directory if this file was read by one of the tools.
 # Or if this file does not reside with the other scripts.
@@ -51,14 +55,13 @@ elif [ ! -e "$SCRIPTS/irbuild" ] && [ -e "$SCRIPTS/scripts/irbuild" ]; then
     SCRIPTS="$SCRIPTS/scripts"
 fi
 
-# Allow directories to be created.
+# Prevent complaints about missing directories, if another script just wants to
+# inspect the configuration.
 
-if [ "$1" = '--make-system-dirs' ]; then
-    MAKEDIRS="$1"
+if [ "$1" = '--inspect-only' ]; then
+    INSPECTONLY=$1
     shift 1
 fi
-
-alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
 
 # Tools.
 
@@ -79,7 +82,7 @@ if [ -e "$SCRIPTS/../sql" ]; then
     SQL=`normpath "$SCRIPTS/../sql"`
 elif [ -e "$SYSSQL" ]; then
     SQL="$SYSSQL"
-else
+elif [ ! "$INSPECTONLY" ]; then
     echo "Cannot locate the irdata sql directory." 1>&2
     exit 1
 fi
@@ -90,7 +93,7 @@ if [ -e "$SCRIPTS/../reports" ]; then
     REPORTS=`normpath "$SCRIPTS/../reports"`
 elif [ -e "$SYSREPORTS" ]; then
     REPORTS="$SYSREPORTS"
-else
+elif [ ! "$INSPECTONLY" ]; then
     echo "Cannot locate the irdata reports directory." 1>&2
     exit 1
 fi
@@ -101,7 +104,7 @@ if [ -e "$SCRIPTS/../manifests" ]; then
     MANIFESTS=`normpath "$SCRIPTS/../manifests"`
 elif [ -e "$SYSMANIFESTS" ]; then
     MANIFESTS="$SYSMANIFESTS"
-else
+elif [ ! "$INSPECTONLY" ]; then
     echo "Cannot locate the irdata manifests directory." 1>&2
     exit 1
 fi
@@ -112,7 +115,7 @@ if [ -e "$SCRIPTS/../resources" ]; then
     RESOURCES=`normpath "$SCRIPTS/../resources"`
 elif [ -e "$SYSRESOURCES" ]; then
     RESOURCES="$SYSRESOURCES"
-else
+elif [ ! "$INSPECTONLY" ]; then
     echo "Cannot locate the irdata resources directory." 1>&2
     exit 1
 fi
@@ -127,10 +130,9 @@ elif [ -e "$SCRIPTS/../data" ]; then
     DATA=`normpath "$SCRIPTS/../data"`
 elif [ -e "$SYSDATA" ]; then
     DATA="$SYSDATA"
-elif [ "$MAKEDIRS" ]; then
-    mkdir -p "$SYSDATA"
-    DATA="$SYSDATA"
-else
+elif [ ! "$SYSPREFIX" ]; then
+    DATA=data
+elif [ ! "$INSPECTONLY" ]; then
     echo "Cannot locate the irdata data directory." 1>&2
     exit 1
 fi
@@ -143,9 +145,8 @@ if [ -e "$SCRIPTS/../logs" ]; then
     LOGS=`normpath "$SCRIPTS/../logs"`
 elif [ -e "$SYSLOGS" ]; then
     LOGS="$SYSLOGS"
-elif [ "$MAKEDIRS" ]; then
-    mkdir -p "$SYSLOGS"
-    LOGS="$SYSLOGS"
+elif [ ! "$SYSPREFIX" ]; then
+    LOGS=logs
 else
     LOGS=
 fi

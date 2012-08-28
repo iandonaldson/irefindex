@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# Get any incomplete configuration without provoking complaints.
+
+INSPECTONLY=true
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+# Allow directories to be created.
+
+if [ "$1" = '--make-dirs' ]; then
+    MAKEDIRS=$1
+    shift 1
+fi
+
+# Support the configuration of other settings.
+
+if [ "$1" = '--suggested' ]; then
+    SUGGESTED=$1
+    shift 1
+fi
+
+# Show the settings.
+
+if [ ! "$SUGGESTED" ]; then
+
+    echo "SYSPREFIX=$SYSPREFIX"
+    echo "SCRIPTS=$SCRIPTS"
+    echo "TOOLS=$TOOLS"
+    echo "SQL=$SQL"
+    echo "REPORTS=$REPORTS"
+    echo "MANIFESTS=$MANIFESTS"
+    echo "RESOURCES=$RESOURCES"
+    echo "DATA=$DATA"
+    echo "LOGS=$LOGS"
+
+fi
+
+# Make directories if requested.
+
+if [ "$MAKEDIRS" ]; then
+
+    if [ ! -e "$DATA" ]; then
+        echo "$PROGNAME: Making $DATA..." 1>&2
+        mkdir -p "$DATA"
+    fi
+
+    if [ ! -e "$LOGS" ]; then
+        echo "$PROGNAME: Making $LOGS..." 1>&2
+        mkdir -p "$LOGS"
+    fi
+
+fi
+
+# Show suggested settings.
+
+if [ "$SUGGESTED" ]; then
+
+    echo
+    echo "# Suggested paths."
+    if [ ! "$SYSPREFIX" ]; then
+        echo "# The paths below assume a local, non-system-wide installation."
+    fi
+    echo
+
+    PYTHONVERSION=`python -c 'import sys; print ".".join(map(str, sys.version_info[:2]))'`
+
+    if [ "$SYSPREFIX" ]; then
+        echo "export PATH=$SYSPREFIX/usr/bin"${PATH:+':$PATH'}
+        echo "export PYTHONPATH=$SYSPREFIX/usr/lib/python$PYTHONVERSION/site-packages:$SYSPREFIX/usr/lib64/python$PYTHONVERSION/site-packages"${PYTHONPATH:+':$PYTHONPATH'}
+    else
+        echo "export PATH=`abspath $SCRIPTS`:`abspath $TOOLS`"${PATH:+':$PATH'}
+        echo "export PYTHONPATH=`pwd`/irdata"${PYTHONPATH:+':$PYTHONPATH'}
+    fi
+
+fi
