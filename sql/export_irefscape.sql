@@ -497,8 +497,7 @@ analyze tmp_rog_accession_mapping;
 
 create temporary table tmp_rog_accessions as
     select rog || '|+|i.taxid=>' || taxid || '|+|i.xref=>|' || accessions || '|'
-    from tmp_rog_accession_mapping
-    where accessions <> '';
+    from tmp_rog_accession_mapping;
 
 \copy tmp_rog_accessions to '<directory>/_COL__ROG_xref.irft'
 
@@ -517,15 +516,21 @@ create temporary table tmp_rogids as
 -- NOTE: The names used do not necessarily replicate those found in previous
 -- NOTE: iRefIndex releases.
 
-create temporary table tmp_rog_fullnames as
-    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.interactor_description=>|'
-        || array_to_string(array_accum(upper("synonym")), '|') || '|'
+create temporary table tmp_rog_fullnames_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct upper("synonym")), '|') as names
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
     inner join tmp_all_gene_synonym_rogids as S
         on SI.rogid = S.rogid
     group by SI.rog, SI.rogid;
+
+analyze tmp_rog_fullnames_mapping;
+
+create temporary table tmp_rog_fullnames as
+    select rog || '|+|i.taxid=>' || taxid
+        || '|+|i.interactor_description=>|' || names || '|'
+    from tmp_rog_fullnames_mapping;
 
 analyze tmp_rog_fullnames;
 
@@ -620,8 +625,7 @@ analyze tmp_uniprot_accessions_mapping;
 
 create temporary table tmp_uniprot_accessions as
     select rog || '|+|i.taxid=>' || taxid || '|+|i.UniProt_Ac=>|' || accessions
-    from tmp_uniprot_accessions_mapping
-    where accessions <> '';
+    from tmp_uniprot_accessions_mapping;
 
 \copy tmp_uniprot_accessions to '<directory>/_ROG__EXT__EXPORT_UniProt_Ac.irft'
 
@@ -673,8 +677,8 @@ create temporary table tmp_refseq as
 
 -- ROG integer identifiers mapped to gene identifiers with taxonomy details.
 
-create temporary table tmp_geneids as
-    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.geneID=>|' || geneid || '|'
+create temporary table tmp_geneids_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, geneid
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -682,36 +686,49 @@ create temporary table tmp_geneids as
         on R.rogid = G.rogid
     group by SI.rog, SI.rogid, geneid;
 
+analyze tmp_geneids_mapping;
+
+create temporary table tmp_geneids as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.geneID=>|' || geneid || '|'
+    from tmp_geneids_mapping;
+
 \copy tmp_geneids to '<directory>/_EXT__EXPORT__ROG_geneID.irft'
 
 -- ROG integer identifiers mapped to molecular weights with taxonomy details.
 
-create temporary table tmp_mw as
-    select SI.rog || '|+|i.taxid=>' || substring(SI.rogid from 28) || '|+|i.mw=>|' || mw || '|'
+create temporary table tmp_mw_mapping as
+    select distinct SI.rog, substring(SI.rogid from 28) as taxid, mw
     from irefindex_rog2rogid as SI
     inner join irefindex_rogid_identifiers as I
         on SI.rogid = I.rogid
     inner join uniprot_proteins as U
         on I.refvalue = U.accession
-        and I.dblabel = 'uniprotkb'
-    group by SI.rog, SI.rogid, mw;
+        and I.dblabel = 'uniprotkb';
+
+analyze tmp_mw_mapping;
+
+create temporary table tmp_mw as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.mw=>|' || mw || '|'
+    from tmp_mw_mapping;
 
 \copy tmp_mw to '<directory>/_EXT__RANGE__ROG_mass.irft'
 
 -- ROG integer identifiers mapped to IPI identifiers with taxonomy details.
 
+create temporary table tmp_ipi_mapping as
+    select distinct SI.rog, substring(SI.rogid from 28) as taxid, substring(refvalue from 'IPI[[:digit:]]*') as refvalue
+    from irefindex_rog2rogid as SI
+    inner join irefindex_rogids as R
+        on SI.rogid = R.rogid
+    inner join irefindex_all_rogid_identifiers as I
+        on R.rogid = I.rogid
+        and dblabel = 'ipi';
+
+analyze tmp_ipi_mapping;
+
 create temporary table tmp_ipi as
     select rog || '|+|i.taxid=>' || taxid || '|+|i.ipi=>|' || refvalue
-    from (
-        select SI.rog, substring(SI.rogid from 28) as taxid, substring(refvalue from 'IPI[[:digit:]]*') as refvalue
-        from irefindex_rog2rogid as SI
-        inner join irefindex_rogids as R
-            on SI.rogid = R.rogid
-        inner join irefindex_all_rogid_identifiers as I
-            on R.rogid = I.rogid
-            and dblabel = 'ipi'
-        ) as X
-    group by rog, taxid, refvalue;
+    from tmp_ipi_mapping;
 
 \copy tmp_ipi to '<directory>/_ROG__EXPORT_ipi.irft'
 
@@ -738,10 +755,8 @@ create temporary table tmp_rog2rigid as
 
 -- ROG integer identifiers mapped to GO term names with taxonomy details.
 
-create temporary table tmp_go_functions as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.function=>|' || array_to_string(array_accum(distinct term), '|')
+create temporary table tmp_go_functions_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct term), '|') as functions
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -752,12 +767,16 @@ create temporary table tmp_go_functions as
         and GG.category = 'Function'
     group by SI.rog, SI.rogid;
 
+analyze tmp_go_functions_mapping;
+
+create temporary table tmp_go_functions as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.function=>|' || functions
+    from tmp_go_functions_mapping;
+
 \copy tmp_go_functions to '<directory>/_EXT__ROG_Function.irft'
 
-create temporary table tmp_go_components as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.function=>|' || array_to_string(array_accum(distinct term), '|')
+create temporary table tmp_go_components_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct term), '|') as components
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -768,12 +787,16 @@ create temporary table tmp_go_components as
         and GG.category = 'Component'
     group by SI.rog, SI.rogid;
 
+analyze tmp_go_components_mapping;
+
+create temporary table tmp_go_components as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.component=>|' || components
+    from tmp_go_components_mapping;
+
 \copy tmp_go_functions to '<directory>/_EXT__ROG_Component.irft'
 
-create temporary table tmp_go_processes as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.function=>|' || array_to_string(array_accum(distinct term), '|')
+create temporary table tmp_go_processes_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct term), '|') as processes
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -784,31 +807,38 @@ create temporary table tmp_go_processes as
         and GG.category = 'Process'
     group by SI.rog, SI.rogid;
 
+analyze tmp_go_processes_mapping;
+
+create temporary table tmp_go_processes as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.process=>|' || processes
+    from tmp_go_processes_mapping;
+
 \copy tmp_go_functions to '<directory>/_EXT__ROG_Process.irft'
 
 -- ROG integer identifiers mapped to chromosome information with taxonomy details.
 
-create temporary table tmp_chromosomes as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.chromosome=>|' || chromosome || '|'
+create temporary table tmp_chromosomes_mapping as
+    select distinct SI.rog, substring(SI.rogid from 28) as taxid, chromosome
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
     inner join irefindex_gene2rog as G
         on R.rogid = G.rogid
     inner join gene_info as GI
-        on G.geneid = GI.geneid
-    group by SI.rog, SI.rogid, chromosome;
+        on G.geneid = GI.geneid;
+
+analyze tmp_chromosomes_mapping;
+
+create temporary table tmp_chromosomes as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.chromosome=>|' || chromosome || '|'
+    from tmp_chromosomes_mapping;
 
 \copy tmp_chromosomes to '<directory>/_ROG_chromosome.irft'
 
 -- ROG integer identifiers mapped to maplocation information with taxonomy details.
 
-create temporary table tmp_maplocations as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.maplocation=>|' || array_to_string(array_accum(maplocation), '|') || '|'
+create temporary table tmp_maplocations_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(maplocation), '|') as maplocations
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -817,6 +847,12 @@ create temporary table tmp_maplocations as
     inner join gene_maplocations as GM
         on G.geneid = GM.geneid
     group by SI.rog, SI.rogid;
+
+analyze tmp_maplocations_mapping;
+
+create temporary table tmp_maplocations as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.maplocation=>|' || maplocations || '|'
+    from tmp_maplocations_mapping;
 
 \copy tmp_maplocations to '<directory>/_ROG_maplocation.irft'
 
@@ -837,11 +873,8 @@ create temporary table tmp_pmids as
 
 -- ROG integer identifiers mapped to interactor short labels with taxonomy details.
 
-create temporary table tmp_shortlabels as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.interactor_shortlbl=>|'
-        || array_to_string(array_accum(distinct upper(name)), '|') || '|'
+create temporary table tmp_shortlabels_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct upper(name)), '|') as names
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -851,32 +884,37 @@ create temporary table tmp_shortlabels as
         and nametype = 'shortLabel'
     group by SI.rog, SI.rogid;
 
+analyze tmp_shortlabels_mapping;
+
+create temporary table tmp_shortlabels as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.interactor_shortlbl=>|' || names || '|'
+    from tmp_shortlabels_mapping;
+
 \copy tmp_shortlabels to '<directory>/_ROG_ShortLabel.irft'
 
 -- ROG integer identifiers mapped to interactor synonyms with taxonomy details.
 -- NOTE: Adopting the previous spelling of the attribute name.
 
-create temporary table tmp_synonyms as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.interactor_synonims=>|'
-        || array_to_string(array_accum(upper("synonym")), '|')
-        || '|'
+create temporary table tmp_synonyms_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(upper("synonym")), '|') as synonyms
     from irefindex_rog2rogid as SI
     inner join tmp_all_gene_synonym_rogids as S
         on SI.rogid = S.rogid
     group by SI.rog, SI.rogid
     having count("synonym") > 0;
 
+analyze tmp_synonyms_mapping;
+
+create temporary table tmp_synonyms as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.interactor_synonims=>|' || synonyms || '|'
+    from tmp_synonyms_mapping;
+
 \copy tmp_synonyms to '<directory>/_ROG_synonyms.irft'
 
 -- ROG integer identifiers mapped to interactor aliases with taxonomy details.
 
-create temporary table tmp_aliases as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.interactor_alias=>|'
-        || array_to_string(array_accum(distinct upper(name)), '|') || '|'
+create temporary table tmp_aliases_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct upper(name)), '|') as names
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -885,6 +923,12 @@ create temporary table tmp_aliases as
            (N.source, N.filename, N.entry, N.interactorid)
         and nametype = 'alias'
     group by SI.rog, SI.rogid;
+
+analyze tmp_aliases_mapping;
+
+create temporary table tmp_aliases as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.interactor_alias=>|' || names || '|'
+    from tmp_aliases_mapping;
 
 \copy tmp_aliases to '<directory>/_ROG_alias.irft'
 
@@ -912,11 +956,8 @@ create temporary table tmp_rig2rigid as
 
 -- Original references for ROG integer identifiers.
 
-create temporary table tmp_original_references as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.originalReferences=>|'
-        || array_to_string(array_accum(distinct originalrefvalue), '|')
+create temporary table tmp_original_references_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct originalrefvalue), '|') as refvalues
     from irefindex_rog2rogid as SI
     inner join irefindex_rogids as R
         on SI.rogid = R.rogid
@@ -924,6 +965,12 @@ create temporary table tmp_original_references as
         on (R.source, R.filename, R.entry, R.interactorid) =
            (A.source, A.filename, A.entry, A.interactorid)
     group by SI.rog, SI.rogid;
+
+analyze tmp_original_references_mapping;
+
+create temporary table tmp_original_references as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.originalReferences=>|' || refvalues
+    from tmp_original_references_mapping;
 
 \copy tmp_original_references to '<directory>/_ROG_originalReference.irft'
 
@@ -939,38 +986,50 @@ create temporary table tmp_dig2rog as
 
 analyze tmp_dig2rog;
 
-create temporary table tmp_omim as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.omim=>|' || array_to_string(array_accum(distinct diseaseomimid), '|')
+create temporary table tmp_omim_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct diseaseomimid), '|') as omimids
     from irefindex_rog2rogid as SI
     inner join tmp_dig2rog as R
         on SI.rogid = R.rogid
     where diseaseomimid <> 0
     group by SI.rog, SI.rogid;
 
+analyze tmp_omim_mapping;
+
+create temporary table tmp_omim as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.omim=>|' || omimids
+    from tmp_omim_mapping;
+
 \copy tmp_omim to '<directory>/_EXT__ROG_omim.irft'
 
-create temporary table tmp_digid as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.digid=>|' || array_to_string(array_accum(distinct digid), '|')
+create temporary table tmp_digid_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct digid), '|') as digids
     from irefindex_rog2rogid as SI
     inner join tmp_dig2rog as R
         on SI.rogid = R.rogid
     where digid <> 0
     group by SI.rog, SI.rogid;
 
+analyze tmp_digid_mapping;
+
+create temporary table tmp_digid as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.digid=>|' || digids
+    from tmp_digid_mapping;
+
 \copy tmp_digid to '<directory>/_EXT__ROG_digid.irft'
 
-create temporary table tmp_digtitle as
-    select SI.rog
-        || '|+|i.taxid=>' || substring(SI.rogid from 28)
-        || '|+|i.dig_title=>|' || array_to_string(array_accum(distinct title), '|')
+create temporary table tmp_digtitle_mapping as
+    select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(distinct title), '|') as titles
     from irefindex_rog2rogid as SI
     inner join tmp_dig2rog as R
         on SI.rogid = R.rogid
     group by SI.rog, SI.rogid;
+
+analyze tmp_digtitle_mapping;
+
+create temporary table tmp_digtitle as
+    select rog || '|+|i.taxid=>' || taxid || '|+|i.dig_title=>|' || titles
+    from tmp_digtitle_mapping;
 
 \copy tmp_digtitle to '<directory>/_ROG_dig_title.irft'
 
@@ -995,7 +1054,6 @@ create temporary table tmp_graph as
     inner join irefindex_rog2rogid as I2
         on R2.rogid = I2.rogid
 
-    where I.rog < I2.rog
     group by I.rog, I2.rog;
 
 \copy tmp_graph to '<directory>/graph'
@@ -1011,10 +1069,16 @@ create temporary table tmp_graph_neighbours as
 
 -- ROG integer identifiers mapped to their degree in the graph.
 
-create temporary table tmp_graph_degree_index as
-    select rogA || '|+|i.taxid=>-10|+|i.overall_degree=>|' || count(rogB) || '|'
+create temporary table tmp_graph_degree_index_mapping as
+    select rogA as rog, count(rogB) as degree
     from tmp_graph
     group by rogA;
+
+analyze tmp_graph_degree_index_mapping;
+
+create temporary table tmp_graph_degree_index as
+    select rog || '|+|i.taxid=>-10|+|i.overall_degree=>|' || degree || '|'
+    from tmp_graph_degree_index_mapping;
 
 \copy tmp_graph_degree_index to '<directory>/_EXT__ROG_overall_degree.irft'
 
@@ -1035,33 +1099,150 @@ create temporary table tmp_rog_details as
         || case when G.symbols is not null then         '|+|i.geneSymbol=>|' || G.symbols else '' end
         || case when RA.accessions is not null then     '|+|i.RefSeq_Ac=>|' || RA.accessions else '' end
         ||                                              '|+|i.rogid=>|' || SI.rogid                                 || '|'
+        || case when FN.names is not null then          '|+|i.interactor_description=>|' || FN.names else '' end    || '|'
+        || case when GI.geneid is not null then         '|+|i.geneID=>|' || GI.geneid else '' end
+        || case when MW.mw is not null then             '|+|i.mw=>|' || MW.mw else '' end                           || '|'
+        || case when IPI.refvalue is not null then      '|+|i.ipi=>|' || IPI.refvalue else '' end
+        || case when GF.functions is not null then      '|+|i.function=>|' || GF.functions else '' end
+        || case when GC.components is not null then     '|+|i.component=>|' || GC.components else '' end
+        || case when GP.processes is not null then      '|+|i.process=>|' || GP.processes else '' end
+        || case when C.chromosome is not null then      '|+|i.chromosome=>|' || C.chromosome else '' end            || '|'
+        || case when M.maplocations is not null then    '|+|i.maplocation=>|' || M.maplocations else '' end         || '|'
+        || case when SL.names is not null then          '|+|i.interactor_shortlbl=>|' || SL.names else '' end       || '|'
+        || case when SM.synonyms is not null then       '|+|i.interactor_synonims=>|' || SM.synonyms else '' end    || '|'
+        || case when A.names is not null then           '|+|i.interactor_alias=>|' || A.names else '' end           || '|'
+        || case when O.refvalues is not null then       '|+|i.originalReferences=>|' || O.refvalues else '' end
+        || case when OM.omimids is not null then        '|+|i.omim=>|' || OM.omimids else '' end
+        || case when DG.digids is not null then         '|+|i.digid=>|' || DG.digids else '' end
+        || case when DT.titles is not null then         '|+|i.dig_title=>|' || DT.titles else '' end
+        ||                                              '|+|i.overall_degree=>|' || GD.degree                       || '|'
         || '|'
+
+    -- ROG and integer identifier for the specific interactor.
+
     from irefindex_rog2rogid as SI
+
+    -- ROG and integer identifier for the canonical interactor.
+
     inner join irefindex_rogids_canonical as CR
         on SI.rogid = CR.rogid
     inner join irefindex_rog2rogid as CI
         on CR.crogid = CI.rogid
+
+    -- Cross-references.
+
     left outer join tmp_rog_accession_mapping as S
         on SI.rog = S.rog
-        and S.accessions <> ''
+
+    -- UniProt identifiers.
+
     left outer join tmp_uniprot_combined as U
         on SI.rog = U.rog
         and U.uniprotids <> ''
+
+    -- Gene symbols and synonyms.
+
     left outer join tmp_gene_symbols_combined as G
         on SI.rog = G.rog
         and G.symbols <> ''
     left outer join tmp_all_gene_synonyms_combined as GS
         on SI.rog = GS.rog
         and GS.synonyms <> ''
-    inner join tmp_display_name_mapping as DN
+
+    -- Display names.
+
+    left outer join tmp_display_name_mapping as DN
         on SI.rog = DN.rog
         and DN.name <> ''
+
+    -- UniProt accessions.
+
     left outer join tmp_uniprot_accessions_mapping as UA
         on SI.rog = UA.rog
-        and UA.accessions <> ''
+
+    -- RefSeq accessions.
+
     left outer join tmp_refseq_mapping as RA
         on SI.rog = RA.rog
-        and RA.accessions <> '';
+
+    -- Full names.
+
+    left outer join tmp_rog_fullnames_mapping as FN
+        on SI.rog = FN.rog
+
+    -- Gene identifiers
+
+    left outer join tmp_geneids_mapping as GI
+        on SI.rog = GI.rog
+
+    -- Molecular weight.
+
+    left outer join tmp_mw_mapping as MW
+        on SI.rog = MW.rog
+
+    -- IPI accessions.
+
+    left outer join tmp_ipi_mapping as IPI
+        on SI.rog = IPI.rog
+
+    -- GO functions.
+
+    left outer join tmp_go_functions_mapping as GF
+        on SI.rog = GF.rog
+
+    -- GO components.
+
+    left outer join tmp_go_components_mapping as GC
+        on SI.rog = GC.rog
+
+    -- GO processes.
+
+    left outer join tmp_go_processes_mapping as GP
+        on SI.rog = GP.rog
+
+    -- Chromosomes.
+
+    left outer join tmp_chromosomes_mapping as C
+        on SI.rog = C.rog
+
+    -- Maplocations.
+
+    left outer join tmp_maplocations_mapping as M
+        on SI.rog = M.rog
+
+    -- Shortlabels.
+
+    left outer join tmp_shortlabels_mapping as SL
+        on SI.rog = SL.rog
+
+    -- Synonyms.
+
+    left outer join tmp_synonyms_mapping as SM
+        on SI.rog = SM.rog
+
+    -- Aliases.
+
+    left outer join tmp_aliases_mapping as A
+        on SI.rog = A.rog
+
+    -- Original references.
+
+    left outer join tmp_original_references_mapping as O
+        on SI.rog = O.rog
+
+    -- Disease group references.
+
+    left outer join tmp_omim_mapping as OM
+        on SI.rog = OM.rog
+    left outer join tmp_digid_mapping as DG
+        on SI.rog = DG.rog
+    left outer join tmp_digtitle_mapping as DT
+        on SI.rog = DT.rog
+
+    -- Degrees.
+
+    inner join tmp_graph_degree_index_mapping as GD
+        on SI.rog = GD.rog;
 
 \copy tmp_rog_details to '<directory>/rogAttributes.irfi'
 
