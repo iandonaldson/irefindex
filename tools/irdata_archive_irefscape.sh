@@ -27,8 +27,9 @@ if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
 Usage: $PROGNAME <directory> <archive directory>
 
-Make an archive of iRefScape data using the files in the given directory,
-writing the archive to the specified location.
+Make an archive of iRefScape data using the files in the given directory
+(typically a directory called iRefScape inside the main data output directory),
+writing the archive (with a date-specific filename) to the specified location.
 EOF
     exit 1
 fi
@@ -53,6 +54,13 @@ fi
 
 
 
+# Convert the graph to the Java serialisation format.
+
+"$TOOLS/irdata_convert_graph.py" "$DATADIR/graph.txt" "$DATADIR/graph"
+
+
+
+# Write a release description.
 # NOTE: Using legacy date format.
 
 DATESTAMP=`date +%m%d%Y`
@@ -71,6 +79,10 @@ CURRENT_DATA_LOCATION_USER=$IREFINDEX_RELEASE_USER
 CURRENT_DATA_LOCATION_PASS=$IREFINDEX_RELEASE_PASSWORD
 CURRENT_DATA_PROPRIETARY=$IREFINDEX_PROPRIETARY_DATA
 EOF
+
+
+
+# Package the different files.
 
 cd "$RESOURCES" && jar cf "$ARCHIVE" *.irct
 cd "$DATADIR" && jar uf "$ARCHIVE" *.irf[mtj] graph RELEASE

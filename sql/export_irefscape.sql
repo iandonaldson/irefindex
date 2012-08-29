@@ -1056,7 +1056,7 @@ create temporary table tmp_graph as
 
     group by I.rog, I2.rog;
 
-\copy tmp_graph to '<directory>/graph'
+\copy tmp_graph to '<directory>/graph.txt'
 
 -- ROG integer identifiers and their neighbours in the graph.
 
