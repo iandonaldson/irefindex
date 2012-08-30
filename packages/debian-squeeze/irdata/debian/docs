@@ -1,2 +1,6 @@
 README.txt
-docs/sources.txt
+docs/postgresql.conf
+docs/pages/Project
+docs/pages/Schema
+docs/pages/Sources
+docs/pages/Workflow
