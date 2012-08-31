@@ -421,7 +421,7 @@ create temporary table tmp_rigid_attributes as
 
             -- Experiment details for specific interactions.
 
-            inner join tmp_experiments as E
+            left outer join tmp_experiments as E
                 on (I.source, I.filename, I.entry, I.interactionid) =
                    (E.source, E.filename, E.entry, E.interactionid)
 
@@ -616,7 +616,7 @@ create temporary table tmp_display_names as
 create temporary table tmp_uniprot_accessions_mapping as
     select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(refvalue), '|') as accessions
     from irefindex_rog2rogid as SI
-    inner join irefindex_rogid_identifiers as I
+    inner join irefindex_all_rogid_identifiers as I
         on SI.rogid = I.rogid
         and dblabel = 'uniprotkb'
     group by SI.rog, SI.rogid;
@@ -662,7 +662,7 @@ create temporary table tmp_gene_symbols as
 create temporary table tmp_refseq_mapping as
     select SI.rog, substring(SI.rogid from 28) as taxid, array_to_string(array_accum(refvalue), '|') as accessions
     from irefindex_rog2rogid as SI
-    inner join irefindex_rogid_identifiers as R
+    inner join irefindex_all_rogid_identifiers as R
         on SI.rogid = R.rogid
         and dblabel = 'refseq'
     group by SI.rog, SI.rogid;
@@ -699,7 +699,7 @@ create temporary table tmp_geneids as
 create temporary table tmp_mw_mapping as
     select distinct SI.rog, substring(SI.rogid from 28) as taxid, mw
     from irefindex_rog2rogid as SI
-    inner join irefindex_rogid_identifiers as I
+    inner join irefindex_all_rogid_identifiers as I
         on SI.rogid = I.rogid
     inner join uniprot_proteins as U
         on I.refvalue = U.accession
