@@ -12,7 +12,7 @@
 The general top-level iRefIndex workflow is as follows:
 
 {{{{#!table
-<rowspan=8 style="border: 0" tablestyle="border-collapse: separate; border-spacing: 5px">
+<rowspan=9 style="border: 0" tablestyle="border-collapse: separate; border-spacing: 5px">
 
 {{{#!dot
 //format=svg
@@ -48,6 +48,8 @@ digraph workflow {
     "interactor sequence digests" [color="#ff33ff"];
   }
 
+  "assignments" [color="#66ff33"];
+
   subgraph {
     rank=same;
     "canonical sequence groups" [color="#33bbbb"];
@@ -64,7 +66,7 @@ digraph workflow {
   "canonical RIG identifiers" [color="#33ff66"];
 
   "common interaction data" -> interactions -> "complete interactions" -> "RIG identifiers";
-  "common interaction data" -> interactors -> "identifier sequence digests" -> "interactor sequence digests" -> "ROG identifiers" -> "RIG identifiers";
+  "common interaction data" -> interactors -> "identifier sequence digests" -> "interactor sequence digests" -> "assignments" -> "ROG identifiers" -> "RIG identifiers";
   "sequence information" -> "identifier sequence digests";
   "archived sequence information" -> "identifier sequence digests";
   "identifier sequence digests" -> "canonical sequence groups" -> "canonical ROG identifiers";
@@ -111,6 +113,14 @@ record. Gene-to-protein mappings are established using Entrez Gene and
 <<Verbatim(UniProt/RefSeq)>> data.
 <<BR>>
 ~-Tables: xml_xref_interactor_sequences, irefindex_gene2uniprot, irefindex_gene2refseq-~
+
+== <style="border: 0; border-left: 2px solid #6f3;">
+
+Each assignment selects a particular sequence digest for a specific interaction
+using interactor-to-sequence information, assessing ambiguity, and using
+interaction record sequence information where no reference sequence exists.
+<<BR>>
+~-Tables: irefindex_assignments-~
 
 == <style="border: 0; border-left: 2px solid #3bb;">
 
@@ -161,30 +171,42 @@ digraph workflow {
 }
 }}}
 
-||
-<style="border: 0"> Cross-references refer to many kinds of entities.
-==
-<style="border: 0"> All references related to interactors are obtained.
-==
-<style="border: 0"> Usable references are then identified by selecting only
-those referring to supported databases and only specific kinds of references
-that are likely to indicate an interactor identity (as opposed to peripheral
-information).
-==
-<style="border: 0"> Identifiers referring to proteins whose sequences are
-unknown in current sequence database versions are first compared against
-archived information from a previous iRefIndex release, with remaining unknown
-identifiers being exported so that this missing information can be obtained
-from other sources.
-==
-<style="border: 0"> A separate program communicates with Entrez Utilities and
-obtains any information that may still be available about the unknown proteins.
-==
-<style="border: 0"> A mapping from identifiers to sequences should now exist
-for as many identifiers as possible.
-==
-<style="border: 0"> The correspondence between identifiers and sequences is now
-applied to the interactors in context, thus identifying them.
+|| <style="border: 0">
+
+Cross-references refer to many kinds of entities.
+
+== <style="border: 0">
+
+All references related to interactors are obtained.
+
+== <style="border: 0">
+
+Usable references are then identified by selecting only those referring to
+supported databases and only specific kinds of references that are likely to
+indicate an interactor identity (as opposed to peripheral information).
+
+== <style="border: 0">
+
+Identifiers referring to proteins whose sequences are unknown in current
+sequence database versions are first compared against archived information from
+a previous iRefIndex release, with remaining unknown identifiers being exported
+so that this missing information can be obtained from other sources.
+
+== <style="border: 0">
+
+A separate program communicates with Entrez Utilities and obtains any
+information that may still be available about the unknown proteins.
+
+== <style="border: 0">
+
+A mapping from identifiers to sequences should now exist for as many
+identifiers as possible.
+
+== <style="border: 0">
+
+The correspondence between identifiers and sequences is now applied to the
+interactors in context, thus identifying them.
+
 }}}}
 
 == Mapping Identifiers to Sequences ==
@@ -395,7 +417,7 @@ The structure of the data resembles the following:
 {{{{#!table
 <colspan=2> '''Interaction record'''                                                            || '''Sequence record'''
 ==
-<rowspan=7> Primary   || <style="background-color: #dfd"> Interaction record sequence           ||<rowspan=2> Null primary<<BR>>(no primary reference)
+<rowspan=7> Primary   || <style="background-color: #dfd"> Interaction record sequence           || <rowspan=2> Null primary<<BR>>(no primary reference)
 ==
                       .. <style="background-color: #fdd"> No sequence
 ==
@@ -409,7 +431,7 @@ The structure of the data resembles the following:
 ==
                       .. <style="background-color: #ffd"> No matching sequence
 ==
-<rowspan=7> Secondary || <style="background-color: #dfd"> Interaction record sequence           ||<rowspan=2> Null secondary<<BR>>(no secondary reference)
+<rowspan=7> Secondary || <style="background-color: #dfd"> Interaction record sequence           || <rowspan=2> Null secondary<<BR>>(no secondary reference)
 ==
                       .. <style="background-color: #fdd"> No sequence
 ==
@@ -469,15 +491,20 @@ digraph assignment_workflow {
 }
 }}}
 
-||
-<style="border: 0"> Each interactor may be associated with many sequences.
-==
-<style="border: 0"> Where possible, a single sequence is chosen for interactors.
-==
-<style="border: 0"> Even for a single sequence, there can have been many ways
-to discover this sequence using the identifiers provided. To simplify the
-assessment of the assignment process, a preferred method of discovery is
-chosen.
+|| <style="border: 0">
+
+Each interactor may be associated with many sequences.
+
+== <style="border: 0">
+
+Where possible, a single sequence is chosen for interactors.
+
+== <style="border: 0">
+
+Even for a single sequence, there can have been many ways to discover this
+sequence using the identifiers provided. To simplify the assessment of the
+assignment process, a preferred method of discovery is chosen.
+
 }}}}
 
 === Scoring Assignments ===
@@ -638,18 +665,22 @@ digraph output {
 }
 }}}
 
-||
-<style="border: 0"> ROG identifiers and a collection of assignments of
-sequences and identifiers for individual interactors have already been
-produced.
-==
-<style="border: 0"> The ROG identifiers are combined with identifier details
-using common information about which interactors provided both kinds of
-information.
-==
-<style="border: 0"> A single preferred identifier is used to describe each
-interactor in columns 1 and 2 of the MITAB data. Alternative identifiers are
-used to describe each interactor in columns 3 and 4. Aliases may require
-additional database identifier information to describe an interactor; they
-appear in columns 5 and 6.
+|| <style="border: 0">
+
+ROG identifiers and a collection of assignments of sequences and identifiers
+for individual interactors have already been produced.
+
+== <style="border: 0">
+
+The ROG identifiers are combined with identifier details using common
+information about which interactors provided both kinds of information.
+
+== <style="border: 0">
+
+A single preferred identifier is used to describe each interactor in columns 1
+and 2 of the MITAB data. Alternative identifiers are used to describe each
+interactor in columns 3 and 4. Aliases may require additional database
+identifier information to describe an interactor; they appear in columns 5 and
+6.
+
 }}}}
