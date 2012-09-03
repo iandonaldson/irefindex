@@ -66,7 +66,9 @@ digraph workflow {
   "canonical RIG identifiers" [color="#33ff66"];
 
   "common interaction data" -> interactions -> "complete interactions" -> "RIG identifiers";
-  "common interaction data" -> interactors -> "identifier sequence digests" -> "interactor sequence digests" -> "assignments" -> "ROG identifiers" -> "RIG identifiers";
+  "common interaction data" -> interactors -> "identifier sequence digests";
+  interactors -> "interactor sequence digests";
+  "identifier sequence digests" -> "interactor sequence digests" -> "assignments" -> "ROG identifiers" -> "RIG identifiers";
   "sequence information" -> "identifier sequence digests";
   "archived sequence information" -> "identifier sequence digests";
   "identifier sequence digests" -> "canonical sequence groups" -> "canonical ROG identifiers";
@@ -101,7 +103,8 @@ iRefIndex release.
 
 == <style="border: 0; border-left: 2px solid #bb3;">
 
-Identifier sequence digests map identifiers/accessions to sequence digests
+Identifier sequence digests map identifiers/accessions to sequence digests for
+sequences known from reference databases and any previous iRefIndex release.
 <<BR>>
 ~-Tables: xml_xref_sequences-~
 
