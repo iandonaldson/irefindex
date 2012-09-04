@@ -379,7 +379,12 @@ insert into irefindex_all_rogid_identifiers
     select distinct refsequence || reftaxid as rogid, dblabel, refvalue
     from irefindex_sequences
     where refsequence is not null
-        and reftaxid is not null;
+        and reftaxid is not null
+    union
+    select distinct sequence || taxid as rogid, dblabel, refvalue
+    from irefindex_assignments
+    where taxid is not null
+        and method = 'interactor sequence';
 
 analyze irefindex_all_rogid_identifiers;
 

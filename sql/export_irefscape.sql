@@ -577,7 +577,7 @@ analyze tmp_all_gene_synonyms_combined;
 
 create temporary table tmp_all_identifiers_combined as
     select SI.rog,
-        array_to_string(array_accum(I.dblabel || ':' || replace(I.refvalue, '|', '_')), '|') as identifiers
+        array_to_string(array_accum(replace(I.refvalue, '|', '_')), '|') as identifiers
     from irefindex_rog2rogid as SI
     left outer join irefindex_all_rogid_identifiers as I
         on I.rogid = SI.rogid
