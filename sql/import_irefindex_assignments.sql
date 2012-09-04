@@ -370,24 +370,6 @@ insert into irefindex_rogid_identifiers
 
 analyze irefindex_rogid_identifiers;
 
--- Make a more comprehensive table mapping ROG identifiers to identifiers,
--- useful for various output products.
--- NOTE: This is rather time consuming and is only really useful for iRefScape
--- NOTE: export data.
-
-insert into irefindex_all_rogid_identifiers
-    select distinct refsequence || reftaxid as rogid, dblabel, refvalue
-    from irefindex_sequences
-    where refsequence is not null
-        and reftaxid is not null
-    union
-    select distinct sequence || taxid as rogid, dblabel, refvalue
-    from irefindex_assignments
-    where taxid is not null
-        and method = 'interactor sequence';
-
-analyze irefindex_all_rogid_identifiers;
-
 -- Determine the complete interactions.
 
 insert into irefindex_interactions_complete
