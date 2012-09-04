@@ -441,7 +441,9 @@ create temporary table tmp_rigid_attributes as
 
         group by rigid, rig, scores
 
-        ) as Y;
+        ) as Y
+
+    order by rigid; -- ordering is for external indexing purposes
 
 \copy tmp_rigid_attributes to '<directory>/rigAttributes.irfi'
 
@@ -1242,7 +1244,9 @@ create temporary table tmp_rog_details as
     -- Degrees.
 
     inner join tmp_graph_degree_index_mapping as GD
-        on SI.rog = GD.rog;
+        on SI.rog = GD.rog
+
+    order by SI.rog; -- ordering is for external indexing purposes
 
 \copy tmp_rog_details to '<directory>/rogAttributes.irfi'
 
