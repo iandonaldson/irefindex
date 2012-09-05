@@ -577,13 +577,18 @@ create temporary table tmp_all_gene_synonyms_combined as
 
 analyze tmp_all_gene_synonyms_combined;
 
+-- NOTE: Limiting identifiers to ROG identifiers providing one or two database
+-- NOTE: identifiers.
+
 create temporary table tmp_all_identifiers_combined as
-    select SI.rog,
-        array_to_string(array_accum(replace(I.refvalue, '|', '_')), '|') as identifiers
+    select SI.rog, SI.rogid,
+        case when count(I.refvalue) < 3 then array_to_string(array_accum(replace(I.refvalue, '|', '_')), '|')
+        else ''
+        end as identifiers
     from irefindex_rog2rogid as SI
     left outer join irefindex_rogid_identifiers as I
         on I.rogid = SI.rogid
-    group by SI.rog;
+    group by SI.rog, SI.rogid;
 
 analyze tmp_all_identifiers_combined;
 
@@ -592,7 +597,8 @@ create temporary table tmp_display_name_mapping as
         when uniprotids <> '' then uniprotids
         when symbols <> '' then symbols
         when synonyms <> '' then synonyms
-        else identifiers
+        when identifiers <> '' then identifiers
+        else rogid
         end as name
     from tmp_all_identifiers_combined as I
     left outer join tmp_uniprot_combined as U
