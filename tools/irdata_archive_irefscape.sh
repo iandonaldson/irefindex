@@ -49,8 +49,8 @@ fi
 
 # Make the separate RIG and ROG indexes.
 
-"$TOOLS/irdata_split_irefscape_data.sh" "$DATADIR/rigAttributes.irfi" "$DATADIR" rigs
-"$TOOLS/irdata_split_irefscape_data.sh" "$DATADIR/rogAttributes.irfi" "$DATADIR" rogs
+"$TOOLS/irdata_index_irefscape_data.sh" "$DATADIR/rigAttributes.irfi" "$DATADIR/rigAttributes.irfx"
+"$TOOLS/irdata_index_irefscape_data.sh" "$DATADIR/rogAttributes.irfi" "$DATADIR/rogAttributes.irfx"
 
 
 
@@ -64,8 +64,6 @@ fi
 # NOTE: Using legacy date format.
 
 DATESTAMP=`date +%m%d%Y`
-ARCHIVE="$ARCHIVEDIR/iRefDATA_$DATESTAMP.irfz"
-
 echo $DATESTAMP > "$DATADIR/irefscape_date.txt"
 
 cat > "$DATADIR/RELEASE" <<EOF
@@ -82,10 +80,18 @@ EOF
 
 
 
+# Remove any existing archive.
+
+ARCHIVE="$ARCHIVEDIR/iRefDATA_$DATESTAMP.irfz"
+
+if [ -e "$ARCHIVE" ]; then
+    rm "$ARCHIVE"
+fi
+
 # Package the different files.
 
 cd "$RESOURCES" && jar cf "$ARCHIVE" *.irct
-cd "$DATADIR" && jar uf "$ARCHIVE" *.irf[mtj] graph RELEASE
+cd "$DATADIR" && jar uf "$ARCHIVE" *.irf[imtx] graph RELEASE
 
 # Write the archive location to standard output.
 
