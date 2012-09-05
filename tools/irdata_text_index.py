@@ -87,8 +87,6 @@ if __name__ == "__main__":
         separator = "\t"
 
     try:
-        # The start of the file is always a viable starting point.
-
         pos = 0
         lineno = 0
 
