@@ -46,7 +46,7 @@ if [ ! "$OUTFILE" ]; then
     exit 1
 fi
 
-INTERVAL=1000
+INTERVAL=100
 
   "$TOOLS/irdata_text_index.py" $INTERVAL "$FILENAME" -d '|' \
 > "$OUTFILE"
