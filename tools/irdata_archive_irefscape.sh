@@ -52,6 +52,12 @@ fi
 "$TOOLS/irdata_index_irefscape_data.sh" "$DATADIR/rigAttributes.irfi" "$DATADIR/rigAttributes.irfx"
 "$TOOLS/irdata_index_irefscape_data.sh" "$DATADIR/rogAttributes.irfi" "$DATADIR/rogAttributes.irfx"
 
+# Make indexes for other "indexes".
+
+for FILENAME in "$DATADIR/"*.irft ; do
+    "$TOOLS/irdata_index_irefscape_data.sh" "$FILENAME" "$DATADIR/"`basename "$FILENAME" .irft`".irfx"
+done
+
 
 
 # Convert the graph to the Java serialisation format.
