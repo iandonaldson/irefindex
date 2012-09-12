@@ -89,6 +89,8 @@ if __name__ == "__main__":
     try:
         pos = 0
         lineno = 0
+        current_value = None
+        current_value_start = None
 
         writer = RawImportFile(rewrite(sys.stdout))
 
@@ -97,8 +99,18 @@ if __name__ == "__main__":
             if not line:
                 break
 
+            value = line.split(separator)[field]
+
+            # For new values, remember where they first appeared.
+
+            if value != current_value:
+                current_value = value
+                current_value_start = pos
+
+            # Emit the start of the current value region.
+
             if lineno % interval == 0:
-                writer.append((line.split(separator)[field], pos))
+                writer.append((current_value, current_value_start))
 
             lineno += 1
             pos += len(line)
