@@ -2,6 +2,7 @@
 
 ############################################################
 # General configuration settings for irdata.
+# (SYSPREFIX and EMAIL are most likely to need changing.)
 
 SYSPREFIX=                                  # system-wide installation root
 EMAIL=                                      # e-mail address for anonymous FTP logins
@@ -15,6 +16,7 @@ PSQL_OPTIONS=                               # "--psql-options <psql connection o
 
 ############################################################
 # Output and publication options.
+# (RELEASE is most likely to need changing.)
 
 RELEASE=10.0                                # iRefIndex release identifier
 
@@ -30,6 +32,7 @@ IREFINDEX_PROPRIETARY_DATA=FALSE
 
 ############################################################
 # Authentication information for certain data sources.
+# (These settings must be changed if DIP is used.)
 
 DIP_USERNAME=                               # DIP download credentials
 DIP_PASSWORD=
@@ -37,130 +40,34 @@ DIP_PASSWORD=
 
 
 ############################################################
-# Program and resource locations.
+# Sources available to the system.
+#
+# Since BIND and GenPept use PSI-MI and Taxonomy data in
+# import, the latter are listed before the former in the
+# other sources list. Otherwise, these lists have been kept
+# in an alphabetical order.
+#
+# The BIND and OPHID data is not publicly available. If not
+# available locally, these sources can be added to the
+# EXCLUDEDSOURCES list below.
+#
+# If available, review the BIND_MIRROR, BIND_RELEASE_URL,
+# OPHID_MIRROR and OPHID_RELEASE_URL settings below.
 
-alias abspath="python -c 'import os, sys; print os.path.abspath(sys.argv[1])'"
-alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
-
-PROGNAME=`basename "$0"`
-SCRIPTS=`dirname "$0"`
-SCRIPTS=`normpath "$SCRIPTS"`
-
-# Fix the scripts directory if this file was read by one of the tools.
-# Or if this file does not reside with the other scripts.
-
-if [ `basename "$SCRIPTS"` = 'tools' ]; then
-    SCRIPTS=`dirname "$SCRIPTS"`/scripts
-elif [ ! -e "$SCRIPTS/irbuild" ] && [ -e "$SCRIPTS/scripts/irbuild" ]; then
-    SCRIPTS="$SCRIPTS/scripts"
-fi
-
-# Prevent complaints about missing directories, if another script just wants to
-# inspect the configuration.
-
-if [ "$1" = '--inspect-only' ]; then
-    INSPECTONLY=$1
-    shift 1
-fi
-
-# Tools.
-
-if [ -e "$SCRIPTS/../tools" ]; then
-    TOOLS=`normpath "$SCRIPTS/../tools"`
-else
-    TOOLS="$SCRIPTS"
-fi
-
-# Search in a relative location (if running the software from the distribution),
-# or search in a system-wide location (if running the installed software).
-
-# Templates.
-
-SYSSQL="$SYSPREFIX/usr/share/irdata/sql"
-
-if [ -e "$SCRIPTS/../sql" ]; then
-    SQL=`normpath "$SCRIPTS/../sql"`
-elif [ -e "$SYSSQL" ]; then
-    SQL="$SYSSQL"
-elif [ ! "$INSPECTONLY" ]; then
-    echo "Cannot locate the irdata sql directory." 1>&2
-    exit 1
-fi
-
-SYSREPORTS="$SYSPREFIX/usr/share/irdata/reports"
-
-if [ -e "$SCRIPTS/../reports" ]; then
-    REPORTS=`normpath "$SCRIPTS/../reports"`
-elif [ -e "$SYSREPORTS" ]; then
-    REPORTS="$SYSREPORTS"
-elif [ ! "$INSPECTONLY" ]; then
-    echo "Cannot locate the irdata reports directory." 1>&2
-    exit 1
-fi
-
-SYSMANIFESTS="$SYSPREFIX/usr/share/irdata/manifests"
-
-if [ -e "$SCRIPTS/../manifests" ]; then
-    MANIFESTS=`normpath "$SCRIPTS/../manifests"`
-elif [ -e "$SYSMANIFESTS" ]; then
-    MANIFESTS="$SYSMANIFESTS"
-elif [ ! "$INSPECTONLY" ]; then
-    echo "Cannot locate the irdata manifests directory." 1>&2
-    exit 1
-fi
-
-SYSRESOURCES="$SYSPREFIX/usr/share/irdata/resources"
-
-if [ -e "$SCRIPTS/../resources" ]; then
-    RESOURCES=`normpath "$SCRIPTS/../resources"`
-elif [ -e "$SYSRESOURCES" ]; then
-    RESOURCES="$SYSRESOURCES"
-elif [ ! "$INSPECTONLY" ]; then
-    echo "Cannot locate the irdata resources directory." 1>&2
-    exit 1
-fi
-
-# Data directory.
-
-SYSDATA="$SYSPREFIX/var/lib/irdata/data"
-
-if [ "$DATA" ] && [ -e "$DATA" ]; then
-    :
-elif [ -e "$SCRIPTS/../data" ]; then
-    DATA=`normpath "$SCRIPTS/../data"`
-elif [ -e "$SYSDATA" ]; then
-    DATA="$SYSDATA"
-elif [ ! "$SYSPREFIX" ]; then
-    DATA=data
-elif [ ! "$INSPECTONLY" ]; then
-    echo "Cannot locate the irdata data directory." 1>&2
-    exit 1
-fi
-
-# Log file directory.
-
-SYSLOGS="$SYSPREFIX/var/log/irdata"
-
-if [ -e "$SCRIPTS/../logs" ]; then
-    LOGS=`normpath "$SCRIPTS/../logs"`
-elif [ -e "$SYSLOGS" ]; then
-    LOGS="$SYSLOGS"
-elif [ ! "$SYSPREFIX" ]; then
-    LOGS=logs
-else
-    LOGS=
-fi
-
-
+XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
+TABSOURCES="MPIDB"
+OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
+# NOTE: To be completed and added below for parsing: SEGUID
 
 ############################################################
-# Parallel processing (irparallel).
+# Excluded sources are those not to be downloaded, parsed,
+# imported or processed. Even requesting operations on "all"
+# sources will ignore these sources.
+#
+# Use the form of the sources given in the above lists,
+# putting a space between each source identifier.
 
-PROCESSES=4                                 # number of process groups to use
-XARGS_I='-I'                                # get round annoying GNU xargs incompatibility
-XARGS_L='-L'                                # get round annoying GNU xargs incompatibility
-
-
+EXCLUDEDSOURCES="GENPEPT"
 
 ############################################################
 # Source locations and details.
@@ -186,31 +93,6 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 # following endings:
 #
 # MANIFEST_URL
-#
-# Since BIND and GenPept use PSI-MI and Taxonomy data in
-# import, the latter are listed before the former in the
-# other sources list. Otherwise, these lists have been kept
-# in an alphabetical order.
-#
-# The BIND and OPHID data is not publicly available. If not
-# available locally, these sources can be added to the
-# EXCLUDEDSOURCES list below.
-#
-# If available, review the BIND_MIRROR, BIND_RELEASE_URL,
-# OPHID_MIRROR and OPHID_RELEASE_URL settings below.
-
-XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
-TABSOURCES="MPIDB"
-OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
-ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
-
-# Excluded sources are those not to be downloaded, parsed,
-# imported or processed. Even requesting operations on "all"
-# sources will ignore these sources.
-
-EXCLUDEDSOURCES="GENPEPT"
-
-# NOTE: To be completed and added below for parsing: SEGUID
 
 ############################################################
 # BIND
@@ -548,12 +430,40 @@ YEAST_MANIFEST_FILE='yeast.txt'
 
 ############################################################
 # Entrez Utilities details
+# (These settings should not normally need changing.)
 
 EUTILS_URL='http://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 EFETCH_URL="$EUTILS_URL/efetch.fcgi"
 
 EUTILS_TOOL='irdata'
 EUTILS_EMAIL="$EMAIL"
+
+
+
+############################################################
+# Parallel processing (irparallel).
+# (Only PROCESSES may need changing. The XARGS settings may
+# need changing on some systems, and this can be checked by
+# running 'xargs --help'.)
+
+PROCESSES=4                                 # number of process groups to use
+XARGS_I='-I'                                # get round annoying GNU xargs incompatibility
+XARGS_L='-L'                                # get round annoying GNU xargs incompatibility
+
+
+
+############################################################
+# The portion below is mostly configuration logic and rarely
+# needs to be changed. If you have changed the settings in
+# the upper sections of this file, you should now be done
+# with your configuration activity.
+
+
+
+############################################################
+# The combined sources list.
+
+ALLSOURCES="$XMLSOURCES $TABSOURCES $OTHERSOURCES"
 
 
 
@@ -572,3 +482,120 @@ isin() {
         return 1
     fi
 }
+
+
+
+############################################################
+# Program and resource locations.
+
+alias abspath="python -c 'import os, sys; print os.path.abspath(sys.argv[1])'"
+alias normpath="python -c 'import os, sys; print os.path.normpath(sys.argv[1])'"
+
+PROGNAME=`basename "$0"`
+SCRIPTS=`dirname "$0"`
+SCRIPTS=`normpath "$SCRIPTS"`
+
+# Fix the scripts directory if this file was read by one of the tools.
+# Or if this file does not reside with the other scripts.
+
+if [ `basename "$SCRIPTS"` = 'tools' ]; then
+    SCRIPTS=`dirname "$SCRIPTS"`/scripts
+elif [ ! -e "$SCRIPTS/irbuild" ] && [ -e "$SCRIPTS/scripts/irbuild" ]; then
+    SCRIPTS="$SCRIPTS/scripts"
+fi
+
+# Prevent complaints about missing directories, if another script just wants to
+# inspect the configuration.
+
+if [ "$1" = '--inspect-only' ]; then
+    INSPECTONLY=$1
+    shift 1
+fi
+
+# Tools.
+
+if [ -e "$SCRIPTS/../tools" ]; then
+    TOOLS=`normpath "$SCRIPTS/../tools"`
+else
+    TOOLS="$SCRIPTS"
+fi
+
+# Search in a relative location (if running the software from the distribution),
+# or search in a system-wide location (if running the installed software).
+
+# Templates.
+
+SYSSQL="$SYSPREFIX/usr/share/irdata/sql"
+
+if [ -e "$SCRIPTS/../sql" ]; then
+    SQL=`normpath "$SCRIPTS/../sql"`
+elif [ -e "$SYSSQL" ]; then
+    SQL="$SYSSQL"
+elif [ ! "$INSPECTONLY" ]; then
+    echo "Cannot locate the irdata sql directory." 1>&2
+    exit 1
+fi
+
+SYSREPORTS="$SYSPREFIX/usr/share/irdata/reports"
+
+if [ -e "$SCRIPTS/../reports" ]; then
+    REPORTS=`normpath "$SCRIPTS/../reports"`
+elif [ -e "$SYSREPORTS" ]; then
+    REPORTS="$SYSREPORTS"
+elif [ ! "$INSPECTONLY" ]; then
+    echo "Cannot locate the irdata reports directory." 1>&2
+    exit 1
+fi
+
+SYSMANIFESTS="$SYSPREFIX/usr/share/irdata/manifests"
+
+if [ -e "$SCRIPTS/../manifests" ]; then
+    MANIFESTS=`normpath "$SCRIPTS/../manifests"`
+elif [ -e "$SYSMANIFESTS" ]; then
+    MANIFESTS="$SYSMANIFESTS"
+elif [ ! "$INSPECTONLY" ]; then
+    echo "Cannot locate the irdata manifests directory." 1>&2
+    exit 1
+fi
+
+SYSRESOURCES="$SYSPREFIX/usr/share/irdata/resources"
+
+if [ -e "$SCRIPTS/../resources" ]; then
+    RESOURCES=`normpath "$SCRIPTS/../resources"`
+elif [ -e "$SYSRESOURCES" ]; then
+    RESOURCES="$SYSRESOURCES"
+elif [ ! "$INSPECTONLY" ]; then
+    echo "Cannot locate the irdata resources directory." 1>&2
+    exit 1
+fi
+
+# Data directory.
+
+SYSDATA="$SYSPREFIX/var/lib/irdata/data"
+
+if [ "$DATA" ] && [ -e "$DATA" ]; then
+    :
+elif [ -e "$SCRIPTS/../data" ]; then
+    DATA=`normpath "$SCRIPTS/../data"`
+elif [ -e "$SYSDATA" ]; then
+    DATA="$SYSDATA"
+elif [ ! "$SYSPREFIX" ]; then
+    DATA=data
+elif [ ! "$INSPECTONLY" ]; then
+    echo "Cannot locate the irdata data directory." 1>&2
+    exit 1
+fi
+
+# Log file directory.
+
+SYSLOGS="$SYSPREFIX/var/log/irdata"
+
+if [ -e "$SCRIPTS/../logs" ]; then
+    LOGS=`normpath "$SCRIPTS/../logs"`
+elif [ -e "$SYSLOGS" ]; then
+    LOGS="$SYSLOGS"
+elif [ ! "$SYSPREFIX" ]; then
+    LOGS=logs
+else
+    LOGS=
+fi

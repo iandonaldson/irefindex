@@ -63,18 +63,35 @@ Configuring an Installation of the Software
 -------------------------------------------
 
 Once the prerequisites have been installed, the software can be run from the
-distribution directory. Alternatively, a system-wide installation can be
-performed or prepared using the setup.py script provided.
+distribution directory. If you choose to do this, you can skip this and the
+following installation sections. Make sure, in this case, to leave SYSPREFIX
+blank in the irdata-config file:
+
+  SYSPREFIX=                                  # system-wide installation root
+
+Alternatively, a system-wide installation can be performed or prepared using
+the setup.py script provided. You can choose the conventional system root as
+follows, although this is not recommended:
+
+  SYSPREFIX=/                                 # system-wide installation root
+
+The reason for not recommending this is that programs would be installed in
+/usr/bin, and other resources in other locations that should normally be
+managed by the system's package manager. If you would prefer to install the
+software centrally in this way, please consider using a packaged version of
+this software.
 
 If a system-wide installation is to reside in a directory hierarchy other than
-the conventional system root (that being /, with programs situated in
-/usr/bin, and so on), the irdata-config file should be modified to reflect
-this by changing the SYSPREFIX setting. For example:
+the conventional system root, the SYSPREFIX setting should be adjusted to
+reflect this. For example:
 
   SYSPREFIX=/home/irefindex                   # system-wide installation root
 
-This setting states the directory at the top of the desired hierarchy. Even
-if a system-wide installation ends up with inappropriate settings, such
+This setting specifies the directory at the top of the desired hierarchy. Upon
+installing the software, given this example, programs would be placed in
+/home/irefindex/usr/bin.
+
+Even if a system-wide installation ends up with inappropriate settings, such
 settings can be overridden as described in "Configuring the Software".
 
 Performing an Installation
