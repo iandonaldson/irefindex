@@ -120,7 +120,7 @@ BIND_TRANSLATION_XML_FILE_PATTERN='*.xml'
 ############################################################
 # BioGRID
 
-BIOGRID_VERSION='3.1.81'
+BIOGRID_VERSION='3.1.92'
 BIOGRID_DOWNLOAD_FILES="BIOGRID-ALL-$BIOGRID_VERSION.psi25.zip"
 BIOGRID_MIRROR='http://thebiogrid.org'
 
@@ -221,7 +221,7 @@ INTACT_XML_FILE_PATTERN='pmid/*/*.xml *.xml'
 ############################################################
 # InnateDB
 
-INNATEDB_DOWNLOAD_FILES="innatedb_20110306.xml.gz"
+INNATEDB_DOWNLOAD_FILES="innatedb_all_compact_20120301.xml.gz"
 INNATEDB_MIRROR='http://www.innatedb.com'
 
 INNATEDB_RELEASE_URL="$INNATEDB_MIRROR/download/interactions/"
@@ -245,10 +245,10 @@ IPI_SCHEMA='ipi'
 ############################################################
 # MatrixDB
 
-MATRIXDB_DOWNLOAD_FILES="MatrixDB_20100826.xml.zip"
+MATRIXDB_DOWNLOAD_FILES="MatrixDB_20120801.xml.zip"
 MATRIXDB_MIRROR='http://matrixdb.ibcp.fr'
 
-MATRIXDB_RELEASE_URL="$MATRIXDB_MIRROR/current/"
+MATRIXDB_RELEASE_URL="$MATRIXDB_MIRROR/cgi-bin/download%3C../../"
 MATRIXDB_DIR_NAME="MatrixDB"
 MATRIXDB_XML_FILE_PATTERN='*.xml'
 
