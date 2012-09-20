@@ -192,17 +192,23 @@ found in the docs directory in the form of the postgresql.conf file. Although
 the settings have been known to change from one release of PostgreSQL to the
 next, the following appear to be crucial:
 
-  shared_buffers
-  work_mem
-  maintenance_work_mem
-  wal_buffers
-  checkpoint_segments
-  effective_cache_size
-  default_statistics_target
+  max_connections           (10)
+  shared_buffers            (25% of RAM where 1GB or more is available)
+  work_mem                  (64MB)
+  maintenance_work_mem      (1GB)
+  wal_buffers               (8MB)
+  checkpoint_segments       (128)
+  effective_cache_size      (50% of RAM)
+  default_statistics_target (500)
 
 For non-interactive systems, the autovacuum feature can be switched off. This
 helps to avoid contention due to table locking performed by the autovacuum
 daemon.
+
+More information can be found in the PostgreSQL documentation:
+
+  http://www.postgresql.org/docs/9.1/interactive/runtime-config-resource.html
+  http://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
 
 Initialising the Database
 -------------------------
