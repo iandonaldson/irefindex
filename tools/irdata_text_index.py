@@ -91,6 +91,7 @@ if __name__ == "__main__":
         lineno = 0
         current_value = None
         current_value_start = None
+        last_value = None
 
         writer = RawImportFile(rewrite(sys.stdout))
 
@@ -109,8 +110,9 @@ if __name__ == "__main__":
 
             # Emit the start of the current value region.
 
-            if lineno % interval == 0:
+            if lineno % interval == 0 and current_value != last_value:
                 writer.append((current_value, current_value_start))
+                last_value = current_value
 
             lineno += 1
             pos += len(line)
