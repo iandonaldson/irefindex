@@ -60,6 +60,13 @@ fi
 # Loop over the sources and collect manifest information in a file.
 
   for SOURCE in $SOURCES ; do
+
+      # Skip excluded sources.
+
+      if isin "$SOURCE" $EXCLUDEDSOURCES ; then
+          continue
+      fi
+
       eval URL='$'"$SOURCE"_MANIFEST_URL
       eval PARSER='$'"$SOURCE"_MANIFEST_PARSER
       eval FILE='$'"$SOURCE"_MANIFEST_FILE
@@ -129,6 +136,13 @@ cp "$MANIFESTS/dateformats.txt" "$DATA"
 
 FAILED=
 for SOURCE in $SOURCES ; do
+
+    # Skip excluded sources.
+
+    if isin "$SOURCE" $EXCLUDEDSOURCES ; then
+        continue
+    fi
+
     if ! ( cut -f 1 "$MANIFEST_OUTPUT" | grep -e "$SOURCE" > /dev/null 2>&1 ) ; then
         FAILED="${FAILED}${FAILED:+ }$SOURCE"
     fi
