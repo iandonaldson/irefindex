@@ -36,6 +36,13 @@ EOF
     exit 1
 fi
 
+if [ "$1" = '--fix' ]; then
+    FIX=$1
+    CHECK=$1 # --fix implies --check
+    NO_PARSE=$1 # --fix implies --no-parse
+    shift 1
+fi
+
 if [ "$1" = '--check' ]; then
     CHECK=$1
     NO_PARSE=$1 # --check implies --no-parse
@@ -122,13 +129,35 @@ for FILEPATTERN in $FILEPATTERNS; do
             break
         fi
 
-        # Test for any XML file and run xmllint.
+        # Test for any XML file and run the checking tool.
         # NOTE: This relies on there either being XML files or other kinds of
         # NOTE: files.
 
-        if [ ! -e "$FILE" ] || [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] && ! xmllint "$FILE" > /dev/null 2> "$OUTPUTDIR/xmllint-`basename $FILE`.log" ; then
-            echo "$PROGNAME: File $FILE in source $SOURCE failed." 1>&2
+        CHECKLOG="$OUTPUTDIR/xmlerrors-`basename $FILE`.log"
+
+        if [ ! -e "$FILE" ] ; then
+            echo "$PROGNAME: File $FILE in source $SOURCE missing." 1>&2
             FAILED="${FAILED}${FAILED:+ }$FILE"
+
+        elif [ "$CHECK" ] && [ "$XMLFILEPATTERN" ] ; then
+
+            # Where the check fails, run the fixing tool if requested.
+
+            if ! "$TOOLS/irdata_xmlcheck.py" "$FILE" > /dev/null 2> "$CHECKLOG" ; then
+
+                if [ "$FIX" ]; then
+                    "$TOOLS/irdata_fixencoding.sh" "$FILE"
+                    echo "$PROGNAME: File $FILE in source $SOURCE fixed." 1>&2
+                else
+                    echo "$PROGNAME: File $FILE in source $SOURCE failed." 1>&2
+                    FAILED="${FAILED}${FAILED:+ }$FILE"
+                fi
+
+            # Remove any log from a successful invocation of the checking tool.
+
+            else
+                rm "$CHECKLOG"
+            fi
         fi
 
         HAVEFILES='yes'

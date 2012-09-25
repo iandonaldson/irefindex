@@ -25,10 +25,11 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --check | --no-parse ] ( --all | <source>... )
+Usage: $PROGNAME [ --fix | --check | --no-parse ] ( --all | <source>... )
 
-Parse or just check data from the different sources. These are configured to be
-the following when --all is specified:
+Parse or just check data (and optionally fix ill-formed data) from the
+different sources. These are configured to be the following when --all is
+specified:
 
 $ALLSOURCES
 
@@ -37,6 +38,11 @@ Sources that are to be excluded are defined to be the following:
 $EXCLUDEDSOURCES
 EOF
     exit 1
+fi
+
+if [ "$1" = '--fix' ]; then
+    FIX=$1
+    shift 1
 fi
 
 if [ "$1" = '--check' ]; then
@@ -71,4 +77,4 @@ done
 # The pipeline.
 
   "$SCRIPTS/argument-per-line" $PARSESOURCES \
-| "$SCRIPTS/irparallel" "\"$SCRIPTS/irparse-source\" $CHECK $NO_PARSE {}"
+| "$SCRIPTS/irparallel" "\"$SCRIPTS/irparse-source\" $FIX $CHECK $NO_PARSE {}"

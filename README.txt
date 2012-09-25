@@ -275,13 +275,13 @@ required data files should be established:
 
   irparse --no-parse --all
 
-It is also possible to check XML data using the xmllint tool using a command
-of the following form:
+It is also recommended that XML data is checked for correctness using a
+command of the following form:
 
-  irparse --check <source>
+  irparse --check --all
 
-However, xmllint may require excessive amounts of memory for some files and is
-not generally suitable for the task.
+See the section below on handling invalid source data if this command produces
+errors.
 
 Parsing of the source data is done as follows:
 
@@ -291,6 +291,31 @@ Once parsed, the import data will reside in an "import" subdirectory of the
 main data directory. Thus, if the main data directory is /home/irefindex/data
 then the import data will reside in /home/irefindex/data/import. Parsing
 errors will be reported on standard error.
+
+Handling Invalid Source Data
+----------------------------
+
+Currently, the only serious case of invalid data is the lack of proper
+encoding information in BIND Translation data files, causing errors resembling
+the following:
+
+irparse-source: Examining BIND_TRANSLATION...
+irparse-source: File /home/irefindex/var/lib/irdata/data/BIND_Translation/taxid10090_PSIMI25.xml in source BIND_TRANSLATION failed.
+irparse-source: File /home/irefindex/var/lib/irdata/data/BIND_Translation/taxid9606_PSIMI25.xml in source BIND_TRANSLATION failed.
+irparse-source: Source BIND_TRANSLATION had invalid data.
+
+These files can be fixed by adding a proper XML declaration with encoding
+details as follows:
+
+  irparse --fix BIND_TRANSLATION
+
+Although the --fix option can be used for all data sources, this is not
+generally recommended because the nature of errors may vary and need proper
+investigation.
+
+Fixed sources can be parsed individually once fixed. For example:
+
+  irparse BIND_TRANSLATION
 
 Importing Source Data
 ---------------------

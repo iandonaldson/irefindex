@@ -10,7 +10,7 @@ Vcs-Browser: http://irefindex.uio.no/hg/irdata
 
 Package: irdata
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-cmdsyntax, python-libxml2dom, postgresql-client, bash | dash, coreutils, findutils, grep, gzip, libxml2-utils, tar, wget, xsltproc
+Depends: ${misc:Depends}, ${python:Depends}, python-cmdsyntax, python-libxml2dom, postgresql-client, bash | dash, coreutils, findutils, grep, gzip, tar, wget, xsltproc
 Recommends: postgresql, openjdk-6-jdk
 Description: Preparation of iRefIndex consolidated protein interaction data
  The irdata distribution provides data processing tools related to iRefIndex
