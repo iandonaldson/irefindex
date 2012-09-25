@@ -90,9 +90,9 @@ if [ "$CHECK_ONLY" ]; then
     if [ ! -e "$DATADIR/$DOWNLOAD_FILE" ]; then
         echo "$PROGNAME: Want to download file: $DOWNLOAD_FILE" 1>&2
     else
-        echo "$DOWNLOAD_FILE"
+        echo "$DATADIR/$DOWNLOAD_FILE"
     fi
 else
-    wget -O "$DATADIR/$DOWNLOAD_FILE" "$DOWNLOAD_URL" && echo "$DOWNLOAD_FILE"
+    wget -O "$DATADIR/$DOWNLOAD_FILE" "$DOWNLOAD_URL" && echo "$DATADIR/$DOWNLOAD_FILE"
     exit $?
 fi
