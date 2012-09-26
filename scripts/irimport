@@ -25,7 +25,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME ( --all | --xml | <source>... )
+Usage: $PROGNAME [ --check ] ( --all | --xml | <source>... )
 
 Import data from the different sources into the configured database. The sources
 are configured to be the following when --all is specified:
@@ -39,8 +39,17 @@ $XMLSOURCES
 Sources that are to be excluded are defined to be the following:
 
 $EXCLUDEDSOURCES
+
+If --check is specified, the database will be inspected for imported sources.
 EOF
     exit 1
+fi
+
+if [ "$1" = '--check' ]; then
+    CHECK=$1
+    shift 1
+else
+    CHECK=
 fi
 
 SOURCES=$*
@@ -54,11 +63,30 @@ elif [ ! "$SOURCES" ]; then
     exit 1
 fi
 
+if [ "$CHECK" ]; then
+    "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_sources.sql" "$DATA"
+    IMPORTEDSOURCES=`cat "$DATA/imported_sources"`
+fi
+
 for SOURCE in $SOURCES ; do
 
     # Skip excluded sources.
 
     if ! isin "$SOURCE" $EXCLUDEDSOURCES ; then
-        "$SCRIPTS/irimport-source" "$SOURCE"
+
+        # Either check the source.
+
+        if [ "$CHECK" ]; then
+            if ! isin "$SOURCE" $IMPORTEDSOURCES ; then
+                echo "$PROGNAME: Source $SOURCE not present in the database." 1>&2
+            else
+                echo "$SOURCE"
+            fi
+
+        # Or import the source.
+
+        else
+            "$SCRIPTS/irimport-source" "$SOURCE"
+        fi
     fi
 done

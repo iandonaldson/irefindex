@@ -327,6 +327,14 @@ Source data is imported into the database using the following command:
 Each imported source should have its name emitted on standard output. Errors
 are produced on standard error.
 
+To perform a cursory check for the presence of data for all sources, run the
+following command:
+
+  irimport --check --all
+
+A list of imported sources will be produced on standard output. Any missing
+sources will be reported in messages written to standard error.
+
 Obtaining Integer Identifiers from Previous Releases
 ----------------------------------------------------
 
