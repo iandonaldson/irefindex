@@ -5,5 +5,5 @@ create table mmdb_pdb_accessions (
     chain varchar not null,
     gi integer not null,
     taxid integer not null,
-    primary key(accession, chain)
+    primary key(accession, chain, gi)
 );
