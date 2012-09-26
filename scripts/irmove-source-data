@@ -1,0 +1,12 @@
+#!/bin/sh
+
+FROMDIR=$1
+TODIR=$2
+
+for FILENAME in "$FROMDIR/"* ; do
+    BASENAME=`basename "$FILENAME"`
+    if [ -d "$FILENAME" ] && [ "$BASENAME" != 'import' ]; then
+        mv "$FILENAME" "$TODIR/"
+        ln -s "$TODIR/$BASENAME" "$FILENAME"
+    fi
+done
