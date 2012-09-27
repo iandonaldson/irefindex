@@ -80,7 +80,7 @@ def file_to_wiki(pathname, filename, wikitype, separator, blank_value, use_headi
                     elif wikitype == "MoinMoin":
                         out.write("||")
                 else:
-                    out.write("||")
+                    out.write(" || ")
 
                 out.write(extra_before)
                 if column != blank_value:
@@ -94,7 +94,7 @@ def file_to_wiki(pathname, filename, wikitype, separator, blank_value, use_headi
             if wikitype == "MediaWiki":
                 out.write("\n")
             elif wikitype == "MoinMoin":
-                out.write("||\n")
+                out.write(" ||\n")
             elif wikitype == "MoinMoinImproved":
                 out.write("\n")
 
