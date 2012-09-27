@@ -45,7 +45,9 @@ def get_index(f):
 
 syntax_description = """
     --help |
-    <index filename> <data filename> [ -f <field> ] [ -d <separator> ] <term>
+    (
+      <index filename> <data filename> [ -f <field> ] [ -d <separator> ] <term>
+    )
     """
 
 if __name__ == "__main__":

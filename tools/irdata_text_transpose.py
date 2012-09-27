@@ -52,12 +52,14 @@ import sys, cmdsyntax
 
 syntax_description = """
     --help |
-    [ -f <start-field> ]
-    [ -t <end-field> ]
-    [ -d <delimiter> ]
-    [ -w <delimiter-within-fields> ]
-    [ -s <sequence-start> ]
-    ( <filename> | - )
+    (
+      [ -f <start-field> ]
+      [ -t <end-field> ]
+      [ -d <delimiter> ]
+      [ -w <delimiter-within-fields> ]
+      [ -s <sequence-start> ]
+      ( <filename> | - )
+    )
     """
 
 # Main program.

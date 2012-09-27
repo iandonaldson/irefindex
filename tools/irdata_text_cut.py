@@ -28,8 +28,10 @@ import sys, cmdsyntax
 
 syntax_description = """
     --help |
-    [ -f ] <fields>
-    [ <filename> | - ]
+    (
+      [ -f ] <fields>
+      [ <filename> | - ]
+    )
     """
 
 # Main program.

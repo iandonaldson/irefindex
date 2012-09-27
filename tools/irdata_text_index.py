@@ -31,7 +31,9 @@ import sys, cmdsyntax, gzip
 
 syntax_description = """
     --help |
-    <interval> [ <filename> | - ] [ -f <field> ] [ -d <separator> ]
+    (
+      <interval> [ <filename> | - ] [ -f <field> ] [ -d <separator> ]
+    )
     """
 
 if __name__ == "__main__":
