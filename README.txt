@@ -221,10 +221,15 @@ can be initialised using the following command:
 Should the need arise for the removal of schema information from the database,
 the following command can be used:
 
-  irdrop --drop
+  irdrop --drop --all
 
 However, it may be more convenient to issue the dropdb command on the database
 and recreate it as described above.
+
+To drop only the build products and not imported source data, run the
+following:
+
+  irdrop --drop --build
 
 Downloading Source Data
 -----------------------
