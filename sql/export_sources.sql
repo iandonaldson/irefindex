@@ -1,13 +1,26 @@
 begin;
 
 create temporary table tmp_sources as
+
+    -- PSI-XML sources.
+
     select distinct source
     from xml_interactors
     union all
+
+    -- MITAB sources.
+
     select 'MPIDB'
     from mitab_uid
     where source in ('MPI-LIT', 'MPI-IMEX')
     union all
+    select 'INNATEDB'
+    from mitab_uid
+    where source = 'INNATEDB'
+    union all
+
+    -- Special sources.
+
     (select 'BIND' as source
     from bind_interactors
     limit 1)
