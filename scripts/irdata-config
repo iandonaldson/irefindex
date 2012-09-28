@@ -54,8 +54,8 @@ DIP_PASSWORD=
 # If available, review the BIND_MIRROR, BIND_RELEASE_URL,
 # OPHID_MIRROR and OPHID_RELEASE_URL settings below.
 
-XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INNATEDB INTACT MATRIXDB MINT MPACT MPPI OPHID"
-TABSOURCES="MPIDB"
+XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INTACT MATRIXDB MINT MPACT MPPI OPHID"
+TABSOURCES="INNATEDB MPIDB"
 OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 # NOTE: To be completed and added below for parsing: SEGUID
 
@@ -221,13 +221,15 @@ INTACT_XML_FILE_PATTERN='pmid/*/*.xml *.xml'
 ############################################################
 # InnateDB
 
-INNATEDB_DOWNLOAD_FILES="innatedb_all_compact_20120301.xml.gz"
+INNATEDB_DOWNLOAD_FILES="innatedb_all.mitab.gz"
 INNATEDB_MIRROR='http://www.innatedb.com'
 
 INNATEDB_RELEASE_URL="$INNATEDB_MIRROR/download/interactions/"
 INNATEDB_DIR_NAME="InnateDB"
-INNATEDB_XML_FILE_PATTERN='*.xml *.xml.gz'
+INNATEDB_OTHER_FILE_PATTERN='*.mitab.gz'
 
+INNATEDB_PARSER='irdata_parse_innatedb.sh'
+INNATEDB_IMPORT_TEMPLATE='import_mitab.sql'
 INNATEDB_MANIFEST_URL="$INNATEDB_MIRROR/download.jsp"
 
 ############################################################
@@ -293,7 +295,7 @@ MPIDB_MIRROR='http://www.jcvi.org'
 MPIDB_RELEASE_URL="$MPIDB_MIRROR/mpidb/download.php?dbsource="
 MPIDB_DIR_NAME="MPIDB"
 MPIDB_OTHER_FILE_PATTERN='MPI-*'
-MPIDB_PARSER='irdata_parse_mpidb.py'
+MPIDB_PARSER='irdata_parse_mpidb.sh'
 MPIDB_IMPORT_TEMPLATE='import_mitab.sql'
 
 ############################################################
