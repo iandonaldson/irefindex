@@ -25,36 +25,56 @@ fi
 
 if [ "$1" = '--help' ] || [ "$1" != '--drop' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME --drop
+Usage: $PROGNAME --drop ( --all | --build )
 
 Remove schema definitions from the database.
 EOF
     exit 1
 fi
 
-if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop.sql" $PSQL_OPTIONS \
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_psixml.sql" $PSQL_OPTIONS \
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_mitab.sql" $PSQL_OPTIONS \
-    && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_manifest.sql" $PSQL_OPTIONS \
-    ) ; then
-    echo "$PROGNAME: Could not remove the database schema." 1>&2
+shift 1
+
+if [ "$1" = '--all' ]; then
+    DROPALL=$1
+elif [ "$1" = '--build' ]; then
+    DROPBUILD=$1
+else
+    echo "$PROGNAME: Either --all or --build must be given." 1>&2
     exit 1
 fi
 
-# Remove any special schemas for data sources.
+# If requested, drop all source data tables.
 
-for SOURCE in $ALLSOURCES ; do
-    eval SCHEMA='$'"$SOURCE"_SCHEMA
+if [ "$DROPALL" ]; then
 
-    if [ "$SCHEMA" ]; then
-        if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_${SCHEMA}.sql" $PSQL_OPTIONS ; then
-            echo "$PROGNAME: Could not remove schema for $SOURCE." 1>&2
-            exit 1
-        fi
+    if ! ( "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop.sql" $PSQL_OPTIONS \
+        && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_psixml.sql" $PSQL_OPTIONS \
+        && "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_mitab.sql" $PSQL_OPTIONS \
+        ) ; then
+        echo "$PROGNAME: Could not remove the database schema." 1>&2
+        exit 1
     fi
-done
+
+    # Remove any special schemas for data sources.
+
+    for SOURCE in $ALLSOURCES ; do
+        eval SCHEMA='$'"$SOURCE"_SCHEMA
+
+        if [ "$SCHEMA" ]; then
+            if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_${SCHEMA}.sql" $PSQL_OPTIONS ; then
+                echo "$PROGNAME: Could not remove schema for $SOURCE." 1>&2
+                exit 1
+            fi
+        fi
+    done
+fi
 
 # Remove the different build tables.
+
+if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_manifest.sql" $PSQL_OPTIONS ; then
+    echo "$PROGNAME: Could not remove the manifest schema." 1>&2
+    exit 1
+fi
 
 if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/drop_irefindex_sequences.sql" $PSQL_OPTIONS ; then
     echo "$PROGNAME: Could not remove the consolidated sequence information schema." 1>&2
