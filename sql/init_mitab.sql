@@ -29,7 +29,8 @@ create table mitab_alternatives (
     position integer not null,
     dbname varchar not null,
     alt varchar not null,
-    primary key(source, filename, interaction, position, dbname, alt)
+    entry integer not null,
+    primary key(source, filename, interaction, position, entry)
 );
 
 -- Aliases (columns 5 and 6)

@@ -18,7 +18,7 @@
 begin;
 
 \copy mitab_uid from '<directory>/mitab_uid.txt'
--- \copy mitab_alternatives from '<directory>/mitab_alternatives.txt'
+\copy mitab_alternatives from '<directory>/mitab_alternatives.txt'
 \copy mitab_aliases from '<directory>/mitab_alias.txt'
 \copy mitab_method_names from '<directory>/mitab_method.txt'
 \copy mitab_authors from '<directory>/mitab_authors.txt'
