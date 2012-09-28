@@ -64,7 +64,7 @@ elif [ ! "$SOURCES" ]; then
 fi
 
 if [ "$CHECK" ]; then
-    "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_sources.sql" "$DATA"
+    "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_sources.sql" "$DATA" $PSQL_OPTIONS
     IMPORTEDSOURCES=`cat "$DATA/imported_sources"`
 fi
 
