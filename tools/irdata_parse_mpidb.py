@@ -24,8 +24,10 @@ You should have received a copy of the GNU General Public License along
 with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from os.path import extsep, join, split, splitext
 import os
 import re
+import gzip
 
 standard_fields = (
     "uidA", "uidB",
@@ -46,6 +48,8 @@ mpidb_fields = standard_fields + (
     "interaction"
     )
 
+all_fields = mpidb_fields
+
 corresponding_fields = (
     "method", "authors", "pmids", "interactionType", "sourcedb",
     "interactionIdentifiers", "confidence"
@@ -57,8 +61,11 @@ non_corresponding_fields = (
 
 list_fields = non_corresponding_fields + corresponding_fields
 
-mpidb_term_regexp = re.compile(r'(?P<prefix>.*?)"(?P<term>.*?)"\((?P<description>.*?)\)')
-standard_term_regexp = re.compile(r'(?P<term>.*?)\((?P<description>.*?)\)')
+mpidb_term_regexp       = re.compile(r'(?P<prefix>.*?)"(?P<term>.*?)"\((?P<description>.*?)\)')
+standard_term_regexp    = re.compile(r'(?P<term>.*?)\((?P<description>.*?)\)')
+taxid_regexp            = re.compile(r'taxid:(?P<taxid>[^(]+)(\((?P<description>.*?)\))?')
+
+term_regexps = mpidb_term_regexp, standard_term_regexp
 
 class Parser:
 
@@ -66,6 +73,8 @@ class Parser:
 
     def __init__(self, writer):
         self.writer = writer
+        self.line_position = 0
+        self.last_interaction = None
 
     def close(self):
         if self.writer is not None:
@@ -78,21 +87,27 @@ class Parser:
         Parse the file with the given 'filename', writing to the output stream.
         """
 
-        f = open(filename)
+        leafname = split(filename)[-1]
+        basename, ext = splitext(leafname)
+
+        if ext.endswith("gz"):
+            opener = gzip.open
+        else:
+            opener = open
+
+        f = opener(filename)
 
         try:
             self.writer.start(filename)
 
-            first = 1
-            for line in f.xreadlines():
+            # Skip the first line since it is a header.
 
-                # Skip the first line since it is a header.
+            line = f.readline()
+            line = f.readline()
 
-                if first:
-                    first = 0
-                    continue
-
+            while line:
                 self.parse_line(line)
+                line = f.readline()
 
         finally:
             f.close()
@@ -101,17 +116,12 @@ class Parser:
 
         "Parse the given 'line', appending output to the writer."
 
-        data = dict(zip(mpidb_fields, line.strip().split("\t")))
+        data = dict(zip(all_fields, line.strip().split("\t")))
 
         # Convert all list values into lists.
 
         for key in list_fields:
             data[key] = get_list(data[key], key in corresponding_fields)
-
-        # Remove alternatives.
-
-        for key in ("altA", "altB"):
-            data[key] = []
 
         # Fix aliases.
 
@@ -123,13 +133,26 @@ class Parser:
         for key in ("method", "interactionType", "sourcedb"):
             data[key] = map(fix_vocabulary_term, data[key])
 
+        # Detect multi-line interactions.
+
+        interaction = get_interaction(data)
+
+        if interaction == self.last_interaction:
+            self.line_position += 1
+        else:
+            self.line_position = 0
+            self.last_interaction = interaction
+
+        data["line_position"] = self.line_position
+
         self.writer.append(data)
 
 class Writer:
 
     "Support for writing to files."
 
-    def __init__(self, directory):
+    def __init__(self, source, directory):
+        self.input_source = source
         self.directory = directory
         self.filename = None
         self.init()
@@ -144,6 +167,17 @@ class Writer:
     def get_experiment_data(self, data):
 
         "Observe correspondences between multivalued fields in 'data'."
+
+        # Where no correspondences are being recorded, return the data as the
+        # only experiment entry, and with only a single additional entry
+        # indicating a unique output line number.
+
+        if not corresponding_fields:
+            data["line"] = self.output_line
+            self.output_line += 1
+            return [data]
+
+        # Obtain the values for each of the fields.
 
         fields = []
         length = None
@@ -188,7 +222,7 @@ class MITABWriter(Writer):
             self.out = None
 
     def get_filename(self):
-        return os.path.join(self.directory, "mpidb_mitab.txt")
+        return join(self.directory, "mpidb_mitab.txt")
 
     def start(self, filename):
         Writer.start(self, filename)
@@ -224,7 +258,7 @@ class iRefIndexWriter(Writer):
 
     filenames = (
         "uid", "alias", # collecting more than one column each
-        "method", "authors", "pmids", "interactionType", "sourcedb", "interactionIdentifiers"
+        "alternatives", "method", "authors", "pmids", "interactionType", "sourcedb", "interactionIdentifiers"
         )
 
     def init(self):
@@ -236,11 +270,17 @@ class iRefIndexWriter(Writer):
         self.files = {}
 
     def get_filename(self, key):
-        return os.path.join(self.directory, "mitab_%s%stxt" % (key, os.path.extsep))
+        return join(self.directory, "mitab_%s%stxt" % (key, extsep))
 
     def start(self, filename):
         Writer.start(self, filename)
-        self.source = os.path.split(filename)[-1]
+
+        # Use the filename for specific MPIDB sources.
+
+        if self.input_source == "MPIDB":
+            self.source = split(filename)[-1]
+        else:
+            self.source = self.input_source
 
         if self.files:
             return
@@ -255,39 +295,60 @@ class iRefIndexWriter(Writer):
 
         "Write iRefIndex-compatible output from the 'data'."
 
-        experiment_data = self.get_experiment_data(data)
-
         # Interactor-specific records.
 
-        self.write_line(self.files["uid"], (self.source, self.filename, data["interaction"], "0") + split_value(data["uidA"]) + (split_value(data["taxA"])[1],))
-        self.write_line(self.files["uid"], (self.source, self.filename, data["interaction"], "1") + split_value(data["uidB"]) + (split_value(data["taxB"])[1],))
+        positionA = data["line_position"]
+        positionB = data["line_position"] + 1
 
-        for position, key in enumerate(("aliasA", "aliasB")):
-            for entry, s in enumerate(data[key]):
-                prefix, value = split_value(s)
-                self.write_line(self.files["alias"], (self.source, self.filename, data["interaction"], position, prefix, value, entry))
+        # Only write the principal interactor of multi-line interactions once.
+
+        if positionA == 0:
+            self.write_line(self.files["uid"], (self.source, self.filename, get_interaction(data), positionA) + split_uid(data["uidA"]) + (split_taxid(data["taxA"])[0],))
+        self.write_line(self.files["uid"], (self.source, self.filename, get_interaction(data), positionB) + split_uid(data["uidB"]) + (split_taxid(data["taxB"])[0],))
+
+        for filename, fields in (
+            ("alternatives", ("altA", "altB")),
+            ("alias", ("aliasA", "aliasB"))
+            ):
+            for position, key in enumerate(fields):
+                for entry, s in enumerate(data[key]):
+                    if not s:
+                        continue
+                    prefix, value = split_value(s)
+
+                    # Only write the details of the principal interactor once.
+
+                    if position != 0 or positionA == 0:
+                        self.write_line(self.files[filename], (self.source, self.filename, get_interaction(data), positionA + position, prefix, value, entry))
 
         # Experiment-specific records.
 
-        for entry, exp_data in enumerate(experiment_data):
+        if positionA == 0:
+            self.append_lists(self.get_experiment_data(data))
+
+    def append_lists(self, list_data):
+        for entry, data in enumerate(list_data):
             for key in ("authors",):
-                for s in exp_data[key]:
-                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], s, entry))
+                for s in data[key]:
+                    self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), s, entry))
 
             for key in ("method", "interactionType", "sourcedb"):
-                for s in exp_data[key]:
+                for s in data[key]:
                     term, description = split_vocabulary_term(s)
-                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], term, description, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), term, description, entry))
 
             for key in ("pmids",):
-                for s in exp_data[key]:
+                for s in data[key]:
                     prefix, value = split_value(s)
-                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], value, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), value, entry))
 
             for key in ("interactionIdentifiers",):
-                for s in exp_data[key]:
+                for s in data[key]:
                     prefix, value = split_value(s)
-                    self.write_line(self.files[key], (self.source, self.filename, exp_data["line"], data["interaction"], prefix, value, entry))
+                    self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), prefix, value, entry))
+
+def get_interaction(data):
+    return data.get("interaction") or split_value(data["interactionIdentifiers"][0])[-1]
 
 # Value processing.
 
@@ -305,11 +366,11 @@ def get_string(l):
         return "|".join(l)
 
 def fix_vocabulary_term(s):
-    match = mpidb_term_regexp.match(s)
-    if not match:
-        raise ValueError, "Term %r is not well-formed." % s
-    else:
-        return "%s(%s)" % (match.group("term"), match.group("description"))
+    for regexp in term_regexps:
+        match = regexp.match(s)
+        if match:
+            return "%s(%s)" % (match.group("term"), match.group("description"))
+    raise ValueError, "Term %r is not well-formed." % s
 
 def fix_alias(s):
     if s.startswith("uniprotkb:"):
@@ -319,15 +380,26 @@ def fix_alias(s):
         return s
 
 def split_value(s):
-    parts = s.split(":")
-    return parts[0], ":".join(parts[1:])
+    parts = s.split(":", 1)
+    return tuple(parts)
 
 def split_vocabulary_term(s):
-    match = standard_term_regexp.match(s)
-    if not match:
-        raise ValueError, "Term %r is not well-formed." % s
+    for regexp in term_regexps:
+        match = regexp.match(s)
+        if match:
+            return (match.group("term"), match.group("description"))
+    raise ValueError, "Term %r is not well-formed." % s
+
+def split_uid(s):
+    uids = get_list(s, False)
+    return split_value(uids[-1]) # NOTE: Hack for InnateDB MITAB.
+
+def split_taxid(s):
+    match = taxid_regexp.match(s)
+    if match:
+        return (match.group("taxid"), match.group("description"))
     else:
-        return (match.group("term"), match.group("description"))
+        raise ValueError, "Taxonomy %r is not well-formed." % s
 
 if __name__ == "__main__":
     from irdata.cmd import get_progname
@@ -336,13 +408,20 @@ if __name__ == "__main__":
     progname = get_progname()
 
     try:
-        directory = sys.argv[1]
-        filenames = sys.argv[2:]
+        source = sys.argv[1]
+        directory = sys.argv[2]
+        filenames = sys.argv[3:]
     except IndexError:
-        print >>sys.stderr, "Usage: %s <output data directory> <filename>..." % progname
+        print >>sys.stderr, "Usage: %s <source> <output data directory> <filename>..." % progname
         sys.exit(1)
 
-    writer = iRefIndexWriter(directory)
+    # Redefine the corresponding multivalued fields according to the mode.
+
+    if not source.startswith("MPI-"):
+        corresponding_fields = ()
+        all_fields = standard_fields
+
+    writer = iRefIndexWriter(source, directory)
 
     parser = Parser(writer)
     try:
