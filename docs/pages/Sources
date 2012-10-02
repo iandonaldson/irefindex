@@ -162,3 +162,8 @@ MPIDB sources employ a MITAB variant which exposes experimental details in a
 non-standard way. This can result in interactions being assigned multiple
 interaction types, which is typically not done by XML-based sources even
 though the schema does permit it.
+
+InnateDB provides multiple uid values. Currently the "ensembl" value is
+ignored, but in future it could be used together with downloaded data from
+ensembl.org to identify interactors. UniProt and RefSeq information appears to
+be provided in the aliases fields.
