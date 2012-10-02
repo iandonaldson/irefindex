@@ -230,7 +230,6 @@ INNATEDB_OTHER_FILE_PATTERN='*.mitab.gz'
 
 INNATEDB_PARSER='irdata_parse_innatedb.sh'
 INNATEDB_IMPORT_TEMPLATE='import_mitab.sql'
-INNATEDB_MANIFEST_URL="$INNATEDB_MIRROR/download.jsp"
 
 ############################################################
 # IPI
