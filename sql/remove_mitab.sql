@@ -9,5 +9,6 @@ delete from mitab_interaction_type_names where source = '<source>';
 delete from mitab_method_names where source = '<source>';
 delete from mitab_pubmed where source = '<source>';
 delete from mitab_sources where source = '<source>';
+delete from mitab_uid where source = '<source>';
 
 commit;
