@@ -166,7 +166,16 @@ class Writer:
 
     def get_experiment_data(self, data):
 
-        "Observe correspondences between multivalued fields in 'data'."
+        """
+        Observe correspondences between multivalued fields in 'data'. This
+        transforms data of the form...
+
+        A|B|C 1|2|3
+
+        ...to...
+
+        A|1 B|2 C|3
+        """
 
         # Where no correspondences are being recorded, return the data as the
         # only experiment entry, and with only a single additional entry
@@ -198,6 +207,9 @@ class Writer:
         experiment_data = []
 
         for values in zip(*fields):
+
+            # Each value will be on its own in the list of values for the field.
+
             new_data = {"line" : self.output_line}
             for key, value in zip(corresponding_fields, values):
                 new_data[key] = [value]
@@ -327,23 +339,23 @@ class iRefIndexWriter(Writer):
             self.append_lists(self.get_experiment_data(data))
 
     def append_lists(self, list_data):
-        for entry, data in enumerate(list_data):
+        for data in list_data:
             for key in ("authors",):
-                for s in data[key]:
+                for entry, s in enumerate(data[key]):
                     self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), s, entry))
 
             for key in ("method", "interactionType", "sourcedb"):
-                for s in data[key]:
+                for entry, s in enumerate(data[key]):
                     term, description = split_vocabulary_term(s)
                     self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), term, description, entry))
 
             for key in ("pmids",):
-                for s in data[key]:
+                for entry, s in enumerate(data[key]):
                     prefix, value = split_value(s)
                     self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), value, entry))
 
             for key in ("interactionIdentifiers",):
-                for s in data[key]:
+                for entry, s in enumerate(data[key]):
                     prefix, value = split_value(s)
                     self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), prefix, value, entry))
 
@@ -417,7 +429,7 @@ if __name__ == "__main__":
 
     # Redefine the corresponding multivalued fields according to the mode.
 
-    if not source.startswith("MPI-"):
+    if not source.startswith("MPI"):
         corresponding_fields = ()
         all_fields = standard_fields
 
