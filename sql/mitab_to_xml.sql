@@ -42,13 +42,36 @@ insert into xml_organisms
 insert into xml_xref
 
     -- Interactor primary references.
+    -- NOTE: This relegates the uid identifier for InnateDB records to a
+    -- NOTE: secondary reference.
 
     select source, filename, 0 as entry, 'interactor' as scope, cast(interactorid as varchar) as parentid,
         'interactor' as property,
-        'primaryRef' as reftype,
+        case when source <> 'INNATEDB' then 'primaryRef' else 'secondaryRef' end as reftype,
         acc as refvalue,
         dbname as dblabel, null as dbcode
     from tmp_mitab_interactors
+    where source <> 'INNATEDB'
+    union all
+
+    -- InnateDB puts UniProt accessions in the aliases list.
+    -- NOTE: This promotes the first alias for InnateDB records to a primary
+    -- NOTE: reference.
+
+    select I.source, I.filename, 0 as entry, 'interactor' as scope, cast(interactorid as varchar) as parentid,
+        'interactor' as property,
+        'primaryRef' as reftype,
+        A.alias as refvalue,
+        'uniprotkb' as dblabel, null as dbcode
+    from tmp_mitab_interactors as I
+    inner join mitab_uid as U
+        on (I.source, I.filename, I.interaction, I.position) =
+           (U.source, U.filename, U.interaction, U.position)
+    inner join mitab_aliases as A
+        on (U.source, U.filename, U.interaction, U.position) =
+           (A.source, A.filename, A.interaction, A.position)
+        and A.entry = 0
+    where I.source = 'INNATEDB'
     union all
 
     -- Experiment methods.
