@@ -1,0 +1,35 @@
+## This file uses a syntax notation compatible with MoinMoin and the
+## ImprovedTableParser extension. It can be deployed in a MoinMoin Wiki or read
+## in a text editor.
+
+= Installation Details =
+
+Once installed, the irdata distribution makes use of a number of directories
+residing under an installation "prefix": a filesystem location acting as the
+uppermost level of a system. For most programs on a system such a prefix would
+be defined as `/` or the system root directory, but you can choose another
+prefix (for example, `/home/irefindex`) as the location within which the
+installed programs, resources and the relevant data will reside.
+
+The table below summarises the directories employed by an installed system
+relative to the installation prefix.
+
+{{{#!table
+'''Directory'''     || '''Purpose/Content'''
+==
+`/usr/bin`          || Programs and scripts from the `scripts` and `tools`
+                    .. directories
+==
+`/usr/libNN/pythonX.Y/site-packages` || Python library files, where `NN` is an
+                    .. optional suffix such as `64` on some 64-bit systems, and
+                    .. where `X.Y` is a Python version number corresponding to
+                    .. the installed version of Python
+==
+`/usr/share/irdata` || Files from the `manifests`, `resources`, `reports` and
+                    .. `sql` directories
+==
+`/var/lib/irdata`   || The location of the downloaded and processed data
+}}}
+
+More specific details of the installed programs and resources can be found in
+the `setup.py` script.
