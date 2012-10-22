@@ -1,12 +1,69 @@
 #!/bin/sh
 
-FROMDIR=$1
+# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Original author: Paul Boddie <paul.boddie@biotek.uio.no>
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME [ --move-import | --only-import ] <destination>
+
+Move all data sources to a destination directory. Data for the following
+sources will be moved:
+
+$ALLSOURCES
+
+If --move-import is specified, the imported data will also be moved.
+If --only-import is specified, only the imported data will be moved.
+EOF
+    exit 1
+fi
+
+if [ "$1" = '--move-import' ]; then
+    MOVEDIRS="$ALLSOURCES import"
+elif [ "$1" = '--only-import' ]; then
+    MOVEDIRS='import'
+else
+    MOVEDIRS=$ALLSOURCES
+fi
+
+if [ ! "$2" ]; then
+    echo "$PROGNAME: Please specify a destination directory." 1>&2
+    exit 1
+fi
+
 TODIR=$2
 
-for FILENAME in "$FROMDIR/"* ; do
-    BASENAME=`basename "$FILENAME"`
-    if [ -d "$FILENAME" ] && [ "$BASENAME" != 'import' ]; then
-        mv "$FILENAME" "$TODIR/"
-        ln -s "$TODIR/$BASENAME" "$FILENAME"
+if [ ! -e "$TODIR" ]; then
+    echo "$PROGNAME: Making directory: $TODIR" 1>&2
+    mkdir "$TODIR"
+fi
+
+for SOURCE in $ALLSOURCES ; do
+    if [ "$SOURCE" != 'import' ]; then
+        eval SOURCEDIR='$'"$SOURCE"_DIR_NAME
+    else
+        SOURCEDIR=$SOURCE
     fi
+    mv "$DATA/$SOURCEDIR" "$TODIR/"
+    ln -s "$TODIR/$SOURCEDIR" "$DATA/$SOURCEDIR"
 done
