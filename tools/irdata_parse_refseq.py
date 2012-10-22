@@ -217,23 +217,28 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <data file>..." % progname
         sys.exit(1)
 
-    for filename in filenames:
-        leafname = split(filename)[-1]
-        basename, ext = splitext(leafname)
-        print >>sys.stderr, "Parsing", leafname
+    try:
+        for filename in filenames:
+            leafname = split(filename)[-1]
+            basename, ext = splitext(leafname)
+            print >>sys.stderr, "Parsing", leafname
 
-        if ext.endswith("gz"):
-            opener = gzip.open
-        else:
-            opener = open
+            if ext.endswith("gz"):
+                opener = gzip.open
+            else:
+                opener = open
 
-        f_main = open(join(data_directory, basename + "_proteins"), "w")
-        f_identifiers = open(join(data_directory, basename + "_identifiers"), "w")
-        f_nucleotides = open(join(data_directory, basename + "_nucleotides"), "w")
-        parser = Parser(opener(filename), f_main, f_identifiers, f_nucleotides)
-        try:
-            parser.parse()
-        finally:
-            parser.close()
+            f_main = open(join(data_directory, basename + "_proteins"), "w")
+            f_identifiers = open(join(data_directory, basename + "_identifiers"), "w")
+            f_nucleotides = open(join(data_directory, basename + "_nucleotides"), "w")
+            parser = Parser(opener(filename), f_main, f_identifiers, f_nucleotides)
+            try:
+                parser.parse()
+            finally:
+                parser.close()
+
+    except Exception, exc:
+        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

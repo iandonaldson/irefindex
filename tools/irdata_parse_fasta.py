@@ -139,25 +139,30 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <identifier types> <output identifier types> <data file>..." % progname
         sys.exit(1)
 
-    for filename in filenames:
-        leafname = split(filename)[-1]
-        basename, ext = splitext(leafname)
-        print >>sys.stderr, "Parsing", leafname
+    try:
+        for filename in filenames:
+            leafname = split(filename)[-1]
+            basename, ext = splitext(leafname)
+            print >>sys.stderr, "Parsing", leafname
 
-        if ext.endswith("gz"):
-            opener = gzip.open
-            basename, ext = splitext(basename) # remove any remaining extension
-        else:
-            opener = open
+            if ext.endswith("gz"):
+                opener = gzip.open
+                basename, ext = splitext(basename) # remove any remaining extension
+            else:
+                opener = open
 
-        f_out = open(join(data_directory, "%s_proteins.txt" % basename), "w")
-        try:
-            parser = Parser(opener(filename), f_out, identifier_types, output_identifier_types)
+            f_out = open(join(data_directory, "%s_proteins.txt" % basename), "w")
             try:
-                parser.parse()
+                parser = Parser(opener(filename), f_out, identifier_types, output_identifier_types)
+                try:
+                    parser.parse()
+                finally:
+                    parser.close()
             finally:
-                parser.close()
-        finally:
-            f_out.close()
+                f_out.close()
+
+    except Exception, exc:
+        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

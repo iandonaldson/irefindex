@@ -159,7 +159,11 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s ( fly | yeast ) [ --discard-ill-formed ]" % progname
         sys.exit(1)
 
-    parser = Parser(sys.stdin, sys.stdout, sys.stderr, filetype, discard_ill_formed, progname)
-    parser.parse()
+    try:
+        parser = Parser(sys.stdin, sys.stdout, sys.stderr, filetype, discard_ill_formed, progname)
+        parser.parse()
+    except Exception, exc:
+        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

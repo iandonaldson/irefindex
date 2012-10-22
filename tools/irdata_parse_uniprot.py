@@ -295,34 +295,39 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <data file> [ <format> ]" % progname
         sys.exit(1)
 
-    leafname = split(filename)[-1]
-    basename, ext = splitext(leafname)
-
-    # Use a default format like "uniprot_sprot_%s.txt".
-
-    format = format or ("%s" % basename) + "_%s" + ("%stxt" % extsep)
-    mainfile = join(data_directory, format % "proteins")
-    accessionsfile = join(data_directory, format % "accessions")
-    identifiersfile = join(data_directory, format % "identifiers")
-    genenamesfile = join(data_directory, format % "gene_names")
-
-    if filename == "-":
-        print >>sys.stderr, "Parsing standard input"
-        f = sys.stdin
-    else:
-        print >>sys.stderr, "Parsing", leafname
-        if ext.endswith("gz"):
-            opener = gzip.open
-        else:
-            opener = open
-        f = opener(filename)
-
-    parser = Parser(f, open(mainfile, "w"), open(accessionsfile, "w"), open(identifiersfile, "w"), open(genenamesfile, "w"))
     try:
-        parser.parse()
-    finally:
-        parser.close()
-        if filename != "-":
-            f.close()
+        leafname = split(filename)[-1]
+        basename, ext = splitext(leafname)
+
+        # Use a default format like "uniprot_sprot_%s.txt".
+
+        format = format or ("%s" % basename) + "_%s" + ("%stxt" % extsep)
+        mainfile = join(data_directory, format % "proteins")
+        accessionsfile = join(data_directory, format % "accessions")
+        identifiersfile = join(data_directory, format % "identifiers")
+        genenamesfile = join(data_directory, format % "gene_names")
+
+        if filename == "-":
+            print >>sys.stderr, "Parsing standard input"
+            f = sys.stdin
+        else:
+            print >>sys.stderr, "Parsing", leafname
+            if ext.endswith("gz"):
+                opener = gzip.open
+            else:
+                opener = open
+            f = opener(filename)
+
+        parser = Parser(f, open(mainfile, "w"), open(accessionsfile, "w"), open(identifiersfile, "w"), open(genenamesfile, "w"))
+        try:
+            parser.parse()
+        finally:
+            parser.close()
+            if filename != "-":
+                f.close()
+
+    except Exception, exc:
+        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

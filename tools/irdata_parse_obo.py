@@ -71,22 +71,27 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <data file>" % progname
         sys.exit(1)
 
-    leafname = split(filename)[-1]
-
-    if filename == "-":
-        print >>sys.stderr, "Parsing standard input"
-        f = sys.stdin
-    else:
-        print >>sys.stderr, "Parsing", leafname
-        f = open(filename)
-
-    f_out = open(join(data_directory, "terms"), "w")
-
     try:
-        parse(f, f_out)
-    finally:
-        if filename != "-":
-            f.close()
-        f_out.close()
+        leafname = split(filename)[-1]
+
+        if filename == "-":
+            print >>sys.stderr, "Parsing standard input"
+            f = sys.stdin
+        else:
+            print >>sys.stderr, "Parsing", leafname
+            f = open(filename)
+
+        f_out = open(join(data_directory, "terms"), "w")
+
+        try:
+            parse(f, f_out)
+        finally:
+            if filename != "-":
+                f.close()
+            f_out.close()
+
+    except Exception, exc:
+        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

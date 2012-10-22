@@ -427,19 +427,25 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <source> <output data directory> <filename>..." % progname
         sys.exit(1)
 
-    # Redefine the corresponding multivalued fields according to the mode.
-
-    if not source.startswith("MPI"):
-        corresponding_fields = ()
-        all_fields = standard_fields
-
-    writer = iRefIndexWriter(source, directory)
-
-    parser = Parser(writer)
     try:
-        for filename in filenames:
-            parser.parse(filename)
-    finally:
-        parser.close() # closes the writer
+        # Redefine the corresponding multivalued fields according to the mode.
+
+        if not source.startswith("MPI"):
+            corresponding_fields = ()
+            all_fields = standard_fields
+
+        writer = iRefIndexWriter(source, directory)
+
+        parser = Parser(writer)
+
+        try:
+            for filename in filenames:
+                parser.parse(filename)
+        finally:
+            parser.close() # closes the writer
+
+    except Exception, exc:
+        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

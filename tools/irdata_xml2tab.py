@@ -376,8 +376,12 @@ if __name__ == "__main__":
 
     parser = PSIParser(writer)
     try:
-        for filename in filenames:
-            parser.parse(filename)
+        try:
+            for filename in filenames:
+                parser.parse(filename)
+        except Exception, exc:
+            print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+            sys.exit(1)
     finally:
         writer.close()
 
