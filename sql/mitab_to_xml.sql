@@ -111,9 +111,9 @@ insert into xml_xref
         'interaction' as property,
         'primaryRef' as reftype,
         "uid" as refvalue,
-        null as dblabel, null as dbcode
+        dbname as dblabel, null as dbcode
     from mitab_interaction_identifiers
-    group by source, filename, interaction, "uid";
+    group by source, filename, interaction, "uid", dbname;
 
 -- Names, labels, aliases.
 
