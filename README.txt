@@ -392,6 +392,60 @@ Output files are generated using the following command:
 
 The primary output format is PSI-MI TAB, also known as MITAB.
 
+Uploading the Output Files
+--------------------------
+
+Traditionally, iRefIndex releases have been published in a directory structure
+having a particular form. Given a particular root directory for an area of the
+filesystem exposed via FTP or HTTP (or another mechanism) for the purpose of
+downloading the release data, such as...
+
+  /home/ftp/irefindex
+
+...the following command can be used to copy the MITAB release data into such
+a directory structure:
+
+  irupload --upload /home/ftp/irefindex --mitab
+
+The result of this command will be the construction of a hierarchy of
+directories of the following form:
+
+  data/archive/release_X.Y/psi_mitab/MITAB2.6
+
+Thus, the following hierarchy will be created for the example root directory
+given above and a release number of 10.0:
+
+  /home/ftp/irefindex/data/archive/release_10.0/psi_mitab/MITAB2.6
+
+Similarly, the iRefScape data can be published as follows:
+
+  irupload --upload /home/ftp/irefindex --irefscape
+
+The result of this command will be a different hierarchy:
+
+  Cytoscape/plugin/archive/release_X.Y
+
+And, for the example root directory and release number, the following
+hierarchy will be created:
+
+  /home/ftp/irefindex/Cytoscape/plugin/archive/release_10.0
+
+It has also been the accepted convention to provide a symbolic link to direct
+users to the "current" release. This link can be set up in the published
+directory hierarchy by using the following commands:
+
+  irupload --update-current /home/ftp/irefindex --mitab
+  irupload --update-current /home/ftp/irefindex --irefscape
+
+Thus, the current release can be updated after the release data has been
+published.
+
+After issuing the above commands, symbolic links will be created in the
+following locations:
+
+  /home/ftp/irefindex/data/current
+  /home/ftp/irefindex/Cytoscape/plugin/current
+
 Contact, Copyright and Licence Information
 ------------------------------------------
 
