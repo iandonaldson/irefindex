@@ -153,15 +153,85 @@ ASCII character values. Such a cluster can be defined as follows:
 
   initdb -D /home/irefindex/pgdata --no-locale
 
-On Debian-based systems, a cluster can be defined using a special command, in
-the following example specifying a PostgreSQL version of 8.2 and a cluster
-name of irdata:
+On Debian-based systems (including Ubuntu and derivatives), a cluster can be
+defined using a special command, in the following example specifying a
+PostgreSQL version of 8.2 and a cluster name of irdata:
 
   pg_createcluster --locale=C 8.2 irdata
 
 Note that the cluster's data directory is different from the data directory
 employed by this software to collect source data and to deposit processed
 data.
+
+Note also that the default location of clusters is typically in the
+/var/lib/postgresql region of the filesystem, at least for Debian packages of
+PostgreSQL, which can lead to disk space issues since /var is often given a
+partition of limited size or resides within the root partition which may
+itself have a limited size.
+
+To choose an alternative location for a cluster, add the -d option:
+
+  pg_createcluster --locale=C -d /home/irefindex/databases 8.2 irdata
+
+A cluster can be started as follows:
+
+  pg_ctl -D /home/irefindex/pgdata start
+
+On Debian-based systems, the following command is used instead:
+
+  pg_ctlcluster 8.2 irdata start
+
+To list the available clusters on Debian-based systems:
+
+  pg_listclusters
+
+This should show, amongst other things, the location, status, locale and port
+number associated with each of the available clusters.
+
+Connecting to Databases and Clusters
+------------------------------------
+
+See the documentation for PostgreSQL and the various tools (createdb, psql)
+for details of connecting to a specific cluster. Generally, the -p option is
+used to direct an operation towards a particular cluster. For example, for a
+cluster listening on port 5433, the following command lists the available
+databases:
+
+  psql -p 5433 -l
+
+Any connection options must be given in the configuration of this software
+using the PSQL_OPTIONS setting. For example, for a cluster listening on port
+5433 the following could be used in the configuration file:
+
+  PSQL_OPTIONS="--psql-options -p 5433"
+
+If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
+be used by employing various explicit "collate" declarations in certain column
+declarations or in various SQL statements where ROG identifiers are being
+retrieved in a particular order. This is not currently supported.
+
+Creating a Database User
+------------------------
+
+It is recommended that iRefIndex be run using a separate database user or
+role, and this user can be set up as follows:
+
+  createuser irefindex
+
+(Additional connection options should be specified to affect the appropriate
+database cluster.)
+
+Although making the new user a superuser may appear excessive, doing so will
+allow the user to create databases, tables and other objects without any
+further configuration.
+
+The choice of username can also be important. PostgreSQL is able to associate
+system users with database users, and so any database user should have the
+same name as the system user running the iRefIndex software in order to take
+advantage of this feature. If the way databases are managed in your own
+environment diverges from this practice, you may choose another username
+instead, but this will then need to be specified in the connection options
+described above.
 
 Creating the Database
 ---------------------
@@ -171,18 +241,8 @@ the usual PostgreSQL tools:
 
   createdb irdata
 
-See the documentation for PostgreSQL and the various tools (createdb, psql)
-for details of connecting to a specific cluster. Any connection options must
-be given in the configuration of this software using the PSQL_OPTIONS setting.
-For example, for a cluster listening on port 5433 the following could be used
-in the configuration file:
-
-  PSQL_OPTIONS="--psql-options -p 5433"
-
-If the use of a separate cluster is undesirable, PostgreSQL 9.1 or later could
-be used by employing various explicit "collate" declarations in certain column
-declarations or in various SQL statements where ROG identifiers are being
-retrieved in a particular order. This is not currently supported.
+(Additional connection options should be specified to affect the appropriate
+database cluster.)
 
 Configuring the Database
 ------------------------
