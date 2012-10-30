@@ -59,6 +59,25 @@ performed, any edits after installation can be incorporated into that
 installation by once again running the command given in "Performing an
 Installation" in the distribution directory.
 
+Reserving a Location for Data
+-----------------------------
+
+The configuration script contains a setting dedicated to the data downloaded
+and processed by the software. By default, it looks like this:
+
+  DATA=                                       # user defined data directory location
+
+Left in this state, the system will attempt to locate the data relative to the
+installed software. However, it can be beneficial to explicitly choose a
+location, especially if the data will reside in a separate partition from the
+installed software. For example:
+
+  DATA=/mnt/storage/data
+
+Note that this DATA setting is not connected with the database system that
+will also used to store and process data during the build process. See below
+for database system configuration information.
+
 Configuring an Installation of the Software
 -------------------------------------------
 
@@ -126,8 +145,8 @@ These definitions can be executed in the shell, and they can also saved in the
 appropriate shell configuration file, such as in .profile, .bashrc,
 .bash_profile or any other appropriate file in a user's home directory.
 
-Reserving a Location for Data
------------------------------
+Initialising a Location for Data
+--------------------------------
 
 Before any operations can be performed using the software installation,
 various data and resource locations must be initialised. This can be done as

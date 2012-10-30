@@ -7,7 +7,7 @@
 SYSPREFIX=                                  # system-wide installation root
 EMAIL=                                      # e-mail address for anonymous FTP logins
 DATABASE=irdata                             # database name
-DATA=${DATA:-}                              # user defined data directory location
+DATA=                                       # user defined data directory location
 WIKIFORMAT=MoinMoin                         # format for generated Wiki pages
 WGET_WAIT=2                                 # time to wait between wget requests
 PSQL_OPTIONS=                               # "--psql-options <psql connection options>"
@@ -21,6 +21,9 @@ PSQL_OPTIONS=                               # "--psql-options <psql connection o
 RELEASE=10.0                                # iRefIndex release identifier
 
 # Information provided with the iRefScape data.
+# This features the FTP download site for iRefIndex data
+# (once uploaded), the path within the site to the data
+# files, and the credentials involved in accessing the site.
 
 IREFINDEX_RELEASE_SITE='ftp.no.embnet.org'
 IREFINDEX_RELEASE_PATH="/irefindex/Cytoscape/plugin/archive/release_$RELEASE"
@@ -170,7 +173,7 @@ DIP_RELEASE_URL="$DIP_MIRROR/dip/Download.cgi?SM=3"
 DIP_DIR_NAME="DIP"
 DIP_XML_FILE_PATTERN='*.mif25 *.mif25.gz'
 
-DIP_MANIFEST_URL="$DATA/$DIP_DIR_NAME/dip_downloads_response.txt"
+#DIP_MANIFEST_URL is defined below once the DATA location is known.
 
 ############################################################
 # Entrez Gene
@@ -453,6 +456,30 @@ XARGS_L='-L'                                # get round annoying GNU xargs incom
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ############################################################
 # The portion below is mostly configuration logic and rarely
 # needs to be changed. If you have changed the settings in
@@ -600,3 +627,10 @@ elif [ ! "$SYSPREFIX" ]; then
 else
     LOGS=
 fi
+
+
+
+############################################################
+# Locations for internal use only.
+
+DIP_MANIFEST_URL="$DATA/$DIP_DIR_NAME/dip_downloads_response.txt"
