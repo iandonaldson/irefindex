@@ -46,18 +46,21 @@ fi
 for FILENAME in $FILENAMES; do
     BASENAME=`basename "$FILENAME"`
     FILETYPE=${BASENAME#*.}
+
+    # Quote the filename so that we can use it in a sed expression.
+
     SED_FILENAME=$( echo "$FILENAME" | sed 's/\//\\\//g' )
 
     if [ "$FILETYPE" = 'ints.txt' ]; then
 
-        # First interactor (add position 0).
+        # First interactor (add filename and position 0).
 
           cut -f 1,2,3,4,5,6,7 "$FILENAME" \
         | uniq \
         | sed -e "s/^/$SED_FILENAME\t0\t/" \
         > "$DATADIR/interactors.txt"
 
-        # Second interactor (add position 1).
+        # Second interactor (add filename and position 1).
 
           cut -f 1,2,8,9,10,11,12 "$FILENAME" \
         | uniq \
