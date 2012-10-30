@@ -78,6 +78,21 @@ Note that this DATA setting is not connected with the database system that
 will also used to store and process data during the build process. See below
 for database system configuration information.
 
+Fine-Tuning the Data Source Details
+-----------------------------------
+
+In the section of the configuration script concerned with source locations and
+details, the VERSION and DOWNLOAD_FILES settings specific to data sources may
+need updating to take new releases of data into account. Unfortunately, this
+cannot be done automatically due to the complexity of having to deal with the
+widely differing mechanisms employed by data providers to publish their data.
+
+In the "Downloading Source Data" section below, a method is provided to view
+the locations of configured data sources, and manual inspection of each
+resource's Web site may then lead to the discovery of new data. The details of
+such new data can then be provided in the configuration and any system-wide
+configuration updated as described in "Performing an Installation".
+
 Configuring an Installation of the Software
 -------------------------------------------
 
@@ -321,6 +336,20 @@ Any sources that could not be downloaded in their entirety will be reported as
 having failed. It is then necessary to attempt to download them individually
 and potentially investigate any underlying problems with each of the download
 activities.
+
+The locations of published data can be shown using the following command:
+
+  irdownload --show-locations
+
+For nicer tabulation, use the column command in addition to the above:
+
+  irdownload --show-locations | column -t
+
+In most cases, a plain URL is listed, and with this information it is then
+generally possible to manually inspect a download site and to find any new,
+updated or moved data files. This information can then be added to the
+configuration as noted in the "Fine-Tuning the Data Source Details" section
+above.
 
 Generating Manifest Information
 -------------------------------

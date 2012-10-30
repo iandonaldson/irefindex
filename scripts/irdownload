@@ -25,7 +25,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --check ] [ -v | --verbose ] ( --all | <source>... )
+Usage: $PROGNAME [ --show-location | --check ] [ -v | --verbose ] ( --all | <source>... )
 
 Download data from the different sources, or if the --check option is specified
 check whether a download needs to be performed. Note that this check is only
@@ -40,8 +40,17 @@ $ALLSOURCES
 Sources that are to be excluded are defined to be the following:
 
 $EXCLUDEDSOURCES
+
+If --show-location is specified, the location from which data will be obtained
+for a data source is shown, and the program will not perform any other
+operation.
 EOF
     exit 1
+fi
+
+if [ "$1" = '--show-location' ]; then
+    SHOW_LOCATION=$1
+    shift 1
 fi
 
 if [ "$1" = '--check' ]; then
@@ -84,8 +93,24 @@ for SOURCE in $SOURCES; do
 
     DATADIR="$DATA/$SOURCEDIR"
 
-    if [ "$CHECK_ONLY" ]; then
+    # Either show the location of the data and proceed no further.
+
+    if [ "$SHOW_LOCATION" ]; then
+        TAB=`printf '\t'`
+        if [ "$DOWNLOAD_SCRIPT" ]; then
+            echo "$SOURCE: Script${TAB}$DOWNLOAD_SCRIPT"
+        elif [ "$DOWNLOAD_FILES" ]; then
+            echo "$SOURCE: URL${TAB}$RELEASE_URL"
+        fi
+        continue
+
+    # Or check the presence of the data.
+
+    elif [ "$CHECK_ONLY" ]; then
         echo "$PROGNAME: Checking $SOURCE..." 1>&2
+
+    # Or download the data.
+
     else
         echo "$PROGNAME: Downloading $SOURCE..." 1>&2
         if [ ! -e "$DATADIR" ]; then

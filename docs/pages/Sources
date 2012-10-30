@@ -2,7 +2,7 @@
 ## ImprovedTableParser extension. It can be deployed in a MoinMoin Wiki or read
 ## in a text editor.
 
-= Data Source Formats and Issues =
+= Data Source Publishing, Formats and Issues =
 
 Although standard data formats exist for interaction data, there remain issues
 with their application to the data provided by interaction databases, either
@@ -10,6 +10,15 @@ due to obvious non-compliance with the standards or due to ambiguity or a lack
 of clarity or specificity in such standards. As a result, software that must
 consume such data must be aware of issues that appear to defy common
 assumptions about XML documents and schema design practices.
+
+In addition, interaction data is published in many different ways. Although
+this software attempts to provide a way of downloading data regardless of how
+it has been made available, the level of support provided is necessarily
+limited for activities such as determining whether new releases of data are
+available and what their version or release labelling might be. Such
+activities would be better supported were the different publishers of source
+data able to standardise on common and reasonable technical mechanisms for
+making their data available.
 
 == Concepts and Relationships ==
 
