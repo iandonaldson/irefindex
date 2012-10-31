@@ -23,7 +23,8 @@ begin;
 
 insert into irefindex_ambiguity
     select source, filename, entry, interactorid, reftype,
-        count(distinct refsequence) as refsequences, count(distinct reftaxid) as reftaxids
+        count(distinct refsequence) as refsequences,        -- number of different sequences
+        count(distinct reftaxid) as reftaxids               -- number of different taxids
     from xml_xref_interactor_sequences
     group by source, filename, entry, interactorid, reftype;
 
@@ -305,6 +306,8 @@ analyze irefindex_assignments_preferred;
 
 
 -- Scoring of assignments.
+-- For each interactor, its properties are collected into an array corresponding
+-- to the "scoring bitmap" mentioned in the literature.
 
 insert into irefindex_assignment_scores
     select distinct A.source, A.filename, A.entry, A.interactorid,
@@ -356,21 +359,22 @@ create index irefindex_rogids_rogid on irefindex_rogids(rogid);
 analyze irefindex_rogids;
 
 -- Database identifiers corresponding to ROG identifiers.
--- Since the assignments table includes reference database and interaction
--- database identifiers, it is used instead of the identifier sequences table
--- for a definitive mapping of known ROG identifiers to database identifiers
--- actually used in the interaction data.
+-- The identifier sequences table is used to get a wide selection of identifiers
+-- instead of only the identifiers actually used in the interaction data.
 
 insert into irefindex_rogid_identifiers
     select distinct rogid, dblabel, refvalue
     from irefindex_rogids as R
-    inner join irefindex_assignments as A
-        on (R.source, R.filename, R.entry, R.interactorid) =
-           (A.source, A.filename, A.entry, A.interactorid);
+    inner join xml_xref_sequences as I
+        on rogid = refsequence || reftaxid
+    where refsequence is not null
+        and reftaxid is not null;
 
 analyze irefindex_rogid_identifiers;
 
 -- Determine the complete interactions.
+-- Interactions where one or more participants are missing are considered
+-- incomplete and cannot be used to construct meaningful RIG identifiers.
 
 insert into irefindex_interactions_complete
     select I.source, I.filename, I.entry, I.interactionid,
