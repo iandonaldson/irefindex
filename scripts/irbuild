@@ -300,5 +300,5 @@ if [ "$MAKE_OUTPUT" ]; then
 
     # Make output files.
 
-    "$SCRIPTS/iroutput"
+    "$SCRIPTS/iroutput" --mitab --irefscape --mapping
 fi

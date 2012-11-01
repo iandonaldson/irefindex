@@ -25,7 +25,7 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --upload ] [ --update-current ] <location> [ --mitab ] [ --irefscape ]
+Usage: $PROGNAME [ --upload ] [ --update-current ] <location> [ --mitab ] [ --irefscape ] [ --mapping ]
 
 Upload output files to a specified location or modify the structure of the
 uploaded data.
@@ -42,6 +42,8 @@ For the location, only filesystem locations are supported. For example:
 If --mitab is specified, the MITAB data will be uploaded.
 
 If --irefscape is specified, the iRefScape data will be uploaded.
+
+If --mapping is specified, the protein identifier mapping file will be uploaded.
 EOF
     exit 1
 fi
@@ -71,6 +73,11 @@ fi
 
 if [ "$1" = '--irefscape' ]; then
     IREFSCAPE=$1
+    shift 1
+fi
+
+if [ "$1" = '--mapping' ]; then
+    MAPPING=$1
     shift 1
 fi
 
@@ -124,7 +131,6 @@ linkoutputdir() {
 
 
 # Upload the MITAB data.
-# NOTE: Mapping files need to be added.
 
 if [ "$MITAB" ]; then
     makeoutputdir "$SITELOCATION" "data" "psi_mitab/MITAB2.6"
@@ -134,6 +140,24 @@ if [ "$MITAB" ]; then
     if [ "$UPLOAD" ]; then
         MITABDATE=`cat "$DATA/mitab_date.txt"`
         cp "$DATA/"*".mitab.$MITABDATE.txt" "$SITELOCATION/data/archive/release_$RELEASE/psi_mitab/MITAB2.6"
+    fi
+
+    # Update the symbolic link.
+
+    if [ "$UPDATELINK" ]; then
+        linkoutputdir "$SITELOCATION" "data"
+    fi
+fi
+
+# Upload the mapping file.
+
+if [ "$MAPPING" ]; then
+    makeoutputdir "$SITELOCATION" "data" "Mappingfiles"
+
+    # Copy the mapping file.
+
+    if [ "$UPLOAD" ]; then
+        cp "$DATA/mappings.txt.gz" "$SITELOCATION/data/archive/release_$RELEASE/Mappingfiles"
     fi
 
     # Update the symbolic link.
