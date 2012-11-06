@@ -362,6 +362,10 @@ analyze irefindex_rogids;
 -- The identifier sequences table is used to get a wide selection of identifiers
 -- instead of only the identifiers actually used in the interaction data.
 
+-- This is not as extensive as the protein identifier mapping (defined in the
+-- export_protein_identifier_mapping.sql template) because that mapping uses
+-- sequences that are not referenced by the interaction data.
+
 insert into irefindex_rogid_identifiers
     select distinct rogid, dblabel, refvalue
     from irefindex_rogids as R

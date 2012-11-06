@@ -1,4 +1,4 @@
--- Combine the interactor details with the identifier sequence details.
+-- Combine the specific interactor details with the identifier sequence details.
 
 -- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>

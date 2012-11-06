@@ -1,4 +1,4 @@
--- Map identifiers/accessions to sequences.
+-- Map identifiers/accessions to sequences for referenced interactors.
 
 -- In this template, the following parameters can be specified:
 -- <sequences> may be given as 'irefindex_sequences' or 'irefindex_sequences_archived'
@@ -197,6 +197,10 @@ create temporary table tmp_xml_xref_sequences as
 
 create index tmp_xml_xref_sequences_index on tmp_xml_xref_sequences(dblabel, refvalue);
 analyze tmp_xml_xref_sequences;
+
+-- Add to any previous table contents.
+-- Note that this table contains only sequence information for "active"
+-- interactors and not all interactors in the sequence databases.
 
 insert into xml_xref_sequences
     select T.*
