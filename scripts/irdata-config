@@ -605,11 +605,13 @@ if [ "$DATA" ] && [ -e "$DATA" ]; then
     :
 elif [ -e "$SCRIPTS/../data" ]; then
     DATA=`normpath "$SCRIPTS/../data"`
-elif [ -e "$SYSDATA" ]; then
-    DATA="$SYSDATA"
 elif [ ! "$SYSPREFIX" ]; then
     DATA=data
-elif [ ! "$INSPECTONLY" ]; then
+else
+    DATA="$SYSDATA"
+fi
+
+if [ ! -e "$DATA" ] && [ ! "$INSPECTONLY" ]; then
     echo "Cannot locate the irdata data directory." 1>&2
     exit 1
 fi
@@ -620,12 +622,15 @@ SYSLOGS="$SYSPREFIX/var/log/irdata"
 
 if [ -e "$SCRIPTS/../logs" ]; then
     LOGS=`normpath "$SCRIPTS/../logs"`
-elif [ -e "$SYSLOGS" ]; then
-    LOGS="$SYSLOGS"
 elif [ ! "$SYSPREFIX" ]; then
     LOGS=logs
 else
-    LOGS=
+    LOGS="$SYSLOGS"
+fi
+
+if [ ! -e "$LOGS" ] && [ ! "$INSPECTONLY" ]; then
+    echo "Cannot locate the irdata logs directory." 1>&2
+    exit 1
 fi
 
 
