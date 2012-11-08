@@ -28,30 +28,29 @@ create temporary table tmp_gene2related as
 alter table tmp_gene2related add primary key(geneid, related);
 analyze tmp_gene2related;
 
+-- Determine which mappings are new information.
+
+truncate table irefindex_gene2related_active;
+
+insert into irefindex_gene2related_active
+    select X.geneid, X.related
+    from tmp_gene2related as X
+    left outer join irefindex_gene2related_known as Y
+        on X.geneid = Y.geneid
+        and X.related = Y.related
+    where Y.geneid is null;
+
 -- Check the distribution of groups and write out how many genes have been
 -- moved to larger groups.
 
 create temporary table tmp_updated as
-    select count(X.geneid)
-    from (
-        select geneid, count(related) as n
-        from tmp_gene2related
-        group by geneid
-        ) as X
-    left outer join (
-        select geneid, count(related) as n
-        from irefindex_gene2related_active
-        group by geneid
-        ) as Y
-        on X.geneid = Y.geneid
-        and X.n = Y.n
-    where Y.geneid is null;
+    select count(distinct geneid)
+    from irefindex_gene2related_active;
 
 \copy tmp_updated to '<directory>/canonical_updates'
 
 -- Update the active genes mapping.
 
-truncate table irefindex_gene2related_active;
-insert into irefindex_gene2related_active select * from tmp_gene2related;
+insert into irefindex_gene2related_known select * from irefindex_gene2related_active;
 
 commit;

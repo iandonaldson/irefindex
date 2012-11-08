@@ -19,7 +19,7 @@ begin;
 
 insert into irefindex_rgg_genes
     select min(related) as rggid, geneid
-    from irefindex_gene2related_active
+    from irefindex_gene2related_known
     group by geneid;
 
 analyze irefindex_rgg_genes;

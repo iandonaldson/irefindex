@@ -45,9 +45,8 @@ analyze irefindex_gene2related;
 -- identifiers may not be available.
 
 create temporary table tmp_rogids as
-    select distinct refsequence || reftaxid as rogid
-    from xml_xref_sequences
-    where refsequence is not null and reftaxid is not null
+    select rogid
+    from irefindex_sequence_rogids
     union
     select distinct sequence || taxid as rogid
     from xml_xref_interactors
@@ -64,5 +63,9 @@ insert into irefindex_gene2related_active
         on A.rogid = C.rogid;
 
 analyze irefindex_gene2related_active;
+
+insert into irefindex_gene2related_known select * from irefindex_gene2related_active;
+
+analyze irefindex_gene2related_known;
 
 commit;
