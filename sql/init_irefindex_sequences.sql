@@ -15,3 +15,10 @@ create table irefindex_sequences (
 
     -- Constraints are added after import.
 );
+
+-- A collection of ROG identifiers for all taxonomy-qualified sequences.
+
+create table irefindex_sequence_rogids (
+    rogid varchar not null,
+    primary key(rogid)
+);

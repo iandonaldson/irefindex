@@ -220,4 +220,11 @@ insert into irefindex_sequences
 create index irefindex_sequences_index on irefindex_sequences(dblabel, refvalue);
 analyze irefindex_sequences;
 
+insert into irefindex_sequence_rogids
+    select distinct refsequence || reftaxid as rogid
+    from irefindex_sequences
+    where reftaxid is not null;
+
+analyze irefindex_sequence_rogids;
+
 commit;
