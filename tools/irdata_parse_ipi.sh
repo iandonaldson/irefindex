@@ -97,7 +97,7 @@ if "$TOOLS/irdata_process_signatures.sh" "$DATADIR" ; then
 
     # Concatenate and tidy up the protein files.
 
-      cat "$DATADIR/"*"_proteins.txt.seq" \
+      cat "$DATADIR/ipi."*"_proteins.txt.seq" \
     | cut -d ':' -f 2- \
     > "$DATADIR/ipi_proteins.txt.seq"
 
