@@ -91,30 +91,15 @@ insert into irefindex_rog2rogid
     select rog, rogid, true
     from tmp_rog2rogid
     union all
-    select nextval('tmp_rog'), rogid, false
-    from (
 
-        -- Newly numbered interactors can be interactors provided by interaction
-        -- records.
+    -- All sequences providing ROG identifiers not known to the previous
+    -- mapping.
 
-        select distinct N.rogid
-        from irefindex_rogids as N
-        left outer join tmp_rog2rogid as O
-            on N.rogid = O.rogid
-        where O.rogid is null
-        union
-
-        -- ...or canonical interactors not directly provided by interaction
-        -- records, but known from sequence database records not employed by
-        -- interaction records.
-
-        select distinct N.crogid
-        from irefindex_rogids_canonical as N
-        left outer join tmp_rog2rogid as O
-            on N.crogid = O.rogid
-        where O.rogid is null
-
-        ) as X;
+    select nextval('tmp_rog'), N.rogid, false
+    from irefindex_sequence_rogids as N
+    left outer join tmp_rog2rogid as O
+        on N.rogid = O.rogid
+    where O.rogid is null;
 
 create index irefindex_rog2rogid_rogid on irefindex_rog2rogid(rogid);
 analyze irefindex_rog2rogid;

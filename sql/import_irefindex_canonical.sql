@@ -41,8 +41,16 @@ insert into irefindex_gene2related
 analyze irefindex_gene2related;
 
 -- Define a mapping of relevant genes using known sequences from interaction
--- records. Since this activity may be performed before assignment, the ROG
--- identifiers may not be available.
+-- records. This activity is performed before assignment because the result of
+-- the canonicalisation process is meant to be used in the assignment of
+-- sequences to identifiers in situations where many sequences are suggested for
+-- an interactor but where a canonical representative might be an appropriate
+-- disambiguator or alternative representation of an interactor.
+
+-- Since identifiers for active interaction records are not yet available, but
+-- since the protein identifier mapping must cover all known sequences and these
+-- must also be considered in the canonicalisation process, ROG identifiers
+-- generated from the full sequence collection are employed instead.
 
 create temporary table tmp_rogids as
     select rogid

@@ -64,8 +64,24 @@ insert into irefindex_rgg_rogids_canonical
 
 analyze irefindex_rgg_rogids_canonical;
 
--- A complete mapping of canonical ROG identifiers is produced once a definitive
--- list of ROG identifiers is available.
+-- A complete canonical mapping for all sequences.
+-- This is needed by the protein identifier mapping.
+
+insert into irefindex_sequence_rogids_canonical
+    select distinct R.rogid, coalesce(C.rogid, R.rogid)
+    from irefindex_sequence_rogids as R
+
+    -- Not all sequences have a mapping to genes.
+
+    left outer join irefindex_rgg_rogids as G
+        on R.rogid = G.rogid
+    left outer join irefindex_rgg_rogids_canonical as C
+        on G.rggid = C.rggid;
+
+analyze irefindex_sequence_rogids_canonical;
+
+-- A complete mapping of active canonical ROG identifiers is produced once a
+-- definitive list of ROG identifiers is available.
 
 -- Canonical RIG identifiers are produced once RIG identifiers are available.
 

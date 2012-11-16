@@ -26,7 +26,7 @@ create temporary table tmp_protein_identifier_mapping as
         I.rog,
         R.rogid,
         CI.rog as crog,
-        CI.rogid as crogid
+        C.crogid as crogid
 
     -- Provide a mapping for all known sequences.
 
@@ -37,12 +37,12 @@ create temporary table tmp_protein_identifier_mapping as
     left outer join irefindex_rog2rogid as I
         on R.rogid = I.rogid
 
-    -- Obtain canonical information.
+    -- Obtain canonical information for the full range of sequences.
 
-    left outer join irefindex_rogids_canonical as C
+    left outer join irefindex_sequence_rogids_canonical as C
         on R.rogid = C.rogid
     left outer join irefindex_rog2rogid as CI
-        on C.rogid = CI.rogid
+        on C.crogid = CI.rogid
 
     -- Gene information for RefSeq records.
 

@@ -123,6 +123,8 @@ analyze tmp_unambiguous_null_references;
 -- NOTE: This will eventually need to distinguish between gene and non-gene
 -- NOTE: references and to exclude gene references for which the canonical
 -- NOTE: representative will instead be chosen.
+-- NOTE: To choose a canonical representative, the combined sequence and taxid
+-- NOTE: would be matched against the irefindex_rogids_canonical table.
 
 create temporary table tmp_arbitrary_references as
     select distinct S.source, S.filename, S.entry, S.interactorid, S.taxid as originaltaxid,
@@ -397,12 +399,10 @@ analyze irefindex_interactions_complete;
 -- in such cases in order to provide a complete mapping.
 
 insert into irefindex_rogids_canonical
-    select distinct I.rogid, coalesce(C.rogid, I.rogid)
+    select distinct I.rogid, coalesce(C.crogid, I.rogid)
     from irefindex_rogids as I
-    left outer join irefindex_rgg_rogids as R
-        on I.rogid = R.rogid
-    left outer join irefindex_rgg_rogids_canonical as C
-        on R.rggid = C.rggid;
+    left outer join irefindex_sequence_rogids_canonical as C
+        on I.rogid = C.rogid;
 
 analyze irefindex_rogids_canonical;
 

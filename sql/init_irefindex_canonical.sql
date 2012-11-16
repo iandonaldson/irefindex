@@ -58,7 +58,14 @@ create table irefindex_rgg_rogids_canonical (
 );
 
 -- Canonical ROG identifiers for ROGs.
--- (This complete mapping is defined and populated in the assignment activity.)
+
+create table irefindex_sequence_rogids_canonical (
+    rogid varchar not null,
+    crogid varchar not null,
+    primary key(rogid)
+);
+
+-- (The complete active mapping is defined and populated in the assignment activity.)
 
 -- Canonical RIG identifiers for RIGs.
 
