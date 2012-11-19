@@ -202,7 +202,7 @@ insert into irefindex_sequences
     from mmdb_pdb_accessions as M
     inner join pdb_proteins as P
         on M.accession = P.accession
-        and M.chain = P.chain
+        and M.chain = substring(P.chain from 1 for 1)
 	and M.gi = P.gi
     union all
     select distinct 'pdb' as dblabel, P.accession || '|' || P.chain as refvalue,
@@ -210,7 +210,7 @@ insert into irefindex_sequences
     from pdb_proteins as P
     left outer join mmdb_pdb_accessions as M
         on M.accession = P.accession
-        and M.chain = P.chain
+        and M.chain = substring(P.chain from 1 for 1)
 	and M.gi = P.gi
 
     -- Exclude previous matches.
