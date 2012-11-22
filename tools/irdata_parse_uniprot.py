@@ -308,10 +308,10 @@ if __name__ == "__main__":
         genenamesfile = join(data_directory, format % "gene_names")
 
         if filename == "-":
-            print >>sys.stderr, "Parsing standard input"
+            print >>sys.stderr, "%s: Parsing standard input" % progname
             f = sys.stdin
         else:
-            print >>sys.stderr, "Parsing", leafname
+            print >>sys.stderr, "%s: Parsing %s" % (progname, leafname)
             if ext.endswith("gz"):
                 opener = gzip.open
             else:

@@ -75,10 +75,10 @@ if __name__ == "__main__":
         leafname = split(filename)[-1]
 
         if filename == "-":
-            print >>sys.stderr, "Parsing standard input"
+            print >>sys.stderr, "%s: Parsing standard input" % progname
             f = sys.stdin
         else:
-            print >>sys.stderr, "Parsing", leafname
+            print >>sys.stderr, "%s: Parsing %s" % (progname, leafname)
             f = open(filename)
 
         f_out = open(join(data_directory, "terms"), "w")
