@@ -34,12 +34,17 @@ EOF
 fi
 
 DATADIR=$1
-shift 1
 
+if [ ! "$DATADIR" ]; then
+    echo "$PROGNAME: A data directory must be specified." 1>&2
+    exit 1
+fi
+
+shift 1
 FILENAMES=$*
 
-if [ ! "$DATADIR" ] || [ ! "$FILENAMES" ]; then
-    echo "$PROGNAME: A data directory and input filenames must be specified." 1>&2
+if [ ! "$FILENAMES" ]; then
+    echo "$PROGNAME: Input filenames must be specified." 1>&2
     exit 1
 fi
 
