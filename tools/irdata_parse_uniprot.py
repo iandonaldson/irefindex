@@ -327,7 +327,7 @@ if __name__ == "__main__":
                 f.close()
 
     except Exception, exc:
-        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        print >>sys.stderr, "%s: Parsing failed for file %s with exception: %s" % (progname, filename, exc)
         sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4

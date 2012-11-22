@@ -156,7 +156,7 @@ class Parser:
         # Handle missing versions in old eUtils records.
 
         if len(version_plus_gi) > 1:
-            version, gi = version_plus_gi
+            version, gi = version_plus_gi[:2]
             record["VERSION"] = version
         else:
             gi = version_plus_gi[0]
