@@ -139,11 +139,13 @@ if __name__ == "__main__":
         print >>sys.stderr, "Usage: %s <output data directory> <identifier types> <output identifier types> <data file>..." % progname
         sys.exit(1)
 
+    filename = None # used for exceptions
+
     try:
         for filename in filenames:
             leafname = split(filename)[-1]
             basename, ext = splitext(leafname)
-            print >>sys.stderr, "Parsing", leafname
+            print >>sys.stderr, "%s: Parsing" % (progname, leafname)
 
             if ext.endswith("gz"):
                 opener = gzip.open
@@ -162,7 +164,7 @@ if __name__ == "__main__":
                 f_out.close()
 
     except Exception, exc:
-        print >>sys.stderr, "%s: Parsing failed with exception: %s" % (progname, exc)
+        print >>sys.stderr, "%s: Parsing failed for file %s with exception: %s" % (progname, filename, exc)
         sys.exit(1)
 
 # vim: tabstop=4 expandtab shiftwidth=4
