@@ -63,9 +63,18 @@ for FILENAME in $FILENAMES; do
         # efficient if done repeatedly.
 
         if [ "$FILETYPE" = 'dat.gz' ]; then
+            UNPACKED_FILENAME=${FILENAME%.gz}
+
+            # Unpack the archive again even if an uncompressed file is present.
+
+            if [ -e "$UNPACKED_FILENAME" ] && [ -e "$FILENAME" ]; then
+                echo "$PROGNAME: Removing existing $UNPACKED_FILENAME..." 1>&2
+                rm "$UNPACKED_FILENAME"
+            fi
+
             echo "$PROGNAME: Unpacking $FILENAME..." 1>&2
             "$SCRIPTS/irunpack-archive" --include-gzip-files "$FILENAME"
-            FILENAME=${FILENAME%.gz}
+            FILENAME=$UNPACKED_FILENAME
         fi
 
         # Remove the extension from the filename.
@@ -86,6 +95,9 @@ for FILENAME in $FILENAMES; do
                 for PIECE in "$DATADIR/${LEAFNAME}_${TYPE}-"*".txt" ; do
                     rm "$PIECE"
                 done
+            else
+                echo "$PROGNAME: Failed to concatenate data files for ${LEAFNAME}_${TYPE}." 1>&2
+                exit 1
             fi
         done
 
