@@ -6,7 +6,12 @@ begin;
 create temporary table tmp_protein_identifiers as
     select dblabel, refvalue, refsequence || reftaxid as rogid
     from irefindex_sequences
-    where refsequence is not null and reftaxid is not null;
+    where refsequence is not null and reftaxid is not null
+        and dblabel in ('pdb', 'uniprotkb')
+
+        -- NOTE: Workaround to exclude nucleotide references.
+
+        or dblabel = 'refseq' and substring(refvalue for 2) in ('AP', 'NP', 'XP', 'YP', 'ZP');
 
 analyze tmp_protein_identifiers;
 

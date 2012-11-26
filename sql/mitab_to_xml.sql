@@ -10,6 +10,18 @@
 
 begin;
 
+-- Remove any existing MITAB data from the XML tables.
+
+create temporary table tmp_mitab_sources as
+    select distinct source
+    from mitab_uid;
+
+delete from xml_interactors where source in (select source from tmp_mitab_sources);
+delete from xml_experiments where source in (select source from tmp_mitab_sources);
+delete from xml_organisms where source in (select source from tmp_mitab_sources);
+delete from xml_xref where source in (select source from tmp_mitab_sources);
+delete from xml_names where source in (select source from tmp_mitab_sources);
+
 -- Common sequence numbers for interactors and participants.
 
 create temporary sequence mitab_interactor;
