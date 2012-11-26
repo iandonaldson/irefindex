@@ -325,6 +325,10 @@ following:
 
   irdrop --drop --build
 
+To reinitialise the build products, the following is then required:
+
+  irinit --init --build
+
 Downloading Source Data
 -----------------------
 
