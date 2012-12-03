@@ -116,44 +116,42 @@ class PSIParser(EmptyElementParser):
             "experimentDescription" : 0
             }
 
-    def get_scope_and_context(self):
+    def get_scopes(self, n=None):
 
-        """
-        Get the scope of the current path as the entity to which the current
-        attributes and content belong. Return this scope and its parent, or
-        return (None, None) if no scope can be found.
-        """
+        "Return the scopes applying to the current path."
 
-        scope = None
+        scopes = []
 
         # Go through the path from the deepest element name to the root, looking
-        # for a scope name. Then, with a scope name, get the next element as the
-        # more general context.
+        # for scope names.
 
         for part in self.current_path[-1::-1]:
+            if part in self.scopes.values():
+                scopes.append(part)
 
-            # Define a scope if a suitable element is found.
+                # Stop collecting scopes if n have been found.
 
-            if scope is None and part in self.scopes.values():
-                scope = part
+                if n is not None and len(scopes) == n:
+                    break
 
-            # Define the context if a scope has been found.
+        # Pad the list with None values if n is greater than the number of
+        # scopes found.
 
-            elif scope is not None:
-                return scope, part
-        else:
-            return scope, None
+        if n is not None and len(scopes) < n:
+            scopes += [None] * (n - len(scopes))
 
-        return None, None
+        return scopes
 
-    def is_implicit(self, name, parent):
+    def is_implicit(self, name, context):
 
         """
         Return whether the element with the given 'name' defines an implicit
-        (not externally referenced) element, given the 'parent' element name.
+        (not externally referenced) element, given the 'context' element name.
         """
 
-        return name == "participant" or name == "interactor" and parent == "participant"
+        return name == "participant" or \
+            name == "interactor" and context == "participant" or \
+            name == "experimentDescription" and context == "interaction"
 
     def characters(self, content):
 
@@ -172,7 +170,7 @@ class PSIParser(EmptyElementParser):
             name = self.scopes[name]
 
             if self.identifiers.has_key(name):
-                parent = self.current_path[-1]
+                context = self.get_scopes(1)[0]
 
                 # Handle PSI MI XML 1.0 identifiers which are absent.
                 # Also assign identifiers to entries.
@@ -184,7 +182,7 @@ class PSIParser(EmptyElementParser):
                 # relationship to participants is implicit, since these might be
                 # reused within interactions (seen in InnateDB).
 
-                if not attrs.has_key("id") or self.is_implicit(name, parent):
+                if not attrs.has_key("id") or self.is_implicit(name, context):
                     attrs = dict(attrs)
                     attrs["id"] = str(self.identifiers[name])
                     self.identifiers[name] += 1
@@ -274,7 +272,7 @@ class PSIParser(EmptyElementParser):
 
             # Insist on a scope.
 
-            scope, context = self.get_scope_and_context()
+            scope, context = self.get_scopes(2)
             if not scope or scope == "entry":
                 return
 
