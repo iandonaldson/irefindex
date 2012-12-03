@@ -33,7 +33,7 @@ insert into xml_xref_all_experiments
         -- Fix certain psi-mi references.
 
         case when dblabel = 'MI' and not refvalue like 'MI:%' then 'MI:' || refvalue
-             when dblabel = 'MI' and refvalue like 'MI:%' and not refvalue ~ 'MI:[0-9]{4}' then substring(refvalue from 'MI:[0-9]{4}')
+             when dblabel = 'MI' and refvalue like 'MI:%' and not refvalue ~ 'MI:[0-9]{4}$' then substring(refvalue from 'MI:[0-9]{4}')
              else refvalue
         end as refvalue
 
