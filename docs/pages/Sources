@@ -95,12 +95,32 @@ describing them in the data file. Where the involvement of entities in
 relationships is ''explicit'', their identifiers typically have `entry`-level
 locality and can be regarded as meaningful.
 
+Data sources employing references to other elements, such as `experimentRef`
+referring to `experimentDescription`, generally provide explicit entities
+whose identifiers can be relied upon. The following table summarises those
+sources providing explicit references:
+
+{{{#!table
+'''Source'''   || '''Explicit'''
+==
+!BioGRID       || experiment, interactor
+==
+HPRD           || experiment, interactor
+==
+!IntAct        || experiment, interactor
+==
+MINT           || experiment, interactor
+==
+OPHID          || experiment
+}}}
+
 Thus, the following policies are used:
 
 {{{#!table
 '''Entity''' || '''Policy'''
 ==
-Experiment   || Retain identifiers
+Experiment   || Retain explicit identifiers;
+             .. assign unique identifiers for implicit experiments
 ==
 Interaction  || Retain identifiers
 ==
@@ -139,7 +159,10 @@ adhered to.
   * For version 2.5, the `xs:int` type is used for `id` attributes, and it is
   noted that these refer to distinct entities throughout a file. However,
   participant identifiers are effectively local and may not have any meaning
-  at all.
+  at all, and although experiment identifiers are supposedly local to an
+  "entry", MPACT has been shown to reuse such identifiers within the same
+  `entry` element (which is presumably the meaning of the term "entry" in the
+  specification).
 
 MIPS and OPHID use version 1.0 of the specification and need to provide values
 using different elements, although these elements correspond directly to
