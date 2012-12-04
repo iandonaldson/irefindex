@@ -277,6 +277,16 @@ analyze irefindex_unassigned;
 -- The above assignments includes potentially multiple paths to the same
 -- sequence for each interactor. By nominating preferred sequence links, a
 -- single path can be chosen.
+-- This should create a table mapping sequence links to priorities like the
+-- following:
+
+-- refseq                      A
+-- uniprotkb                   A
+-- refseq/entrezgene           B
+-- uniprotkb/entrezgene-symbol B
+
+-- Selecting the first/best priority (A as opposed to B in the above above
+-- illustration) permits more appropriate identifiers to be chosen.
 
 create temporary table tmp_sequencelinks as
     select distinct sequencelink, priority
@@ -319,7 +329,7 @@ insert into irefindex_assignment_scores
             case when A.sequencelink        in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected')    then 'U' else '' end,
             case when A.sequencelink        = 'refseq/version-discarded'                                                then 'V' else '' end,
             case when originaltaxid         <> taxid                                                                    then 'T' else '' end,
-            case when A.sequencelink        like 'entrezgene%'                                                          then 'G' else '' end,
+            case when A.sequencelink        like '%entrezgene%'                                                         then 'G' else '' end,
             case when originaldblabel       <> A.dblabel                                                                then 'D' else '' end,
             -- NOTE: M currently not generally tracked (typographical modification).
             case when A.sequencelink        like 'uniprotkb/sgd%'                                                       then 'M' else '' end,
