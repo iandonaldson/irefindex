@@ -18,12 +18,24 @@
 begin;
 
 insert into xml_xref_interactor_sequences
-    select source, filename, entry, interactorid, reftype, reftypelabel,
+    select I.source, I.filename, I.entry, I.interactorid, reftype, reftypelabel,
         I.dblabel, I.refvalue, I.originaldblabel, I.originalrefvalue, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence
     from xml_xref_interactors as I
     left outer join xml_xref_sequences as S
-        on (I.dblabel, I.refvalue) = (S.dblabel, S.refvalue);
+        on (I.dblabel, I.refvalue) = (S.dblabel, S.refvalue)
+
+    -- Filter out non-proteins.
+
+    left outer join xml_xref_interactor_types as T
+        on (I.source, I.filename, I.entry, I.interactorid)
+         = (T.source, T.filename, T.entry, T.interactorid)
+
+    -- No type information is assumed to mean that interactors are only ever
+    -- proteins.
+
+    where T.refvalue is null
+        or T.refvalue = 'MI:0326';
 
 create index xml_xref_interactor_sequences_index on xml_xref_interactor_sequences(source, filename, entry, interactorid);
 analyze xml_xref_interactor_sequences;
