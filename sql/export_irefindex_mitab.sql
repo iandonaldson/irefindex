@@ -120,6 +120,11 @@ create temporary table tmp_aliases as
         inner join gene_info
             on dblabel = 'entrezgene/locuslink'
             and cast(refvalue as integer) = geneid
+        union all
+        select R.rogid, 'icrogid' as dblabel, cast(I.rog as varchar) as refvalue
+        from irefindex_rogid_identifiers as R
+        inner join irefindex_rog2rogid as I
+            on R.rogid = I.rogid
         ) as X
     group by rogid;
 
@@ -324,13 +329,18 @@ create temporary table tmp_interactor_experiments as
         -- finalReferenceA (the original reference for A, or a corrected/complete/updated/unambiguous reference)
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
 
-        case when edgetype = 'C' then 'complex:' || I.rigid
-             else nameA.dblabel || ':' || nameA.refvalue
-        end as finalReferenceA,
+        case when edgetype = 'C' then 'complex:'
+             else nameA.dblabel
+        end as finaldblabelA,
+
+        case when edgetype = 'C' then I.rigid
+             else nameA.refvalue
+        end as finalrefvalueA,
 
         -- finalReferenceB (the original reference for B, or a corrected/complete/updated/unambiguous reference)
 
-        nameB.dblabel || ':' || nameB.refvalue as finalReferenceB,
+        nameB.dblabel as finaldblabelB,
+        nameB.refvalue as finalrefvalueB,
 
         -- originalReferenceA (original primary or secondary reference for A, the rigid of any complex as 'complex:...')
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
@@ -446,11 +456,16 @@ create temporary table tmp_mitab_all as
 
         -- uidA (identifier, preferably uniprotkb accession, refseq, complex as 'complex:...')
 
-        case when edgetype = 'C' then 'complex:' || I.rigid else prefA.dblabel || ':' || prefA.refvalue end as uidA,
+        case when edgetype = 'C' then 'complex:' || I.rigid
+             when finaldblabelA in ('uniprotkb', 'refseq') then finaldblabelA || ':' || finalrefvalueA
+             else prefA.dblabel || ':' || prefA.refvalue
+        end as uidA,
 
         -- uidB (identifier, preferably uniprotkb accession, refseq)
 
-        prefB.dblabel || ':' || prefB.refvalue as uidB,
+        case when finaldblabelB in ('uniprotkb', 'refseq') then finaldblabelB || ':' || finalrefvalueB
+             else prefB.dblabel || ':' || prefB.refvalue
+        end as uidB,
 
         -- altA (alternatives for A, preferably uniprotkb accession, refseq, entrezgene/locuslink identifier, including rogid, irogid)
 
@@ -640,11 +655,11 @@ create temporary table tmp_mitab_all as
         -- finalReferenceA (the original reference for A, or a corrected/complete/updated/unambiguous reference)
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
 
-        finalReferenceA,
+        finaldblabelA || ':' || finalrefvalueA as finalReferenceA,
 
         -- finalReferenceB (the original reference for B, or a corrected/complete/updated/unambiguous reference)
 
-        finalReferenceB,
+        finaldblabelB || ':' || finalrefvalueB as finalReferenceB,
 
         -- mappingScoreA (operation characters describing the original-to-final transformation, "-" for complexes)
 

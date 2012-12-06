@@ -90,6 +90,8 @@ for FILENAME in $FILENAMES; do
 
         # Merge the pieces.
 
+        echo "$PROGNAME: Merging data files for $LEAFNAME..." 1>&2
+
         for TYPE in "accessions" "gene_names" "identifiers" "proteins" ; do
             if cat "$DATADIR/${LEAFNAME}_${TYPE}-"*".txt" > "$DATADIR/${LEAFNAME}_${TYPE}.txt" ; then
                 for PIECE in "$DATADIR/${LEAFNAME}_${TYPE}-"*".txt" ; do
@@ -100,6 +102,16 @@ for FILENAME in $FILENAMES; do
                 exit 1
             fi
         done
+
+        # Filter the identifiers in order to avoid huge files containing
+        # superfluous identifier details.
+
+        UNFILTERED="$DATADIR/${LEAFNAME}_identifiers.txt"
+        FILTERED="$DATADIR/${LEAFNAME}_identifiers.txt.filtered"
+
+        if [ -e "$UNFILTERED" ] && grep 'GeneID' "$UNFILTERED" > "$FILTERED" ; then
+            mv "$FILTERED" "$UNFILTERED"
+        fi
 
     else
         echo "$PROGNAME: Data file $FILENAME is not supported." 1>&2
