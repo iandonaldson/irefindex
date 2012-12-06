@@ -145,7 +145,7 @@ if __name__ == "__main__":
         for filename in filenames:
             leafname = split(filename)[-1]
             basename, ext = splitext(leafname)
-            print >>sys.stderr, "%s: Parsing" % (progname, leafname)
+            print >>sys.stderr, "%s: Parsing %s" % (progname, leafname)
 
             if ext.endswith("gz"):
                 opener = gzip.open
