@@ -18,15 +18,9 @@
 
 begin;
 
+-- Find gene identifier cross-references.
+
 insert into irefindex_gene2uniprot
-    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
-    from gene_info as G
-    inner join uniprot_gene_names as N
-        on G.symbol = N.genename
-    inner join uniprot_proteins as P
-        on N.uniprotid = P.uniprotid
-        and P.taxid = G.taxid
-    union
     select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
     from gene_info as G
     inner join uniprot_identifiers as I
@@ -35,6 +29,32 @@ insert into irefindex_gene2uniprot
     inner join uniprot_proteins as P
         on I.uniprotid = P.uniprotid;
         -- P.taxid = G.taxid could be used to override any gene association in the UniProt record
+
+analyze irefindex_gene2uniprot;
+
+-- Add gene name mappings where no cross-reference is provided where only a
+-- single identifier is found.
+
+insert into irefindex_gene2uniprot
+    select min(G.geneid), P.accession, P.sequencedate, P.taxid, P.sequence, P.length
+    from gene_info as G
+    inner join uniprot_gene_names as N
+        on G.symbol = N.genename
+    inner join uniprot_proteins as P
+        on N.uniprotid = P.uniprotid
+        and P.taxid = G.taxid
+
+    -- Filter out records covered by cross-references.
+
+    left outer join uniprot_identifiers as I
+        on N.uniprotid = I.uniprotid
+        and I.dblabel = 'GeneID'
+    where I.uniprotid is null
+
+    -- Select only unambiguous mappings.
+
+    group by P.accession, P.sequencedate, P.taxid, P.sequence, P.length
+    having count(G.geneid) = 1;
 
 analyze irefindex_gene2uniprot;
 
