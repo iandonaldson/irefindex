@@ -43,6 +43,8 @@ create table irefindex_assignments (
     refvalue varchar not null,
     originaldblabel varchar not null,
     originalrefvalue varchar not null,
+    finaldblabel varchar not null,
+    finalrefvalue varchar not null,
 
     -- Labelling and availability information.
 
@@ -56,7 +58,7 @@ create table irefindex_assignments (
     -- When populating this table, distinct selections should ensure that null
     -- values do not cause unnecessary record duplication.
 
-    unique(source, filename, entry, interactorid, sequence, sequencelink, dblabel, refvalue)
+    unique(source, filename, entry, interactorid, sequence, sequencelink, dblabel, refvalue, finaldblabel, finalrefvalue)
 );
 
 -- Unassigned interactors.
@@ -87,8 +89,15 @@ create table irefindex_assignments_preferred (
     -- Specific assignment details.
 
     sequencelink varchar not null,
+    finaldblabel varchar not null,
+    finalrefvalue varchar not null,
     dblabel varchar not null,
     refvalue varchar not null,
+
+    -- Details preserved for convenience.
+
+    originaldblabel varchar not null,
+    originalrefvalue varchar not null,
     primary key(source, filename, entry, interactorid)
 );
 

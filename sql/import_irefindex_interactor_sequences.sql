@@ -19,7 +19,8 @@ begin;
 
 insert into xml_xref_interactor_sequences
     select I.source, I.filename, I.entry, I.interactorid, reftype, reftypelabel,
-        I.dblabel, I.refvalue, I.originaldblabel, I.originalrefvalue, missing,
+        I.dblabel, I.refvalue, I.originaldblabel, I.originalrefvalue,
+        S.finaldblabel, S.finalrefvalue, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence
     from xml_xref_interactors as I
     left outer join xml_xref_sequences as S

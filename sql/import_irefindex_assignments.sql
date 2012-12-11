@@ -38,7 +38,9 @@ create temporary table tmp_unambiguous_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
         sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-        originaldblabel, originalrefvalue, missing,
+        originaldblabel, originalrefvalue,
+        coalesce(finaldblabel, I.dblabel) as finaldblabel, coalesce(finalrefvalue, I.refvalue) as finalrefvalue,
+        missing,
         cast('unambiguous' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -57,7 +59,9 @@ create temporary table tmp_unambiguous_matching_taxonomy_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
         sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-        originaldblabel, originalrefvalue, missing,
+        originaldblabel, originalrefvalue,
+        coalesce(finaldblabel, I.dblabel) as finaldblabel, coalesce(finalrefvalue, I.refvalue) as finalrefvalue,
+        missing,
         cast('matching taxonomy' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -85,7 +89,9 @@ create temporary table tmp_unambiguous_matching_sequence_references as
     select distinct I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         refsequence as sequence, reftaxid as taxid,
         sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-        originaldblabel, originalrefvalue, missing,
+        originaldblabel, originalrefvalue,
+        coalesce(finaldblabel, I.dblabel) as finaldblabel, coalesce(finalrefvalue, I.refvalue) as finalrefvalue,
+        missing,
         cast('matching sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -107,7 +113,9 @@ create temporary table tmp_unambiguous_null_references as
     select I.source, I.filename, I.entry, I.interactorid, I.taxid as originaltaxid,
         I.sequence, taxid,
         cast('null' as varchar) as sequencelink, I.reftype, I.reftypelabel, I.dblabel, I.refvalue,
-        originaldblabel, originalrefvalue, missing,
+        originaldblabel, originalrefvalue,
+        coalesce(finaldblabel, I.dblabel) as finaldblabel, coalesce(finalrefvalue, I.refvalue) as finalrefvalue,
+        missing,
         cast('interactor sequence' as varchar) as method
     from xml_xref_interactor_sequences as I
     inner join irefindex_ambiguity as A
@@ -130,7 +138,9 @@ create temporary table tmp_arbitrary_references as
     select distinct S.source, S.filename, S.entry, S.interactorid, S.taxid as originaltaxid,
         refdetails[1] as sequence, cast(refdetails[2] as integer) as taxid,
         sequencelink, S.reftype, S.reftypelabel, S.dblabel, S.refvalue,
-        originaldblabel, originalrefvalue, missing,
+        originaldblabel, originalrefvalue,
+        coalesce(finaldblabel, S.dblabel) as finaldblabel, coalesce(finalrefvalue, S.refvalue) as finalrefvalue,
+        missing,
         cast('arbitrary' as varchar) as method
     from (
 
@@ -274,7 +284,7 @@ analyze irefindex_unassigned;
 
 
 -- Preferred assignments.
--- The above assignments includes potentially multiple paths to the same
+-- The above assignments include potentially multiple paths to the same
 -- sequence for each interactor. By nominating preferred sequence links, a
 -- single path can be chosen.
 -- This should create a table mapping sequence links to priorities like the
@@ -296,22 +306,19 @@ create temporary table tmp_sequencelinks as
         ) as X;
 
 insert into irefindex_assignments_preferred
-    select A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue
+    select source, filename, entry, interactorid, preferred[2], preferred[3], preferred[4], preferred[5], preferred[6], preferred[7], preferred[8]
     from (
 
         -- Use the priority ordering defined above to select a minimum (best)
         -- priority, selecting an arbitrary identifier where multiple paths to
         -- the sequence have the same priority.
 
-        select source, filename, entry, interactorid, min(array[priority, A.sequencelink, dblabel, refvalue]) as preferred
+        select source, filename, entry, interactorid, min(array[priority, A.sequencelink, finaldblabel, finalrefvalue, dblabel, refvalue, originaldblabel, originalrefvalue]) as preferred
         from irefindex_assignments as A
         inner join tmp_sequencelinks as S
             on A.sequencelink = S.sequencelink
         group by source, filename, entry, interactorid
-        ) as P
-        inner join irefindex_assignments as A
-        on (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue) =
-           (P.source, P.filename, P.entry, P.interactorid, preferred[2], preferred[3], preferred[4]);
+        ) as P;
 
 analyze irefindex_assignments_preferred;
 
@@ -326,29 +333,29 @@ insert into irefindex_assignment_scores
         array_to_string(array[
             case when reftype               = 'primaryRef'                                                              then 'P' else '' end,
             case when reftype               = 'secondaryRef'                                                            then 'S' else '' end,
-            case when A.sequencelink        in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected')    then 'U' else '' end,
-            case when A.sequencelink        = 'refseq/version-discarded'                                                then 'V' else '' end,
+            case when P.sequencelink        in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected')    then 'U' else '' end,
+            case when P.sequencelink        = 'refseq/version-discarded'                                                then 'V' else '' end,
             case when originaltaxid         <> taxid                                                                    then 'T' else '' end,
-            case when A.sequencelink        like '%entrezgene%'                                                         then 'G' else '' end,
-            case when originaldblabel       <> A.dblabel                                                                then 'D' else '' end,
+            case when P.sequencelink        like '%entrezgene%'                                                         then 'G' else '' end,
+            case when P.originaldblabel     <> P.finaldblabel                                                           then 'D' else '' end,
             -- NOTE: M currently not generally tracked (typographical modification).
-            case when A.sequencelink        like 'uniprotkb/sgd%'                                                       then 'M' else '' end,
+            case when P.sequencelink        like 'uniprotkb/sgd%'                                                       then 'M' else '' end,
             case when method                <> 'unambiguous'                                                            then '+' else '' end,
             case when method                = 'matching sequence'                                                       then 'O' else '' end,
             case when method                = 'matching taxonomy'                                                       then 'X' else '' end,
             '', -- ?
             case when method                = 'arbitrary'                                                               then 'L' else '' end,
-            case when A.dblabel             = 'genbank_protein_gi'                                                      then 'I' else '' end,
+            case when P.finaldblabel        = 'genbank_protein_gi'                                                      then 'I' else '' end,
             case when missing                                                                                           then 'E' else '' end,
-            case when A.sequencelink        like 'archived/%' 								then 'Y' else '' end,
+            case when P.sequencelink        like 'archived/%'                                                           then 'Y' else '' end,
             -- NOTE: N refers to "new assignment", but this appears to be specific to interaction record sequences.
             case when method                = 'interactor sequence'                                                     then 'N' else '' end,
             case when reftypelabel          = 'see-also'                                                                then 'Q' else '' end
             ], '') as score
     from irefindex_assignments_preferred as P
     inner join irefindex_assignments as A
-        on (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue) =
-           (P.source, P.filename, P.entry, P.interactorid, P.sequencelink, P.dblabel, P.refvalue);
+        on (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue, A.finaldblabel, A.finalrefvalue) =
+           (P.source, P.filename, P.entry, P.interactorid, P.sequencelink, P.dblabel, P.refvalue, P.finaldblabel, P.finalrefvalue);
 
 analyze irefindex_assignment_scores;
 
@@ -380,11 +387,21 @@ analyze irefindex_rogids;
 
 insert into irefindex_rogid_identifiers
     select distinct rogid, dblabel, refvalue
-    from irefindex_rogids as R
-    inner join xml_xref_sequences as I
-        on rogid = refsequence || reftaxid
-    where refsequence is not null
-        and reftaxid is not null;
+    from (
+        select rogid, finaldblabel as dblabel, finalrefvalue as refvalue
+        from irefindex_rogids as R
+        inner join xml_xref_sequences as I
+            on rogid = refsequence || reftaxid
+        where refsequence is not null
+            and reftaxid is not null
+        union
+        select rogid, dblabel, refvalue
+        from irefindex_rogids as R
+        inner join xml_xref_sequences as I
+            on rogid = refsequence || reftaxid
+        where refsequence is not null
+            and reftaxid is not null
+        ) as X;
 
 analyze irefindex_rogid_identifiers;
 

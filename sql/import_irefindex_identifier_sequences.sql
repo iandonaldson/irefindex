@@ -26,7 +26,9 @@ begin;
 -- Match plain identifiers mapping to sequences.
 
 create temporary table tmp_plain as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || X.dblabel as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || X.dblabel as sequencelink,
         reftaxid, refsequence
     from xml_xref_interactors as X
     inner join <sequences> as P
@@ -36,7 +38,9 @@ create temporary table tmp_plain as
 -- UniProt matches for unexpected isoforms.
 
 create temporary table tmp_uniprot_isoform as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'uniprotkb/isoform-primary-unexpected' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/isoform-primary-unexpected' as sequencelink,
         P.reftaxid, P.refsequence
     from xml_xref_interactors as X
 
@@ -57,7 +61,9 @@ create temporary table tmp_uniprot_isoform as
 -- UniProt matches for gene identifiers.
 
 create temporary table tmp_uniprot_gene as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'uniprotkb/entrezgene-symbol' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        'uniprotkb' as finaldblabel, P.accession as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/entrezgene-symbol' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join irefindex_gene2uniprot as P
@@ -67,7 +73,9 @@ create temporary table tmp_uniprot_gene as
 -- UniProt matches for gene identifiers via history.
 
 create temporary table tmp_uniprot_gene_history as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'uniprotkb/entrezgene-symbol-history' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        'uniprotkb' as finaldblabel, P.accession as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/entrezgene-symbol-history' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join gene_history as H
@@ -84,7 +92,9 @@ create temporary table tmp_refseq_discarding_version as
     -- RefSeq accession matches for otherwise non-matching versions.
     -- The latest version for the matching accession is chosen.
 
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'refseq/version-discarded' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'refseq/version-discarded' as sequencelink,
         reftaxid, refsequence
     from xml_xref_interactors as X
     inner join <sequences> as P
@@ -96,7 +106,9 @@ create temporary table tmp_refseq_discarding_version as
 -- RefSeq accession matches via Entrez Gene.
 
 create temporary table tmp_refseq_gene as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'refseq/entrezgene' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        'refseq' as finaldblabel, P.accession as finalrefvalue,
+        '<linkprefix>' || 'refseq/entrezgene' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join irefindex_gene2refseq as P
@@ -107,7 +119,9 @@ create temporary table tmp_refseq_gene as
 -- RefSeq accession matches via Entrez Gene history.
 
 create temporary table tmp_refseq_gene_history as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'refseq/entrezgene-history' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        'refseq' as finaldblabel, P.accession as finalrefvalue,
+        '<linkprefix>' || 'refseq/entrezgene-history' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join gene_history as H
@@ -126,7 +140,9 @@ create temporary table tmp_refseq_gene_history as
 -- UniProt matches via Yeast accessions.
 
 create temporary table tmp_yeast_primary as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'uniprotkb/sgd-primary' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/sgd-primary' as sequencelink,
         P.reftaxid, P.refsequence
     from xml_xref_interactors as X
     inner join <sequences> as P
@@ -142,7 +158,9 @@ create temporary table tmp_yeast_primary as
 -- GenBank protein identifier matches in RefSeq or against accessions.
 
 create temporary table tmp_genpept_genbank_accession as
-    select distinct P.dblabel, X.refvalue, '<linkprefix>' || 'genpept/genbank-accession-bad-gi' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'genpept/genbank-accession-bad-gi' as sequencelink,
         reftaxid, refsequence
     from xml_xref_interactors as X
     inner join <sequences> as P
@@ -154,7 +172,9 @@ create temporary table tmp_genpept_genbank_accession as
 -- IPI accession matches discarding versioning.
 
 create temporary table tmp_ipi_discarding_version as
-    select distinct X.dblabel, X.refvalue, '<linkprefix>' || 'ipi/version-discarded' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'ipi/version-discarded' as sequencelink,
         P.reftaxid, P.refsequence
     from xml_xref_interactors as X
     inner join <sequences> as P

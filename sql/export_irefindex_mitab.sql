@@ -83,7 +83,9 @@ create temporary table tmp_identifiers as
 analyze tmp_identifiers;
 
 -- Define the preferred identifiers as those provided by UniProt or RefSeq, with
--- ROG identifiers used otherwise.
+-- ROG identifiers used otherwise. These identifiers are used in the uid columns
+-- and can be any identifiers referring to a protein sequence, not just those
+-- used in the context of an interaction.
 
 create temporary table tmp_preferred as
     select I.rogid,
@@ -169,8 +171,8 @@ create temporary table tmp_assignments as
     select A.*, score
     from irefindex_assignments_preferred as P
     inner join irefindex_assignments as A
-        on (P.source, P.filename, P.entry, P.interactorid, P.sequencelink, P.dblabel, P.refvalue) =
-           (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue)
+        on (P.source, P.filename, P.entry, P.interactorid, P.sequencelink, P.dblabel, P.refvalue, P.finaldblabel, P.finalrefvalue) =
+           (A.source, A.filename, A.entry, A.interactorid, A.sequencelink, A.dblabel, A.refvalue, A.finaldblabel, A.finalrefvalue)
     inner join irefindex_assignment_scores as S
         on (P.source, P.filename, P.entry, P.interactorid) = (S.source, S.filename, S.entry, S.interactorid);
 
@@ -324,13 +326,18 @@ create temporary table tmp_interactor_experiments as
         -- finalReferenceA (the original reference for A, or a corrected/complete/updated/unambiguous reference)
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
 
-        case when edgetype = 'C' then 'complex:' || I.rigid
-             else nameA.dblabel || ':' || nameA.refvalue
-        end as finalReferenceA,
+        case when edgetype = 'C' then 'complex:'
+             else nameA.finaldblabel
+        end as finaldblabelA,
+
+        case when edgetype = 'C' then I.rigid
+             else nameA.finalrefvalue
+        end as finalrefvalueA,
 
         -- finalReferenceB (the original reference for B, or a corrected/complete/updated/unambiguous reference)
 
-        nameB.dblabel || ':' || nameB.refvalue as finalReferenceB,
+        nameB.finaldblabel as finaldblabelB,
+        nameB.finalrefvalue as finalrefvalueB,
 
         -- originalReferenceA (original primary or secondary reference for A, the rigid of any complex as 'complex:...')
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
@@ -446,11 +453,16 @@ create temporary table tmp_mitab_all as
 
         -- uidA (identifier, preferably uniprotkb accession, refseq, complex as 'complex:...')
 
-        case when edgetype = 'C' then 'complex:' || I.rigid else prefA.dblabel || ':' || prefA.refvalue end as uidA,
+        case when edgetype = 'C' then 'complex:' || I.rigid
+             when finaldblabelA in ('uniprotkb', 'refseq') then finaldblabelA || ':' || finalrefvalueA
+             else prefA.dblabel || ':' || prefA.refvalue
+        end as uidA,
 
         -- uidB (identifier, preferably uniprotkb accession, refseq)
 
-        prefB.dblabel || ':' || prefB.refvalue as uidB,
+        case when finaldblabelB in ('uniprotkb', 'refseq') then finaldblabelB || ':' || finalrefvalueB
+             else prefB.dblabel || ':' || prefB.refvalue
+        end as uidB,
 
         -- altA (alternatives for A, preferably uniprotkb accession, refseq, entrezgene/locuslink identifier, including rogid, irogid)
 
@@ -640,11 +652,11 @@ create temporary table tmp_mitab_all as
         -- finalReferenceA (the original reference for A, or a corrected/complete/updated/unambiguous reference)
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
 
-        finalReferenceA,
+        finaldblabelA || ':' || finalrefvalueA as finalReferenceA,
 
         -- finalReferenceB (the original reference for B, or a corrected/complete/updated/unambiguous reference)
 
-        finalReferenceB,
+        finaldblabelB || ':' || finalrefvalueB as finalReferenceB,
 
         -- mappingScoreA (operation characters describing the original-to-final transformation, "-" for complexes)
 

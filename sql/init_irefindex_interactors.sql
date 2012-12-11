@@ -62,10 +62,15 @@ create table xml_xref_interactor_types (
 
 create table xml_xref_sequences (
 
-    -- Primary reference details.
+    -- Original reference details.
 
     dblabel varchar not null,
     refvalue varchar not null,
+
+    -- Final reference details.
+
+    finaldblabel varchar not null,
+    finalrefvalue varchar not null,
 
     -- Link to sequence database describing how the connection was made.
 
@@ -105,6 +110,8 @@ create table xml_xref_interactor_sequences (
 
     -- From xml_xref_sequences:
 
+    finaldblabel varchar,
+    finalrefvalue varchar,
     missing boolean,
 
     -- From xml_organisms:
