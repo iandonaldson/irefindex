@@ -304,6 +304,25 @@ More information can be found in the PostgreSQL documentation:
   http://www.postgresql.org/docs/9.1/interactive/runtime-config-resource.html
   http://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
 
+The shared memory limit for the system on which the database will be hosted
+will need to be checked and possibly changed. This topic is covered in the
+above documentation, but to summarise, the kernel.shmmax parameter should be
+inspected as follows:
+
+  sysctl kernel.shmmax
+
+It can be set to a certain number of bytes as follows:
+
+  sysctl -w kernel.shmmax=1073741824 # 1024 * 1024 * 1024 == 1GB
+
+To make this setting permanent, either edit the /etc/sysctl.conf file or add a
+file to the /etc/sysctl.d directory, if present, and write the following line:
+
+  kernel.shmmax = 1073741824
+
+For all operations changing the configuration, you will need to have root
+privileges.
+
 Initialising the Database
 -------------------------
 
