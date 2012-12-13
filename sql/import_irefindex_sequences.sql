@@ -31,17 +31,7 @@ insert into irefindex_sequences
 
     select 'uniprotkb' as dblabel, accession as refvalue,
         taxid as reftaxid, sequence as refsequence, sequencedate as refdate
-    from uniprot_proteins as P
-    union all
-
-    -- Add non-primary accessions.
-
-    select 'uniprotkb' as dblabel, A.accession as refvalue,
-        taxid as reftaxid, sequence as refsequence, sequencedate as refdate
-    from uniprot_proteins as P
-    inner join uniprot_accessions as A
-        on P.uniprotid = A.uniprotid
-        and P.accession <> A.accession;
+    from uniprot_proteins;
 
 -- RefSeq versions and accessions mapping directly to proteins.
 

@@ -35,6 +35,24 @@ create temporary table tmp_plain as
         on X.dblabel = P.dblabel
         and X.refvalue = P.refvalue;
 
+-- UniProt non-primary accessions.
+
+create temporary table tmp_uniprot_non_primary as
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/non-primary' as sequencelink,
+        P.reftaxid, P.refsequence
+    from xml_xref_interactors as X
+    inner join uniprot_accessions as A1
+        on X.refvalue = A1.accession
+    inner join uniprot_accessions as A2
+        on A1.uniprotid = A2.uniprotid
+        and A1.accession <> A2.accession
+    inner join <sequences> as P
+        on X.dblabel = P.dblabel
+        and A2.accession = P.refvalue
+    where P.dblabel = 'uniprotkb';
+
 -- UniProt matches for unexpected isoforms.
 
 create temporary table tmp_uniprot_isoform as
@@ -57,6 +75,28 @@ create temporary table tmp_uniprot_isoform as
         on (X.dblabel, X.refvalue) = (P2.dblabel, P2.refvalue)
     where P.dblabel = 'uniprotkb'
         and P2.dblabel is null;
+
+-- UniProt matches for unexpected non-primary accession-based isoforms.
+
+create temporary table tmp_uniprot_non_primary_isoform as
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/isoform-non-primary-unexpected' as sequencelink,
+        P.reftaxid, P.refsequence
+    from xml_xref_interactors as X
+
+    -- Match using the base accession.
+
+    inner join uniprot_accessions as A1
+        on position('-' in X.refvalue) <> 0
+        and substring(X.refvalue from 1 for position('-' in X.refvalue) - 1) = A1.accession
+    inner join uniprot_accessions as A2
+        on A1.uniprotid = A2.uniprotid
+        and A1.accession <> A2.accession
+    inner join <sequences> as P
+        on X.dblabel = P.dblabel
+        and A2.accession = P.refvalue
+    where P.dblabel = 'uniprotkb';
 
 -- UniProt matches for gene identifiers.
 
@@ -197,7 +237,11 @@ create temporary table tmp_ipi_discarding_version as
 create temporary table tmp_xml_xref_sequences as
     select * from tmp_plain
     union all
+    select * from tmp_uniprot_non_primary
+    union all
     select * from tmp_uniprot_isoform
+    union all
+    select * from tmp_uniprot_non_primary_isoform
     union all
     select * from tmp_uniprot_gene
     union all
