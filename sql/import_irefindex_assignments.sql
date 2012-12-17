@@ -386,22 +386,38 @@ analyze irefindex_rogids;
 -- sequences that are not referenced by the interaction data.
 
 insert into irefindex_rogid_identifiers
-    select distinct rogid, dblabel, refvalue
-    from (
-        select rogid, finaldblabel as dblabel, finalrefvalue as refvalue
-        from irefindex_rogids as R
-        inner join xml_xref_sequences as I
-            on rogid = refsequence || reftaxid
-        where refsequence is not null
-            and reftaxid is not null
-        union
-        select rogid, dblabel, refvalue
-        from irefindex_rogids as R
-        inner join xml_xref_sequences as I
-            on rogid = refsequence || reftaxid
-        where refsequence is not null
-            and reftaxid is not null
-        ) as X;
+    select distinct rogid, finaldblabel, finalrefvalue
+    from irefindex_rogids as R
+    inner join xml_xref_sequences as I
+        on rogid = refsequence || reftaxid
+    where refsequence is not null
+        and reftaxid is not null;
+
+analyze irefindex_rogid_identifiers;
+
+insert into irefindex_rogid_identifiers
+    select distinct R.rogid, S.dblabel, S.refvalue
+    from irefindex_rogids as R
+    inner join irefindex_sequences as S
+        on rogid = refsequence || reftaxid
+    left outer join irefindex_rogid_identifiers as I
+        on R.rogid = I.rogid
+    where refsequence is not null
+        and reftaxid is not null
+        and I.rogid is null;
+
+analyze irefindex_rogid_identifiers;
+
+insert into irefindex_rogid_identifiers
+    select distinct R.rogid, S.dblabel, S.refvalue
+    from irefindex_rogids as R
+    inner join irefindex_sequences_archived as S
+        on rogid = refsequence || reftaxid
+    left outer join irefindex_rogid_identifiers as I
+        on R.rogid = I.rogid
+    where refsequence is not null
+        and reftaxid is not null
+        and I.rogid is null;
 
 analyze irefindex_rogid_identifiers;
 
