@@ -462,8 +462,12 @@ references.
 For arbitrary assignment, one of the sequences proposed for an interactor is
 chosen without making any judgement on whether that sequence is the most
 appropriate. Currently, this is done by sorting the sequences according to the
-ASCII values of the characters in the sequences and choosing the one with the
-highest value (the last in a low-to-high ordering).
+ASCII values of the characters in the digests of the sequences and choosing the
+one with the highest value (the last in a low-to-high ordering). An alternative
+means of selecting sequences has also been proposed where a canonical
+representative is chosen if a single representative of this nature can be
+associated with the entire range of ambiguous sequences or is associated with a
+majority of the ambiguous sequences.
 
 === Workflow and Preferred Assignments ===
 
