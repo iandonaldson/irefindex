@@ -454,15 +454,12 @@ create temporary table tmp_mitab_all as
         -- uidA (identifier, preferably uniprotkb accession, refseq, complex as 'complex:...')
 
         case when edgetype = 'C' then 'complex:' || I.rigid
-             when finaldblabelA in ('uniprotkb', 'refseq') then finaldblabelA || ':' || finalrefvalueA
              else prefA.dblabel || ':' || prefA.refvalue
         end as uidA,
 
         -- uidB (identifier, preferably uniprotkb accession, refseq)
 
-        case when finaldblabelB in ('uniprotkb', 'refseq') then finaldblabelB || ':' || finalrefvalueB
-             else prefB.dblabel || ':' || prefB.refvalue
-        end as uidB,
+        prefB.dblabel || ':' || prefB.refvalue as uidB,
 
         -- altA (alternatives for A, preferably uniprotkb accession, refseq, entrezgene/locuslink identifier, including rogid, irogid)
 
