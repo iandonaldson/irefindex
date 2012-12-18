@@ -333,13 +333,15 @@ insert into irefindex_assignment_scores
         array_to_string(array[
             case when reftype               = 'primaryRef'                                                              then 'P' else '' end,
             case when reftype               = 'secondaryRef'                                                            then 'S' else '' end,
-            case when P.sequencelink        in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected')    then 'U' else '' end,
-            case when P.sequencelink        = 'refseq/version-discarded'                                                then 'V' else '' end,
+            case when P.sequencelink        in ('uniprotkb/non-primary', 'uniprotkb/isoform-non-primary-unexpected',
+                                                'archived/uniprotkb/non-primary', 'archived/uniprotkb/isoform-non-primary-unexpected')
+                                                                                                                        then 'U' else '' end,
+            case when P.sequencelink        in ('refseq/version-discarded', 'archived/refseq/version-discarded')        then 'V' else '' end,
             case when originaltaxid         <> taxid                                                                    then 'T' else '' end,
             case when P.sequencelink        like '%entrezgene%'                                                         then 'G' else '' end,
             case when P.originaldblabel     <> P.finaldblabel                                                           then 'D' else '' end,
             -- NOTE: M currently not generally tracked (typographical modification).
-            case when P.sequencelink        like 'uniprotkb/sgd%'                                                       then 'M' else '' end,
+            case when P.sequencelink        like '%uniprotkb/sgd%'                                                      then 'M' else '' end,
             case when method                <> 'unambiguous'                                                            then '+' else '' end,
             case when method                = 'matching sequence'                                                       then 'O' else '' end,
             case when method                = 'matching taxonomy'                                                       then 'X' else '' end,
@@ -387,6 +389,16 @@ analyze irefindex_rogids;
 
 insert into irefindex_rogid_identifiers
     select distinct rogid, finaldblabel, finalrefvalue
+    from irefindex_rogids as R
+    inner join xml_xref_sequences as I
+        on rogid = refsequence || reftaxid
+    where refsequence is not null
+        and reftaxid is not null
+    union
+
+    -- Add things like gene identifiers.
+
+    select distinct rogid, dblabel, refvalue
     from irefindex_rogids as R
     inner join xml_xref_sequences as I
         on rogid = refsequence || reftaxid
