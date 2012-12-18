@@ -326,6 +326,9 @@ privileges.
 Initialising the Database
 -------------------------
 
+(Note that you can defer this step until you are ready to import data,
+described in the "Importing Source Data" section below.)
+
 Once the database system has been started, the database used by this software
 can be initialised using the following command:
 
@@ -347,6 +350,10 @@ following:
 To reinitialise the build products, the following is then required:
 
   irinit --init --build
+
+If you need to reinitialise the database, you can jump ahead to "Importing
+Source Data" after doing so, or if only the build products have been
+reinitialised, you can jump ahead to "Finishing the Build" instead.
 
 Downloading Source Data
 -----------------------
