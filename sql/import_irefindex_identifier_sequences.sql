@@ -140,6 +140,7 @@ create temporary table tmp_refseq_discarding_version as
     inner join <sequences> as P
         on X.dblabel = P.dblabel
         and substring(X.refvalue from '[A-Z0-9_]+') = substring(P.refvalue from '[A-Z0-9_]+')
+        and X.refvalue <> P.refvalue
     where X.dblabel = 'refseq'
         and (X.refvalue like '%.%' or P.refvalue like '%.%');
 
