@@ -139,9 +139,9 @@ create temporary table tmp_refseq_discarding_version as
     from xml_xref_interactors as X
     inner join <sequences> as P
         on X.dblabel = P.dblabel
-        and substring(X.refvalue from 1 for position('.' in X.refvalue) - 1) = P.refvalue
+        and substring(X.refvalue from '[A-Z0-9_]+') = substring(P.refvalue from '[A-Z0-9_]+')
     where X.dblabel = 'refseq'
-        and position('.' in X.refvalue) <> 0;
+        and (X.refvalue like '%.%' or P.refvalue like '%.%');
 
 -- RefSeq accession matches via Entrez Gene.
 
