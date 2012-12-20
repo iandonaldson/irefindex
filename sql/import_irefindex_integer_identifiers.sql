@@ -101,6 +101,18 @@ insert into irefindex_rog2rogid
         on N.rogid = O.rogid
     where O.rogid is null;
 
+-- Add archived sequences providing ROG identifiers.
+
+insert into irefindex_rog2rogid
+    select nextval('tmp_rog'), rogid, false
+    from (
+        select distinct N.rogid
+        from irefindex_rogids as N
+        left outer join irefindex_rog2rogid as I
+            on N.rogid = I.rogid
+        where I.rogid is null
+        ) as X;
+
 create index irefindex_rog2rogid_rogid on irefindex_rog2rogid(rogid);
 analyze irefindex_rog2rogid;
 
