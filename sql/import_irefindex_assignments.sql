@@ -383,10 +383,6 @@ analyze irefindex_rogids;
 -- The identifier sequences table is used to get a wide selection of identifiers
 -- instead of only the identifiers actually used in the interaction data.
 
--- This is not as extensive as the protein identifier mapping (defined in the
--- export_protein_identifier_mapping.sql template) because that mapping uses
--- sequences that are not referenced by the interaction data.
-
 insert into irefindex_rogid_identifiers
     select distinct rogid, finaldblabel, finalrefvalue
     from irefindex_rogids as R
@@ -404,32 +400,6 @@ insert into irefindex_rogid_identifiers
         on rogid = refsequence || reftaxid
     where refsequence is not null
         and reftaxid is not null;
-
-analyze irefindex_rogid_identifiers;
-
-insert into irefindex_rogid_identifiers
-    select distinct R.rogid, S.dblabel, S.refvalue
-    from irefindex_rogids as R
-    inner join irefindex_sequences as S
-        on rogid = refsequence || reftaxid
-    left outer join irefindex_rogid_identifiers as I
-        on R.rogid = I.rogid
-    where refsequence is not null
-        and reftaxid is not null
-        and I.rogid is null;
-
-analyze irefindex_rogid_identifiers;
-
-insert into irefindex_rogid_identifiers
-    select distinct R.rogid, S.dblabel, S.refvalue
-    from irefindex_rogids as R
-    inner join irefindex_sequences_archived as S
-        on rogid = refsequence || reftaxid
-    left outer join irefindex_rogid_identifiers as I
-        on R.rogid = I.rogid
-    where refsequence is not null
-        and reftaxid is not null
-        and I.rogid is null;
 
 analyze irefindex_rogid_identifiers;
 
