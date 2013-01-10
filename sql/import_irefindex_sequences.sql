@@ -197,7 +197,7 @@ insert into irefindex_sequences
 -- PDB accessions mapping directly and indirectly to proteins.
 
 insert into irefindex_sequences
-    select distinct 'pdb' as dblabel, M.accession as refvalue,
+    select distinct 'pdb' as dblabel, M.accession || '|' || M.chain as refvalue,
         M.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from mmdb_pdb_accessions as M
     inner join pdb_proteins as P
@@ -205,13 +205,12 @@ insert into irefindex_sequences
         and M.chain = substring(P.chain from 1 for 1)
 	and M.gi = P.gi
     union all
-    select distinct 'pdb' as dblabel, P.accession || '|' || P.chain as refvalue,
+    select distinct 'pdb' as dblabel, P.accession || '|' || substring(P.chain from 1 for 1) as refvalue,
         M.taxid as reftaxid, P.sequence as refsequence, null as refdate
     from pdb_proteins as P
     left outer join mmdb_pdb_accessions as M
         on M.accession = P.accession
         and M.chain = substring(P.chain from 1 for 1)
-	and M.gi = P.gi
 
     -- Exclude previous matches.
 

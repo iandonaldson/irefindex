@@ -228,6 +228,25 @@ create temporary table tmp_ipi_discarding_version as
     where X.dblabel = 'ipi'
         and P2.dblabel is null;
 
+-- PDB accession matches without chain information.
+
+create temporary table tmp_pdb_without_chain as
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'pdb/without-chain' as sequencelink,
+        P.reftaxid, P.refsequence
+    from xml_xref_interactors as X
+    inner join <sequences> as P
+        on X.dblabel = P.dblabel
+        and X.refvalue = substring(P.refvalue from '[^|]*')
+
+    -- Exclude existing matches.
+
+    left outer join <sequences> as P2
+        on (X.dblabel, X.refvalue) = (P2.dblabel, P2.refvalue)
+    where X.dblabel = 'pdb'
+        and P2.dblabel is null;
+
 -- Create a mapping from accessions to reference sequences.
 -- Combine the straightforward mapping with those requiring some identifier
 -- transformations.
@@ -257,7 +276,9 @@ create temporary table tmp_xml_xref_sequences as
     union all
     select * from tmp_genpept_genbank_accession
     union all
-    select * from tmp_ipi_discarding_version;
+    select * from tmp_ipi_discarding_version
+    union all
+    select * from tmp_pdb_without_chain;
 
 create index tmp_xml_xref_sequences_index on tmp_xml_xref_sequences(dblabel, refvalue);
 analyze tmp_xml_xref_sequences;
