@@ -1,0 +1,22 @@
+#Variable_name\tdatatype(int, double,string, boolean, list,NO_list, block)
+i.score_hpr=int
+i.score_lpr=int
+i.score_np=int
+i.PMID=int
+i.geneID_TOP=int
+i.rogid=NO_list
+i.mass=NO_list
+i.mass_TOP=int
+i.sequence_TOP=block
+i.taxid=int
+i.Canonical_rog_TOP=int
+i.Canonical_rog=NO_list
+i.source_protein=int
+i.target_protein=int
+i.overall_degree=NO_list
+i.overall_degree_TOP=int
+i.digid=int
+i.omim=int
+%ORDER::UniProt_Ac|RefSeq_Ac|UniProt_ID|rogid|geneID|geneSymbol|ipi|mass|rog|rogid|PMID|rig|src_intxn_id|omim|digid|
+%IGNOREAFTERDOT::ipi|RefSeq_Ac
+%IGNOREAFTERDASH::UniProt_Ac
