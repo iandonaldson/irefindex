@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -23,7 +23,7 @@ else
     . 'irdata-config'
 fi
 
-DATESTAMP=`date +%Y-%m-%d`
+DATESTAMP=`date +%m-%d-%Y`
 MITAB_COMPLETE_OUTPUT="$DATA/All.mitab.$DATESTAMP.txt"
 MITAB_ORGANISM_OUTPUT="$DATA/{}.mitab.$DATESTAMP.txt"
 
