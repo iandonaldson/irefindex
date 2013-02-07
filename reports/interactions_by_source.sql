@@ -1,6 +1,6 @@
 -- Show interaction details for each data source.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -27,10 +27,22 @@ create temporary table tmp_interactions_available_by_source as
 
 create temporary table tmp_interactions_having_assignments as
     select I.source, count(distinct array[I.source, I.filename, cast(I.entry as varchar), interactionid]) as total
-    from xml_interactors as I
-    inner join xml_xref_interactor_sequences as S
-        on (I.source, I.filename, I.entry, I.interactorid) =
-           (S.source, S.filename, S.entry, S.interactorid)
+    from (
+
+        -- Group interactors by interaction and make sure that only interactions
+        -- where all interactors provide sequences are considered.
+
+        select I.source, I.filename, I.entry, I.interactionid
+        from xml_interactors as I
+        left outer join xml_xref_interactor_types as S
+            on (I.source, I.filename, I.entry, I.interactorid) =
+               (S.source, S.filename, S.entry, S.interactorid)
+        group by I.source, I.filename, I.entry, I.interactionid
+        having count(I.interactorid) = count(S.interactorid)
+            and count(distinct refvalue) = 1
+            and min(refvalue) = 'MI:0326'
+            or count(S.interactorid) = 0
+        ) as I
     group by I.source;
 
 \copy tmp_interactions_available_by_source to '<directory>/interactions_having_assignments_by_source'
