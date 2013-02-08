@@ -72,23 +72,35 @@ be found.
 <rowspan="3">
 Interactors       || irefindex_rogids                || Only "active" interactors described by
                                                      .. interaction data; source details provided
+                                                     .. (specific and general interactors)
 ==
                   .. irefindex_rogid_identifiers     || Identifiers for "active" interactors
+                                                     .. (general interactors)
 ==
                   .. irefindex_all_rogid_identifiers || Identifiers for all possible interactors
                                                      .. described by sequence data
+                                                     .. (general interactors)
 ==
 <rowspan="4">
 Interactions      || irefindex_interactions_complete || Source details for "active", complete
                                                      .. interactions where all interactors have been
                                                      .. identified
+                                                     .. (specific interactions only)
 ==
                   .. irefindex_rigids                || Only "active" interactions described by
                                                      .. interaction data; source details provided
+                                                     .. (specific and general interactions)
 ==
                   .. irefindex_interactions          || "Active" interactions with interactor and
-                                                     .. source details
+                                                     .. source details, preserving all interactor
+                                                     .. details (including multiple identical
+                                                     .. interactors in a specific interaction)
+                                                     .. (specific and general interactions)
 ==
                   .. irefindex_distinct_interactions || A simple correspondence between "active"
-                                                     .. interactions and interactors
+                                                     .. interactions and their interactors without
+                                                     .. source details, preserving all interactor
+                                                     .. details (including multiple identical
+                                                     .. interactors)
+                                                     .. (general interactions)
 }}}
