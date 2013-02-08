@@ -1,4 +1,4 @@
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -38,8 +38,8 @@ delete from bind_interactors
         where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex')
         );
 delete from bind_complexes
-    where bindid in (
-        select bindid
+    where bcid in (
+        select bcid
         from bind_complexes
         where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex')
         );
@@ -57,7 +57,7 @@ alter table bind_interactors alter column interactorid set not null;
 -- Add indexes.
 
 create index bind_interactors_index on bind_interactors(bindid);
-create index bind_complexes_index on bind_complexes(bindid);
+create index bind_complexes_index on bind_complexes(bcid);
 
 analyze bind_interactors;
 analyze bind_complexes;
@@ -77,7 +77,7 @@ insert into xml_interactors
     -- Get the identifiers from the group of records representing a complex.
 
     select distinct 'BIND' as source, filename, 0 as entry, cast(interactorid as varchar) as interactorid,
-        cast(interactorid as varchar) as participantid, cast(bindid as varchar) as interactionid
+        cast(interactorid as varchar) as participantid, cast(bcid as varchar) as interactionid
     from bind_complexes;
 
 insert into xml_xref
@@ -136,8 +136,8 @@ insert into xml_xref
     -- Get the interaction identifier from the group of records representing a complex.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'interaction' as scope,
-        cast(bindid as varchar) as parentid, 'interaction' as property,
-        'primaryRef' as reftype, cast(bindid as varchar) as refvalue, 'bind' as dblabel,
+        cast(bcid as varchar) as parentid, 'interaction' as property,
+        'primaryRef' as reftype, cast(bcid as varchar) as refvalue, 'bind' as dblabel,
         null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_complexes
     union all
@@ -157,12 +157,12 @@ insert into xml_xref
     -- Get the PubMed references for complexes.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
-        cast(I.bindid as varchar) as parentid, 'bibref' as property,
+        cast(I.bcid as varchar) as parentid, 'bibref' as property,
         'primaryRef' as reftype, pmid as refvalue, 'pubmed' as dblabel,
         'MI:0446' as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_complexes as I
     inner join bind_complex_references as R
-        on I.bindid = R.bindid
+        on I.bcid = R.bcid
         and pmid <> '-1'
     union all
 
@@ -259,8 +259,8 @@ insert into xml_experiments
         cast(bindid as varchar) as interactionid
     from bind_interactors
     union all
-    select distinct 'BIND' as source, filename, 0 as entry, cast(bindid as varchar) as interactionid,
-        cast(bindid as varchar) as interactionid
+    select distinct 'BIND' as source, filename, 0 as entry, cast(bcid as varchar) as interactionid,
+        cast(bcid as varchar) as interactionid
     from bind_complexes;
 
 commit;

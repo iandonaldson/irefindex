@@ -13,7 +13,7 @@ create table bind_interactors (
 
 create table bind_complexes (
     filename varchar not null,
-    bindid integer not null,
+    bcid integer not null,
     participantType varchar not null,
     database varchar not null,
     accession varchar not null,
@@ -33,7 +33,7 @@ create table bind_references (
 );
 
 create table bind_complex_references (
-    bindid integer not null,
+    bcid integer not null,
     pmid varchar not null
 );
 
