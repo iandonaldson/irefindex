@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Parsing of BIND flat-file data.
+# See: http://bond.unleashedinformatics.com/downloads/data/BIND/data/bindflatfiles/bindindex/README
+#
 # Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
