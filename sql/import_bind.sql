@@ -257,6 +257,10 @@ insert into xml_organisms
 insert into xml_experiments
     select distinct 'BIND' as source, filename, 0 as entry, cast(bindid as varchar) as interactionid,
         cast(bindid as varchar) as interactionid
-    from bind_interactors;
+    from bind_interactors
+    union all
+    select distinct 'BIND' as source, filename, 0 as entry, cast(bindid as varchar) as interactionid,
+        cast(bindid as varchar) as interactionid
+    from bind_complexes;
 
 commit;
