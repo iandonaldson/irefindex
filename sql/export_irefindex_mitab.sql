@@ -88,17 +88,22 @@ analyze tmp_identifiers;
 -- used in the context of an interaction.
 
 create temporary table tmp_preferred as
-    select I.rogid,
-        coalesce(min(U.dblabel), min(R.dblabel), 'rogid') as dblabel,
-        coalesce(min(U.refvalue), min(R.refvalue), I.rogid) as refvalue
-    from irefindex_rogids as I
-    left outer join irefindex_rogid_identifiers as U
-        on I.rogid = U.rogid
-        and U.dblabel = 'uniprotkb'
-    left outer join irefindex_rogid_identifiers as R
-        on I.rogid = R.rogid
-        and R.dblabel = 'refseq'
-    group by I.rogid;
+    select rogid,
+        coalesce(uniprotacc[2], refseqacc[2], 'rogid') as dblabel,
+        coalesce(uniprotacc[3], refseqacc[3], rogid) as refvalue
+    from (
+        select I.rogid,
+            min(array[cast(U.priority as varchar), U.dblabel, U.refvalue]) as uniprotacc,
+            min(array[cast(R.priority as varchar), R.dblabel, R.refvalue]) as refseqacc
+        from irefindex_rogids as I
+        left outer join irefindex_rogid_identifiers as U
+            on I.rogid = U.rogid
+            and U.dblabel = 'uniprotkb'
+        left outer join irefindex_rogid_identifiers as R
+            on I.rogid = R.rogid
+            and R.dblabel = 'refseq'
+        group by I.rogid
+        ) as X;
 
 analyze tmp_preferred;
 

@@ -384,22 +384,32 @@ analyze irefindex_rogids;
 -- instead of only the identifiers actually used in the interaction data.
 
 insert into irefindex_rogid_identifiers
-    select distinct rogid, finaldblabel, finalrefvalue
-    from irefindex_rogids as R
-    inner join xml_xref_sequences as I
-        on rogid = refsequence || reftaxid
-    where refsequence is not null
-        and reftaxid is not null
-    union
-
-    -- Add things like gene identifiers.
-
-    select distinct rogid, dblabel, refvalue
+    select distinct rogid, finaldblabel, finalrefvalue, 1 as priority
     from irefindex_rogids as R
     inner join xml_xref_sequences as I
         on rogid = refsequence || reftaxid
     where refsequence is not null
         and reftaxid is not null;
+
+analyze irefindex_rogid_identifiers;
+
+insert into irefindex_rogid_identifiers
+
+    -- Add things like gene identifiers.
+    -- These should only be chosen to refer to an interactor if no better
+    -- identifier exists.
+
+    select distinct R.rogid, I.dblabel, I.refvalue, 2 as priority
+    from irefindex_rogids as R
+    inner join xml_xref_sequences as I
+        on R.rogid = refsequence || reftaxid
+    left outer join irefindex_rogid_identifiers as RI
+        on R.rogid = RI.rogid
+        and I.dblabel = RI.dblabel
+        and I.refvalue = RI.refvalue
+    where refsequence is not null
+        and reftaxid is not null
+        and RI.rogid is null;
 
 analyze irefindex_rogid_identifiers;
 
