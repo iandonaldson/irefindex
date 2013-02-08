@@ -326,7 +326,7 @@ create temporary table tmp_interactor_experiments as
         -- finalReferenceA (the original reference for A, or a corrected/complete/updated/unambiguous reference)
         -- NOTE: This actually appears as "-" in the iRefIndex 9 MITAB output for complexes.
 
-        case when edgetype = 'C' then 'complex:'
+        case when edgetype = 'C' then 'complex'
              else nameA.finaldblabel
         end as finaldblabelA,
 
