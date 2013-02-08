@@ -3,7 +3,14 @@
 create table ipi_proteins (
     accession varchar not null,
     "sequence" varchar not null,
+    length integer not null,
     primary key(accession)
+);
+
+create table ipi_sequences (
+    "sequence" varchar not null,            -- the digest representing the sequence
+    actualsequence varchar not null,        -- the original sequence
+    primary key("sequence")
 );
 
 create table ipi_identifiers (

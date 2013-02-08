@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -55,5 +55,5 @@ TAB=`printf '\t'`
 | sed -e "s/\(.*\)${TAB}\(.*\)${TAB}\(.*\)${TAB}.*\[\(.*\)\]${TAB}\(.*\)/\\1${TAB}\\2${TAB}\\3${TAB}\\4${TAB}\\5/" \
 > "$DATADIR/genpept_proteins.txt"
 
-"$TOOLS/irdata_process_signatures.sh" "$DATADIR"
+"$TOOLS/irdata_process_signatures.sh" "$DATADIR" --append --append-length
 exit $?

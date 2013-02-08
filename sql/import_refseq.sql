@@ -1,6 +1,6 @@
 -- Import data into the schema.
 
--- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -22,6 +22,7 @@ create temporary table tmp_refseq_proteins (
     version varchar,
     gi integer not null,
     taxid integer,
+    actualsequence varchar not null,
     "sequence" varchar not null,
     length integer not null
 );
@@ -39,6 +40,10 @@ create temporary table tmp_refseq_nucleotides (
 );
 
 \copy tmp_refseq_proteins from '<directory>/refseq_proteins.txt.seq'
+
+create index tmp_refseq_proteins_sequence on tmp_refseq_proteins(sequence);
+analyze tmp_refseq_proteins;
+
 \copy tmp_refseq_identifiers from '<directory>/refseq_identifiers.txt'
 \copy tmp_refseq_nucleotides from '<directory>/refseq_nucleotides.txt'
 
@@ -48,6 +53,10 @@ insert into refseq_proteins
             cast(substring(version from position('.' in version) + 1) as integer)
         else null end as vnumber,
         gi, taxid, "sequence", length, false as missing
+    from tmp_refseq_proteins;
+
+insert into refseq_sequences
+    select distinct "sequence", actualsequence
     from tmp_refseq_proteins;
 
 insert into refseq_identifiers
@@ -61,8 +70,10 @@ insert into refseq_nucleotides
 create index refseq_proteins_accession on refseq_proteins(accession);
 create index refseq_proteins_version on refseq_proteins(version);
 create index refseq_proteins_sequence on refseq_proteins(sequence);
+create index refseq_sequences_sequence on refseq_sequences(sequence);
 
 analyze refseq_proteins;
+analyze refseq_sequences;
 analyze refseq_identifiers;
 analyze refseq_nucleotides;
 

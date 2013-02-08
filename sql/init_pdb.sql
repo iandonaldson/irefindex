@@ -5,5 +5,12 @@ create table pdb_proteins (
     chain varchar not null,
     gi integer not null,
     "sequence" varchar not null,
+    length integer not null,
     primary key(accession, chain)
+);
+
+create table pdb_sequences (
+    "sequence" varchar not null,            -- the digest representing the sequence
+    actualsequence varchar not null,        -- the original sequence
+    primary key("sequence")
 );

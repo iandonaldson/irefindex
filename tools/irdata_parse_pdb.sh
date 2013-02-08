@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2011 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -56,5 +56,5 @@ for FILENAME in $FILENAMES; do
     fi
 done
 
-"$TOOLS/irdata_process_signatures.sh" "$DATADIR"
+"$TOOLS/irdata_process_signatures.sh" "$DATADIR" --append --append-length
 exit $?

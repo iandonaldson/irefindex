@@ -118,5 +118,5 @@ for FILENAME in $FILENAMES; do
     fi
 done
 
-"$TOOLS/irdata_process_signatures.sh" "$DATADIR" --append-length
+"$TOOLS/irdata_process_signatures.sh" "$DATADIR" --append --append-length
 exit $?

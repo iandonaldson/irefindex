@@ -1,6 +1,6 @@
 -- Import data into the schema.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -17,8 +17,29 @@
 
 begin;
 
-\copy ipi_proteins from '<directory>/ipi_proteins.txt.seq'
-\copy ipi_identifiers from '<directory>/ipi_identifiers.txt'
+-- Import the proteins, separating the original sequences into a separate
+-- mapping table.
+
+create temporary table tmp_ipi_proteins (
+    accession varchar not null,
+    actualsequence varchar not null,
+    "sequence" varchar not null,
+    length integer not null,
+    primary key(accession)
+);
+
+\copy tmp_ipi_proteins from '<directory>/ipi_proteins.txt.seq'
+
+create index tmp_ipi_proteins_sequence on tmp_ipi_proteins(sequence);
+analyze tmp_ipi_proteins;
+
+insert into ipi_proteins
+    select accession, "sequence", length
+    from tmp_ipi_proteins;
+
+insert into ipi_sequences
+    select distinct "sequence", actualsequence
+    from tmp_ipi_proteins;
 
 insert into ipi_accessions
     select accession, substring(accession from '[^.]*') as shortform
@@ -29,6 +50,8 @@ analyze ipi_proteins;
 
 create index ipi_accessions_shortform on ipi_accessions(shortform);
 analyze ipi_accessions;
+
+\copy ipi_identifiers from '<directory>/ipi_identifiers.txt'
 
 analyze ipi_identifiers;
 

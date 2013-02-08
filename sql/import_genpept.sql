@@ -1,6 +1,6 @@
 -- Import data into the schema.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -22,21 +22,29 @@ create temporary table tmp_genpept_proteins (
     db varchar not null,
     gi integer not null,
     organism varchar not null,
-    "sequence" varchar not null
+    actualsequence varchar not null,
+    "sequence" varchar not null,
+    length integer not null
 );
 
 \copy tmp_genpept_proteins from '<directory>/genpept_proteins.txt.seq'
+
+create index tmp_genpept_proteins_sequence on tmp_genpept_proteins(sequence);
 analyze tmp_genpept_proteins;
 
 insert into genpept_proteins
-    select accession, db, gi, case when taxids = 1 then taxid else null end, "sequence"
+    select accession, db, gi, case when taxids = 1 then taxid else null end, "sequence", length
     from (
-        select accession, db, gi, "sequence", count(distinct taxid) as taxids, min(taxid) as taxid
+        select accession, db, gi, "sequence", length, count(distinct taxid) as taxids, min(taxid) as taxid
         from tmp_genpept_proteins
         left outer join taxonomy_names
             on organism = name
         group by accession, db, gi, "sequence"
         ) as X;
+
+insert into genpept_sequences
+    select distinct "sequence", actualsequence
+    from tmp_genpept_proteins;
 
 create index genpept_proteins_sequence on genpept_proteins(sequence);
 create index genpept_proteins_gi on genpept_proteins(gi);

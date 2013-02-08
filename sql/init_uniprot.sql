@@ -14,6 +14,12 @@ create table uniprot_proteins (
     primary key(accession)
 );
 
+create table uniprot_sequences (
+    "sequence" varchar not null,        -- the digest representing the sequence
+    actualsequence varchar not null,    -- the original sequence
+    primary key("sequence")
+);
+
 create table uniprot_accessions (
     uniprotid varchar not null,
     accession varchar not null,

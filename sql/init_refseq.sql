@@ -12,6 +12,12 @@ create table refseq_proteins (
     primary key(gi)
 );
 
+create table refseq_sequences (
+    "sequence" varchar not null,            -- the digest representing the sequence
+    actualsequence varchar not null,        -- the original sequence
+    primary key("sequence")
+);
+
 create table refseq_identifiers (
     accession varchar not null,
     dblabel varchar not null,
