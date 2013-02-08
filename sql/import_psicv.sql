@@ -1,6 +1,6 @@
 -- Import PSI-MI data.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -17,15 +17,9 @@
 
 begin;
 
-create temporary table tmp_psicv_terms (
-    code varchar not null,
-    name varchar not null,
-    nametype varchar not null
-);
+\copy psicv_terms from '<directory>/terms'
 
-\copy tmp_psicv_terms from '<directory>/terms'
-
-insert into psicv_terms select distinct code, name, nametype from tmp_psicv_terms;
+create index psicv_terms_index on psicv_terms(code, name, nametype);
 analyze psicv_terms;
 
 commit;

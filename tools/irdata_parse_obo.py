@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 
 """
-Extract term information from the PSI-MI ontology file.
+Extract term information from the PSI-MI ontology file, producing a file with
+the following structure:
+
+<identifier> <name> (preferred|synonym) <qualifier>
+
+The qualifier may be given as an encoded null value ("\N") for synonyms and is
+always null for preferred names.
 
 --------
 
-Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -23,7 +29,8 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
 
-synonym_pattern = re.compile(r'synonym: "(.*?)" EXACT')
+#                              synonym: "name"  EXACT qualifier   []
+synonym_pattern = re.compile(r'synonym: "(.*?)" EXACT (?:(.*?) )?\[\]')
 
 def parse(infile, outfile):
     state = None
@@ -43,12 +50,12 @@ def parse(infile, outfile):
 
         elif state == "ID":
             if line.startswith("name: "):
-                output = [id, line[6:], 'preferred']
+                output = [id, line[6:], 'preferred', "\\N"]
                 print >>outfile, "\t".join(output)
             else:
                 match = synonym_pattern.match(line)
                 if match:
-                    output = [id, match.group(1), 'synonym']
+                    output = [id, match.group(1), 'synonym', match.group(2) or "\\N"]
                     print >>outfile, "\t".join(output)
 
         elif not line.strip():
