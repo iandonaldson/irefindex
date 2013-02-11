@@ -32,8 +32,8 @@ begin;
 -- NOTE: Such records are discarded here.
 
 delete from bind_interactors
-    where bindid in (
-        select bindid
+    where interactionid in (
+        select interactionid
         from bind_interactors
         where participantType not in ('gene', 'protein', 'DNA', 'RNA', 'complex')
         );
@@ -56,7 +56,7 @@ alter table bind_interactors alter column interactorid set not null;
 
 -- Add indexes.
 
-create index bind_interactors_index on bind_interactors(bindid);
+create index bind_interactors_index on bind_interactors(interactionid);
 create index bind_complexes_index on bind_complexes(bcid);
 
 analyze bind_interactors;
@@ -70,7 +70,7 @@ insert into xml_interactors
     -- Get the identifiers from each interactor.
 
     select 'BIND' as source, filename, 0 as entry, cast(interactorid as varchar) as interactorid,
-        cast(participantid as varchar) as participantid, cast(bindid as varchar) as interactionid
+        cast(participantid as varchar) as participantid, cast(interactionid as varchar) as interactionid
     from bind_interactors
     union all
 
@@ -127,7 +127,7 @@ insert into xml_xref
     -- Get the interaction identifier from the group of records representing an interaction.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'interaction' as scope,
-        cast(bindid as varchar) as parentid, 'interaction' as property,
+        cast(interactionid as varchar) as parentid, 'interaction' as property,
         'primaryRef' as reftype, cast(bindid as varchar) as refvalue, 'bind' as dblabel,
         null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_interactors
@@ -145,7 +145,7 @@ insert into xml_xref
     -- Get the PubMed references for interactions.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
-        cast(I.bindid as varchar) as parentid, 'bibref' as property,
+        cast(I.interactionid as varchar) as parentid, 'bibref' as property,
         'primaryRef' as reftype, pmid as refvalue, 'pubmed' as dblabel,
         'MI:0446' as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_interactors as I
@@ -229,7 +229,7 @@ insert into xml_names
     -- Get the methods.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
-        cast(I.bindid as varchar) as parentid, 'interactionDetectionMethod' as property,
+        cast(I.interactionid as varchar) as parentid, 'interactionDetectionMethod' as property,
         'shortLabel' as nametype, null as typelabel, null as typecode, method as name
     from bind_interactors as I
     inner join bind_references as R
@@ -255,8 +255,8 @@ insert into xml_organisms
 -- interaction identifier.
 
 insert into xml_experiments
-    select distinct 'BIND' as source, filename, 0 as entry, cast(bindid as varchar) as interactionid,
-        cast(bindid as varchar) as interactionid
+    select distinct 'BIND' as source, filename, 0 as entry, cast(interactionid as varchar) as interactionid,
+        cast(interactionid as varchar) as interactionid
     from bind_interactors
     union all
     select distinct 'BIND' as source, filename, 0 as entry, cast(bcid as varchar) as interactionid,

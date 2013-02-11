@@ -3,7 +3,7 @@
 # Parsing of BIND flat-file data.
 # See: http://bond.unleashedinformatics.com/downloads/data/BIND/data/bindflatfiles/bindindex/README
 #
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -54,20 +54,31 @@ for FILENAME in $FILENAMES; do
 
     SED_FILENAME=$( echo "$FILENAME" | sed 's/\//\\\//g' )
 
+    # A note about line numbers in sed invocations: with sed -n suppressing
+    # automatic output of the pattern space, 'p;=' produces a line of input
+    # followed by a line with the input line number, whereas '=;p' produces the
+    # input line number followed by the line of input; such pairs of lines can
+    # be concatenated and processed as a single line by using 'N' in any sed
+    # invocation receiving such pairs of lines.
+
     if [ "$FILETYPE" = 'ints.txt' ]; then
 
-        # First interactor (add filename and position 0).
+        # First interactor (add line number as a unique interactor identifier,
+        # then insert the filename and position 0 before it).
 
           cut -f 1,2,3,4,5,6,7 "$FILENAME" \
+        | sed -n -e '=;p' \
+        | sed -e "N;s/\n/\t/;s/^/$SED_FILENAME\t0\t/" \
         | uniq \
-        | sed -e "s/^/$SED_FILENAME\t0\t/" \
         > "$DATADIR/interactors.txt"
 
-        # Second interactor (add filename and position 1).
+        # Second interactor (add line number as a unique interactor identifier,
+        # then insert the filename and position 1 before it).
 
           cut -f 1,2,8,9,10,11,12 "$FILENAME" \
+        | sed -n -e '=;p' \
+        | sed -e "N;s/\n/\t/;s/^/$SED_FILENAME\t1\t/" \
         | uniq \
-        | sed -e "s/^/$SED_FILENAME\t1\t/" \
         >> "$DATADIR/interactors.txt"
 
     elif [ "$FILETYPE" = 'refs.txt' ]; then
