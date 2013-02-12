@@ -3,6 +3,10 @@
 # Parsing of BIND flat-file data.
 # See: http://bond.unleashedinformatics.com/downloads/data/BIND/data/bindflatfiles/bindindex/README
 #
+# In order to maintain a usable interaction identifier, each binary interaction
+# labelled with an identifier derived from the line number of the interaction
+# record in the file, prefixed with 'B' for "binary".
+#
 # Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
@@ -64,20 +68,22 @@ for FILENAME in $FILENAMES; do
     if [ "$FILETYPE" = 'ints.txt' ]; then
 
         # First interactor (add line number as a unique interactor identifier,
-        # then insert the filename and position 0 before it).
+        # then insert the filename and position 0 before it, adding a 'B' prefix
+        # for "binary" to the identifier).
 
           cut -f 1,2,3,4,5,6,7 "$FILENAME" \
         | sed -n -e '=;p' \
-        | sed -e "N;s/\n/\t/;s/^/$SED_FILENAME\t0\t/" \
+        | sed -e "N;s/\n/\t/;s/^/$SED_FILENAME\t0\tB/" \
         | uniq \
         > "$DATADIR/interactors.txt"
 
         # Second interactor (add line number as a unique interactor identifier,
-        # then insert the filename and position 1 before it).
+        # then insert the filename and position 1 before it, adding a 'B' prefix
+        # for "binary" to the identifier).
 
           cut -f 1,2,8,9,10,11,12 "$FILENAME" \
         | sed -n -e '=;p' \
-        | sed -e "N;s/\n/\t/;s/^/$SED_FILENAME\t1\t/" \
+        | sed -e "N;s/\n/\t/;s/^/$SED_FILENAME\t1\tB/" \
         | uniq \
         >> "$DATADIR/interactors.txt"
 
@@ -97,6 +103,7 @@ for FILENAME in $FILENAMES; do
         # Add the line number as the interactor identifier.
         # Then transpose each line to make a collection of lines with a
         # different alias on each one.
+        # Then add the filename before the identifier.
 
           sed -n -e 'p;=' "$FILENAME" \
         | sed -e 'N;s/\n/\t/' \

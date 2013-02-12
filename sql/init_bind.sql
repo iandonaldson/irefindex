@@ -1,7 +1,7 @@
 create table bind_interactors (
     filename varchar not null,
     participantid integer not null,
-    interactionid integer not null,
+    interactionid varchar not null,
     groupid integer not null,
     bindid integer not null,
     participantType varchar not null,

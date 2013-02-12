@@ -70,7 +70,7 @@ insert into xml_interactors
     -- Get the identifiers from each interactor.
 
     select 'BIND' as source, filename, 0 as entry, cast(interactorid as varchar) as interactorid,
-        cast(participantid as varchar) as participantid, cast(interactionid as varchar) as interactionid
+        cast(participantid as varchar) as participantid, interactionid
     from bind_interactors
     union all
 
@@ -127,7 +127,7 @@ insert into xml_xref
     -- Get the interaction identifier from the group of records representing an interaction.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'interaction' as scope,
-        cast(interactionid as varchar) as parentid, 'interaction' as property,
+        interactionid as parentid, 'interaction' as property,
         'primaryRef' as reftype, cast(bindid as varchar) as refvalue, 'bind' as dblabel,
         null as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_interactors
@@ -145,7 +145,7 @@ insert into xml_xref
     -- Get the PubMed references for interactions.
 
     select distinct 'BIND' as source, filename, 0 as entry, 'experimentDescription' as scope,
-        cast(I.interactionid as varchar) as parentid, 'bibref' as property,
+        I.interactionid as parentid, 'bibref' as property,
         'primaryRef' as reftype, pmid as refvalue, 'pubmed' as dblabel,
         'MI:0446' as dbcode, 'primary-reference' as reftypelabel, 'MI:0358' as reftypecode
     from bind_interactors as I
@@ -255,11 +255,11 @@ insert into xml_organisms
 -- interaction identifier.
 
 insert into xml_experiments
-    select distinct 'BIND' as source, filename, 0 as entry, cast(interactionid as varchar) as interactionid,
-        cast(interactionid as varchar) as interactionid
+    select distinct 'BIND' as source, filename, 0 as entry, interactionid as experimentid,
+        interactionid
     from bind_interactors
     union all
-    select distinct 'BIND' as source, filename, 0 as entry, cast(bcid as varchar) as interactionid,
+    select distinct 'BIND' as source, filename, 0 as entry, cast(bcid as varchar) as experimentid,
         cast(bcid as varchar) as interactionid
     from bind_complexes;
 
