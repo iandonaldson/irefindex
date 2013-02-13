@@ -278,12 +278,14 @@ analyze irefindex_sequences;
 
 
 -- Augment the interactor tables.
--- See import_irefindex_interactors.sql for similar code.
+-- See import_irefindex_identifier_sequences.sql for similar code.
 
 -- Match plain identifiers mapping to sequences.
 
 create temporary table tmp_plain as
-    select distinct X.dblabel, X.refvalue, X.dblabel as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        X.dblabel as sequencelink,
         reftaxid, refsequence
     from xml_xref_interactors as X
     inner join tmp_irefindex_sequences as P
@@ -298,7 +300,9 @@ create temporary table tmp_refseq_discarding_version as
     -- RefSeq accession matches for otherwise non-matching versions.
     -- The latest version for the matching accession is chosen.
 
-    select distinct X.dblabel, X.refvalue, 'refseq/version-discarded' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        'refseq/version-discarded' as sequencelink,
         reftaxid, refsequence
     from xml_xref_interactors as X
     inner join tmp_irefindex_sequences as P
@@ -310,7 +314,9 @@ create temporary table tmp_refseq_discarding_version as
 -- RefSeq accession matches via Entrez Gene.
 
 create temporary table tmp_refseq_gene as
-    select distinct X.dblabel, X.refvalue, 'refseq/entrezgene' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        'refseq' as finaldblabel, P.accession as finalrefvalue,
+        'refseq/entrezgene' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join tmp_irefindex_gene2refseq as P
@@ -321,7 +327,9 @@ create temporary table tmp_refseq_gene as
 -- RefSeq accession matches via Entrez Gene history.
 
 create temporary table tmp_refseq_gene_history as
-    select distinct X.dblabel, X.refvalue, 'refseq/entrezgene-history' as sequencelink,
+    select distinct X.dblabel, X.refvalue,
+        'refseq' as finaldblabel, P.accession as finalrefvalue,
+        'refseq/entrezgene-history' as sequencelink,
         P.taxid as reftaxid, P.sequence as refsequence
     from xml_xref_interactors as X
     inner join gene_history as H
@@ -344,6 +352,8 @@ create temporary table tmp_refseq_gene_history as
 create temporary table tmp_xml_xref_sequences (
     dblabel varchar not null,
     refvalue varchar not null,
+    finaldblabel varchar not null,
+    finalrefvalue varchar not null,
     sequencelink varchar,
     reftaxid integer,
     refsequence varchar,
@@ -385,7 +395,7 @@ where (dblabel, refvalue) in (
 insert into xml_xref_interactor_sequences
     select source, filename, entry, interactorid, reftype, reftypelabel,
         I.dblabel, I.refvalue,
-        originaldblabel, originalrefvalue, missing,
+        originaldblabel, originalrefvalue, finaldblabel, finalrefvalue, missing,
         taxid, sequence, sequencelink, reftaxid, refsequence
     from xml_xref_interactors as I
     inner join tmp_xml_xref_sequences as S
