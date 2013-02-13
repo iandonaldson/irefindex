@@ -1,6 +1,6 @@
 -- Tidy up XML data and add constraints.
 
--- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -28,7 +28,7 @@ delete from xml_xref where refvalue is null;
 
 analyze xml_experiments;
 
-alter table xml_interactors add primary key (source, filename, entry, interactorid, participantid, interactionid);
+alter table xml_interactors add primary key (source, filename, entry, interactionid, interactorid, participantid);
 analyze xml_interactors;
 
 alter table xml_names alter column name set not null;
