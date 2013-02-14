@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -87,6 +87,11 @@ if [ "$DOWNLOAD" ] ; then
 fi
 
 if [ "$IMPORT" ] ; then
+    if [ ! -e "$DATADIR/refseq_proteins.txt.seq" ] || [ ! -e "$DATADIR/refseq_identifiers.txt" ] || [ ! -e "$DATADIR/refseq_nucleotides.txt" ]; then
+        echo "$PROGNAME: The required RefSeq downloads are not available. Try running this program with the --download option." 1>&2
+        exit 1
+    fi
+
     if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/import_unknown_refseq.sql" "$DATADIR" $PSQL_OPTIONS ; then
         echo "$PROGNAME: Could not import missing sequences." 1>&2
         exit 1
