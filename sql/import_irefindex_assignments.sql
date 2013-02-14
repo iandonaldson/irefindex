@@ -393,11 +393,12 @@ insert into irefindex_rogid_identifiers
 
 analyze irefindex_rogid_identifiers;
 
-insert into irefindex_rogid_identifiers
+-- Add things like original references (which may be have been gene identifiers
+-- that were mapped to protein identifiers).
+-- These should only be chosen to refer to an interactor if no better identifier
+-- exists.
 
-    -- Add things like gene identifiers.
-    -- These should only be chosen to refer to an interactor if no better
-    -- identifier exists.
+insert into irefindex_rogid_identifiers
 
     select distinct R.rogid, I.dblabel, I.refvalue, 2 as priority
     from irefindex_rogids as R
@@ -410,6 +411,21 @@ insert into irefindex_rogid_identifiers
     where refsequence is not null
         and reftaxid is not null
         and RI.rogid is null;
+
+analyze irefindex_rogid_identifiers;
+
+-- Add gene identifiers based on the known mappings from proteins to genes.
+
+insert into irefindex_rogid_identifiers
+    select distinct R.rogid, 'entrezgene/locuslink' as dblabel, cast(geneid as varchar) as refvalue, 3 as priority
+    from irefindex_rogids as R
+    inner join irefindex_gene2rog as G
+        on R.rogid = G.rogid
+    left outer join irefindex_rogid_identifiers as RI
+        on R.rogid = RI.rogid
+        and RI.dblabel = 'entrezgene/locuslink'
+        and cast(geneid as varchar) = RI.refvalue
+    where RI.rogid is null;
 
 analyze irefindex_rogid_identifiers;
 
