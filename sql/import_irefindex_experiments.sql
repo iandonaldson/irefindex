@@ -1,6 +1,6 @@
 -- Collect experiment-related information.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -25,7 +25,7 @@ insert into xml_xref_all_experiments
              else property
         end as property,
         reftype,
-        case when dblabel in ('Pub-Med', 'PUBMED', 'Pubmed') then 'pubmed'
+        case when dblabel in ('Pub-Med', 'PUBMED', 'Pubmed', 'PubMed') then 'pubmed'
              when dblabel in ('MI', 'psimi', 'PSI-MI') then 'psi-mi'
              else dblabel
         end as dblabel,
