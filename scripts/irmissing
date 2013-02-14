@@ -34,17 +34,24 @@ EOF
     exit 1
 fi
 
-if [ "$1" = '--check' ] || [ "$1" = '--all' ] ; then
+if [ "$1" = '--all' ] ; then
+    CHECK=$1
+    DOWNLOAD=$1
+    IMPORT=$1
+    shift 1
+fi
+
+if [ "$1" = '--check' ] ; then
     CHECK=$1
     shift 1
 fi
 
-if [ "$1" = '--download' ] || [ "$1" = '--all' ] ; then
+if [ "$1" = '--download' ] ; then
     DOWNLOAD=$1
     shift 1
 fi
 
-if [ "$1" = '--import' ] || [ "$1" = '--all' ] ; then
+if [ "$1" = '--import' ] ; then
     IMPORT=$1
     shift 1
 fi
