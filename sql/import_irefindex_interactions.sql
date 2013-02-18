@@ -24,7 +24,7 @@ begin;
 -- NOTE: provide data in PSI-MI XML 1.0 format, but do seem to provide
 -- NOTE: experiment information that could be usable.
 
-insert into xml_xref_interactions
+insert into xml_xref_all_interactions
     select distinct source, filename, entry, parentid as interactionid,
 
         -- Normalise database labels.
@@ -42,7 +42,9 @@ insert into xml_xref_interactions
         case when dblabel = 'MI' and not refvalue like 'MI:%' then 'MI:' || refvalue
              when dblabel = 'MI' and refvalue like 'MI:%' and not refvalue ~ 'MI:[0-9]{4}' then substring(refvalue from 'MI:[0-9]{4}')
              else refvalue
-        end as refvalue
+        end as refvalue,
+
+        reftype
 
     from xml_xref
 
@@ -50,7 +52,20 @@ insert into xml_xref_interactions
 
     where scope = 'interaction'
         and property = 'interaction'
-        and reftype = 'primaryRef';
+        and reftype in ('primaryRef', 'secondaryRef');
+
+analyze xml_xref_all_interactions;
+
+-- Get preferred identifiers for the interactions.
+
+insert into xml_xref_interactions
+    select source, filename, entry, interactionid, identifier[2] as dblabel, identifier[3] as refvalue
+    from (
+        select source, filename, entry, interactionid, max(array[reftype, dblabel, refvalue]) as identifier
+        from xml_xref_all_interactions
+        where reftype = 'primaryRef' or source = 'INTACT' and reftype = 'secondaryRef' and dblabel = 'intact'
+        group by source, filename, entry, interactionid
+        ) as X;
 
 analyze xml_xref_interactions;
 
