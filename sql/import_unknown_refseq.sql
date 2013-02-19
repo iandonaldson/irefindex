@@ -291,7 +291,7 @@ create temporary table tmp_plain as
     inner join tmp_irefindex_sequences as P
         on X.dblabel = P.dblabel
         and X.refvalue = P.refvalue
-    where X.dblabel = 'refseq';
+    where X.dblabel in ('refseq', 'genbank_protein_gi');
 
 -- RefSeq accession matches discarding versioning.
 
