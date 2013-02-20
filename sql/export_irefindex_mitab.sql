@@ -82,31 +82,6 @@ create temporary table tmp_identifiers as
 
 analyze tmp_identifiers;
 
--- Define the preferred identifiers as those provided by UniProt or RefSeq, with
--- ROG identifiers used otherwise. These identifiers are used in the uid columns
--- and can be any identifiers referring to a protein sequence, not just those
--- used in the context of an interaction.
-
-create temporary table tmp_preferred as
-    select rogid,
-        coalesce(uniprotacc[2], refseqacc[2], 'rogid') as dblabel,
-        coalesce(uniprotacc[3], refseqacc[3], rogid) as refvalue
-    from (
-        select I.rogid,
-            min(array[cast(U.priority as varchar), U.dblabel, U.refvalue]) as uniprotacc,
-            min(array[cast(R.priority as varchar), R.dblabel, R.refvalue]) as refseqacc
-        from irefindex_rogids as I
-        left outer join irefindex_rogid_identifiers as U
-            on I.rogid = U.rogid
-            and U.dblabel = 'uniprotkb'
-        left outer join irefindex_rogid_identifiers as R
-            on I.rogid = R.rogid
-            and R.dblabel = 'refseq'
-        group by I.rogid
-        ) as X;
-
-analyze tmp_preferred;
-
 -- Define aliases for each ROG identifier.
 -- Any | characters will be replaced since the identifiers will be used in
 -- pipe-separated lists.
@@ -726,12 +701,12 @@ create temporary table tmp_mitab_all as
     left outer join tmp_identifiers as rognameA
         on I.uidA = rognameA.rogid
         and I.edgetype <> 'C'
-    left outer join tmp_preferred as prefA
+    left outer join irefindex_rogid_identifiers_preferred as prefA
         on I.uidA = prefA.rogid
         and I.edgetype <> 'C'
     inner join tmp_identifiers as rognameB
         on I.uidB = rognameB.rogid
-    inner join tmp_preferred as prefB
+    inner join irefindex_rogid_identifiers_preferred as prefB
         on I.uidB = prefB.rogid
     left outer join tmp_aliases as aliasA
         on I.uidA = aliasA.rogid

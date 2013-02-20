@@ -137,6 +137,16 @@ create table irefindex_rogid_identifiers (
     primary key(rogid, dblabel, refvalue)
 );
 
+-- A mapping from ROG identifiers to the preferred database identifier referring
+-- to that object in assignments.
+
+create table irefindex_rogid_identifiers_preferred (
+    rogid varchar not null, -- collate "C" would require PostgreSQL 9.1
+    dblabel varchar not null,
+    refvalue varchar not null,
+    primary key(rogid)
+);
+
 -- Complete interactions where all interactors could be assigned a ROG
 -- identifier if complete is true.
 

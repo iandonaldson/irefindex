@@ -429,6 +429,31 @@ insert into irefindex_rogid_identifiers
 
 analyze irefindex_rogid_identifiers;
 
+-- Define the preferred identifiers as those provided by UniProt or RefSeq, with
+-- ROG identifiers used otherwise. These identifiers are used in the uid columns
+-- of the MITAB output and can be any identifiers referring to a protein
+-- sequence, not just those used in the context of an interaction.
+
+insert into irefindex_rogid_identifiers_preferred
+    select rogid,
+        coalesce(uniprotacc[2], refseqacc[2], 'rogid') as dblabel,
+        coalesce(uniprotacc[3], refseqacc[3], rogid) as refvalue
+    from (
+        select I.rogid,
+            min(array[cast(U.priority as varchar), U.dblabel, U.refvalue]) as uniprotacc,
+            min(array[cast(R.priority as varchar), R.dblabel, R.refvalue]) as refseqacc
+        from irefindex_rogids as I
+        left outer join irefindex_rogid_identifiers as U
+            on I.rogid = U.rogid
+            and U.dblabel = 'uniprotkb'
+        left outer join irefindex_rogid_identifiers as R
+            on I.rogid = R.rogid
+            and R.dblabel = 'refseq'
+        group by I.rogid
+        ) as X;
+
+analyze irefindex_rogid_identifiers_preferred;
+
 -- Determine the complete interactions.
 -- Interactions where one or more participants are missing are considered
 -- incomplete and cannot be used to construct meaningful RIG identifiers.

@@ -5,5 +5,6 @@ drop table irefindex_assignments_preferred;
 drop table irefindex_assignment_scores;
 drop table irefindex_rogids;
 drop table irefindex_rogid_identifiers;
+drop table irefindex_rogid_identifiers_preferred;
 drop table irefindex_interactions_complete;
 drop table irefindex_rogids_canonical;
