@@ -12,7 +12,7 @@ The following principal table types are provided in the database schema:
 mitab        || MITAB-originating source data
 ==
 xml          || PSI-XML-originating source data together with converted MITAB
-             .. data
+             .. and BIND data
 ==
 xml_xref     || Data specifically providing cross-references such as identifiers
 ==
@@ -59,6 +59,20 @@ The above data sources are typically delivered in non-XML and generally
 unstandardised formats, meaning that their data must be processed before being
 merged with other data. Only BIND tables contribute to the sum of interaction
 data in the system.
+
+== Relationships Between Interactions, Interactors and Experiments ==
+
+The XML tables provide mappings between the three main entity types.
+
+{{{#!table
+'''Table'''     || '''Mapping'''
+==
+xml_interactors || Interactions to participants (being specific observations of
+                .. interactors)
+==
+xml_experiments || Interactions to experiments (being specific observations of
+                .. interactions)
+}}}
 
 == iRefIndex Table Reference ==
 
