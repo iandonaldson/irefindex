@@ -306,7 +306,8 @@ create temporary table tmp_sequencelinks as
         ) as X;
 
 insert into irefindex_assignments_preferred
-    select source, filename, entry, interactorid, preferred[2], preferred[3], preferred[4], preferred[5], preferred[6], preferred[7], preferred[8]
+    select source, filename, entry, interactorid, preferred[2] as sequencelink, preferred[3] as finaldblabel, preferred[4] as finalrefvalue,
+        preferred[5] as dblabel, preferred[6] as refvalue, preferred[7] as originaldblabel, preferred[8] as originalrefvalue
     from (
 
         -- Use the priority ordering defined above to select a minimum (best)
