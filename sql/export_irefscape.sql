@@ -90,39 +90,44 @@ analyze tmp_all_gene_synonym_rogids;
 -- Obtain participant role information.
 -- The participant method output is built here since making a string from an
 -- array of nulls results in an empty string that can be easily detected later.
+-- NOTE: This is done using separate queries because of strange PostgreSQL query
+-- NOTE: planner behaviour on PostgreSQL 9.x (compared to 8.4).
 
-create temporary table tmp_participants as
-    select I.source, I.filename, I.entry, I.interactionid, I.rigid,
-        count(roleP.refvalue) as baits,
-        rogs,
-        array_to_string(array_accum(distinct methodP.refvalue), '|') as partmethods,
-        array_to_string(array_accum(distinct methodnameP.name), '|') as partmethodnames
+-- First, get ordered ROG integer identifiers for specific interactions.
+
+create temporary table tmp_participant_rogs as
+    select source, filename, entry, interactionid, rigid, array_accum(rog) as rogs
     from (
 
-        -- Get ordered ROG integer identifiers for specific interactions.
+        select I.source, I.filename, I.entry, I.interactionid, I.rigid, rog
 
-        select source, filename, entry, interactionid, rigid, array_accum(rog) as rogs
-        from (
+        from irefindex_interactions as I
 
-            select I.source, I.filename, I.entry, I.interactionid, I.rigid, rog
+        -- Integer identifiers.
 
-            from irefindex_interactions as I
+        inner join irefindex_rog2rogid as irog
+            on I.rogid = irog.rogid
 
-            -- Integer identifiers.
+        -- Accumulate ROG details.
 
-            inner join irefindex_rog2rogid as irog
-                on I.rogid = irog.rogid
+        order by I.source, I.filename, I.entry, I.interactionid, I.rigid, rog
 
-            -- Accumulate ROG, participant and bait details.
+        ) as X
 
-            order by I.source, I.filename, I.entry, I.interactionid, I.rigid, rog
+    group by source, filename, entry, interactionid, rigid;
 
-            ) as X
+analyze tmp_participant_rogs;
 
-        group by source, filename, entry, interactionid, rigid
+-- Then, get the participant bait and method details.
 
-        ) as Y
+create temporary table tmp_participant_details as
+    select I.source, I.filename, I.entry, I.interactionid, I.rigid,
+        roleP.refvalue as bait,
+        rogs,
+        methodP.refvalue as partmethod,
+        methodnameP.name as partmethodname
 
+    from tmp_participant_rogs as Y
     inner join irefindex_interactions as I
         on (Y.source, Y.filename, Y.entry, Y.interactionid) =
            (I.source, I.filename, I.entry, I.interactionid)
@@ -146,9 +151,22 @@ create temporary table tmp_participants as
 
     left outer join psicv_terms as methodnameP
         on methodP.refvalue = methodnameP.code
-        and methodnameP.nametype = 'preferred'
+        and methodnameP.nametype = 'preferred';
 
-    group by I.source, I.filename, I.entry, I.interactionid, I.rigid, rogs;
+analyze tmp_participant_details;
+
+-- Finally, aggregate the details.
+-- NOTE: It may be this aggregation process that seems to cause problems on
+-- NOTE: PostgreSQL 9.x.
+
+create temporary table tmp_participants as
+    select source, filename, entry, interactionid, rigid,
+        count(bait) as baits,
+        rogs,
+        array_to_string(array_accum(distinct partmethod), '|') as partmethods,
+        array_to_string(array_accum(distinct partmethodname), '|') as partmethodnames
+    from tmp_participant_details
+    group by source, filename, entry, interactionid, rigid, rogs;
 
 analyze tmp_participants;
 
