@@ -18,7 +18,7 @@ must be whole line records.
 
 --------
 
-Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -85,7 +85,15 @@ Example: %s 10000 uniprot_sprot.dat '//'
             # Handle the end of the file.
 
             if not line:
-                print one_based and (start + 1) or start
+
+                # Check to see if the last start position was at the end of the
+                # file.
+
+                f_in.seek(start)
+
+                if f_in.readline():
+                    print one_based and (start + 1) or start
+
                 break
 
             while record_terminator and line.rstrip("\n") != record_terminator:
