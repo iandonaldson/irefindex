@@ -9,7 +9,8 @@ EMAIL=                                      # e-mail address for anonymous FTP l
 DATABASE=irdata                             # database name
 DATA=                                       # user defined data directory location
 WIKIFORMAT=MoinMoin                         # format for generated Wiki pages
-WGET_WAIT=2                                 # time to wait between wget requests
+WGET_WAIT=5                                 # time to wait between wget requests
+WGET_ATTEMPTS=5                             # number of attempts to make using wget
 PSQL_OPTIONS=                               # "--psql-options <psql connection options>"
 
 
