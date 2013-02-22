@@ -3,32 +3,30 @@ begin;
 -- iRefWeb employs a schema with ubiquitous surrogate keys, some of which are
 -- preserved across releases in the following tables:
 --
--- interaction                  (integer RIG identifier)
--- interaction_detection_type   (iRefWeb-specific sequence number)
--- interaction_type             (iRefWeb-specific sequence number)
--- interactor                   (integer ROG identifier)
--- interactor_detection_type    (iRefWeb-specific sequence number)
--- interactor_type              (iRefWeb-specific sequence number)
--- name_space                   (iRefWeb-specific sequence number)
--- sequence                     (iRefWeb-specific sequence number)
--- source_db                    (iRefWeb-specific sequence number)
+-- interaction                      (integer RIG identifier)
+-- interaction_detection_type       (iRefWeb-specific sequence number)
+-- interaction_source_db            (iRefWeb-specific sequence number)
+-- interaction_source_db_experiment (iRefWeb-specific sequence number)
+-- interaction_type                 (iRefWeb-specific sequence number)
+-- interaction_interactor           (iRefWeb-specific sequence number)
+-- interactor                       (integer ROG identifier)
+-- interactor_detection_type        (iRefWeb-specific sequence number)
+-- interactor_type                  (iRefWeb-specific sequence number)
+-- name_space                       (iRefWeb-specific sequence number)
+-- score                            (iRefWeb-specific sequence number)
+-- sequence                         (iRefWeb-specific sequence number)
+-- NOTE: To do: sequence_source_db
+-- source_db                        (iRefWeb-specific sequence number)
 --
 -- Other tables do not attempt to preserve the keys from one release to the
 -- next (using iRefWeb-specific sequence numbers throughout):
 --
 -- alias
--- interaction_interactor
+-- NOTE: To do: geneid2rog
 -- interactor_alias
 -- interactor_alias_display
-
--- NOTE: To do:
--- NOTE: interaction_interactor_assignment
--- NOTE: interaction_source_db
--- NOTE: interaction_source_db_experiment
--- NOTE: score
--- NOTE: sequence_source_db
--- NOTE: statistics
--- NOTE: geneid2rog
+-- NOTE: To do: interaction_interactor_assignment
+-- NOTE: To do: statistics
 
 
 
@@ -69,7 +67,30 @@ create temporary table tmp_interaction_descriptions as
 
 analyze tmp_interaction_descriptions;
 
+-- Get participant positions.
 
+create temporary table tmp_participant_positions as
+    select source, filename, entry, interactionid, "index", interactors["index"] as interactorid
+    from (
+        select source, filename, entry, interactionid, generate_subscripts(interactors, 1) as "index", interactors
+        from (
+            select source, filename, entry, interactionid, array_accum(interactorid) as interactors
+            from (
+                select source, filename, entry, interactionid, interactorid, participantid
+                from xml_interactors
+                order by source, filename, entry, interactionid, participantid
+                ) as X
+            group by source, filename, entry, interactionid
+            ) as Y
+        ) as Z;
+
+analyze tmp_participant_positions;
+
+
+
+-- Interactions are records mapping RIG identifiers to general interaction
+-- details including the confidence scores and a textual description (produced
+-- above).
 
 -- Get old interactions.
 
@@ -147,6 +168,9 @@ create temporary table tmp_irefweb_interactions as
 
 
 
+-- Interactor detection types are collected from interaction participant
+-- information and enumerated.
+
 -- Get old interactor detection types.
 
 create temporary table tmp_previous_interactor_detection_types (
@@ -205,6 +229,9 @@ create temporary table tmp_irefweb_interactor_detection_types as
 
 
 
+-- Interaction detection types are collected from interaction experiment
+-- information and enumerated.
+
 -- Get old interaction detection types.
 
 create temporary table tmp_previous_interaction_detection_types (
@@ -262,6 +289,8 @@ create temporary table tmp_irefweb_interaction_detection_types as
 \copy tmp_irefweb_interaction_detection_types to '<directory>/irefweb_interaction_detection_type'
 
 
+
+-- Interaction types are collected from interaction information and enumerated.
 
 -- Get old interaction types.
 
@@ -329,6 +358,10 @@ create temporary table tmp_irefweb_interaction_types as
 \copy tmp_irefweb_interaction_types to '<directory>/irefweb_interaction_type'
 
 
+
+-- Source databases are collected from the manifest information (provided by the
+-- downloaded data files) and from interactor information (indicating the origin
+-- of data).
 
 -- Get old source databases.
 
@@ -411,7 +444,9 @@ analyze tmp_irefweb_source_databases;
 
 
 
--- Name spaces are more or less database labels.
+-- Name spaces are more or less database labels, although it seems that data
+-- types such as "short label", "full name", "alias" (and so on) are also
+-- present.
 
 -- Get old name spaces.
 
@@ -457,26 +492,46 @@ create temporary table tmp_irefweb_name_spaces as
 
 
 -- Interactor details providing interactor type and alias information.
--- This table maps each interactor to a single type and to many aliases.
+-- This table maps each interactor to a single type and to a single set of
+-- aliases, using the "name space" identifiers instead of database labels.
 
 create temporary table tmp_interactors as
-    select distinct
+    select
+
+        -- Specific interactor information.
+
+        R.source, R.filename, R.entry, R.interactorid,
 
         -- Interactor information.
 
         I.rog as rog,
-        C.rogid as rogid,
+        C.crogid as rogid,
         substring(C.rogid for 28) as seguid,
+
+        -- Taxonomy information.
+
         R.taxid as taxonomy_id,
-
-        -- Alias information.
-
-        A.refvalue as alias,
-        N.id as name_space_id,
+        X.originaltaxid as used_taxonomy_id,
+        O.taxid as primary_taxonomy_id,
 
         -- Interactor type information.
 
-        V.name as name
+        V.name as name,
+
+        -- Alias information.
+
+        originalN.id as used_name_space_id,
+        X.originalrefvalue as used_alias,
+        finalN.id as final_name_space_id,
+        X.finalrefvalue as final_alias,
+        primaryN.id as primary_name_space_id,
+        primaryA.refvalue as primary_alias,
+        canonicalN.id as canonical_name_space_id,
+        canonicalA.refvalue as canonical_alias,
+
+        -- Assignment score information.
+
+        XS.score
 
     -- Interactor information.
 
@@ -484,7 +539,7 @@ create temporary table tmp_interactors as
     inner join irefindex_rogids_canonical as C
         on R.rogid = C.rogid
     inner join irefindex_rog2rogid as I
-        on C.rogid = I.rogid
+        on C.crogid = I.rogid
 
     -- Interactor type information.
 
@@ -496,11 +551,42 @@ create temporary table tmp_interactors as
 
     -- Alias information.
 
-    inner join xml_xref_all_interactors as A
+    inner join irefindex_assignments as X
         on (R.source, R.filename, R.entry, R.interactorid)
-         = (A.source, A.filename, A.entry, A.interactorid)
-    inner join tmp_irefweb_name_spaces as N
-        on A.dblabel = N.name;
+         = (X.source, X.filename, X.entry, X.interactorid)
+    inner join tmp_irefweb_name_spaces as originalN
+        on X.originaldblabel = originalN.name
+    inner join tmp_irefweb_name_spaces as finalN
+        on X.finaldblabel = finalN.name
+
+    -- Assignment score information.
+
+    inner join irefindex_assignment_scores as XS
+        on (R.source, R.filename, R.entry, R.interactorid)
+         = (XS.source, XS.filename, XS.entry, XS.interactorid)
+
+    -- Primary alias information.
+
+    inner join xml_xref_all_interactors as primaryA
+        on (R.source, R.filename, R.entry, R.interactorid)
+         = (primaryA.source, primaryA.filename, primaryA.entry, primaryA.interactorid)
+    inner join tmp_irefweb_name_spaces as primaryN
+        on primaryA.dblabel = primaryN.name
+        and primaryA.reftype = 'primaryRef'
+
+    -- Primary taxonomy information.
+
+    left outer join xml_organisms as O
+        on (X.source, X.filename, X.entry, X.interactorid)
+         = (O.source, O.filename, O.entry, O.parentid)
+        and O.scope = 'interactor'
+
+    -- Canonical alias information.
+
+    inner join irefindex_rogid_identifiers_preferred as canonicalA
+        on C.crogid = canonicalA.rogid
+    inner join tmp_irefweb_name_spaces as canonicalN
+        on canonicalA.dblabel = canonicalN.name;
 
 analyze tmp_interactors;
 
@@ -562,7 +648,8 @@ create temporary table tmp_irefweb_interactor_types as
 
 
 
--- Aliases reside in a separate table.
+-- Aliases are an aggregation of different name information with an arbitrary
+-- sequence number assigned to each one.
 
 create temporary sequence tmp_irefweb_alias_id;
 
@@ -572,7 +659,16 @@ create temporary table tmp_irefweb_aliases as
         setval('tmp_version', nextval('tmp_version'), false) as version,
         alias,
         name_space_id
-    from tmp_interactors as I
+    from (
+        select distinct alias, name_space_id
+        from tmp_interactors
+        union
+        select distinct final_alias as alias, final_name_space_id as name_space_id
+        from tmp_interactors
+        union
+        select distinct primary_alias as alias, primary_name_space_id as name_space_id
+        from tmp_interactors
+        ) as X
     group by alias, name_space_id;
 
 create index tmp_irefweb_aliases_index on tmp_irefweb_aliases(alias, name_space_id);
@@ -605,6 +701,8 @@ analyze tmp_irefweb_interactor_aliases;
 \copy tmp_irefweb_interactor_aliases to '<directory>/irefweb_interactor_alias'
 
 
+
+-- Sequences are collected from the original sequence data and enumerated.
 
 -- Get old sequence information.
 
@@ -668,6 +766,9 @@ create temporary table tmp_irefweb_sequences as
 
 
 
+-- Interactors are records mapping ROG identifiers to general interactor
+-- details including sequence and alias information.
+
 -- Get old interactors.
 
 create temporary table tmp_previous_interactors (
@@ -716,14 +817,29 @@ analyze tmp_irefweb_interactors;
 
 -- Create a mapping from canonical interactions to canonical interactors.
 
+-- Get old mappings.
+
+create temporary table tmp_previous_interaction_interactors (
+    id integer not null,
+    version integer not null,
+    rig integer not null,
+    rog integer not null,
+    cardinality integer not null,
+    primary key(id)
+);
+
+\copy tmp_previous_interaction_interactors from '<directory>/old_irefweb_interaction_interactor'
+
+-- Combine previously unknown mappings with the previous table.
+
 create temporary sequence tmp_irefweb_interaction_interactors_id;
 
 create temporary table tmp_irefweb_interaction_interactors as
     select
         nextval('tmp_irefweb_interaction_interactors_id') as id,
         setval('tmp_version', nextval('tmp_version'), false) as version,
-        rig as interaction_id,
-        rog as interactor_id,
+        CI.rig as interaction_id,
+        CO.rog as interactor_id,
         count(CO.rogid) as cardinality
     from irefindex_distinct_interactions as I
     inner join irefindex_rigids_canonical as CI
@@ -734,7 +850,20 @@ create temporary table tmp_irefweb_interaction_interactors as
         on CI.crigid = II.rigid
     inner join irefindex_rog2rogid as IO
         on CO.crogid = IO.rogid
-    group by rig, rog;
+
+    -- Exclude previous mappings.
+
+    left outer join tmp_previous_interaction_interactors as P
+        on CI.rig = P.rig
+        and CO.rog = P.rog
+    where P.rig is null
+    group by rig, rog
+
+    -- Combine with previous mappings.
+
+    union
+    select id, version, interaction_id, interactor_id, cardinality
+    from tmp_previous_interaction_interactors;
 
 \copy tmp_irefweb_interaction_interactors as '<directory>/irefweb_interaction_interactor'
 
@@ -742,6 +871,22 @@ create temporary table tmp_irefweb_interaction_interactors as
 
 -- Create a record of specific interactions (interactions with source
 -- information).
+
+-- Get old source interactions.
+
+create temporary table tmp_old_interaction_sources (
+    id integer not null,
+    version integer not null,
+    interaction_id integer not null,
+    source_db_intrctn_id integer not null,
+    source_db_id integer not null,
+    interaction_type_id integer not null,
+    primary key(id)
+);
+
+\copy tmp_old_interaction_sources from '<directory>/old_irefweb_interaction_source_db'
+
+-- Combine previously unknown source interactions with the previous table.
 
 create temporary sequence tmp_irefweb_interaction_sources_id;
 
@@ -767,7 +912,201 @@ create temporary table tmp_irefweb_interaction_sources as
         on (R.source, R.filename, R.entry, R.interactionid)
          = (T.source, T.filename, T.entry, T.interactionid)
     left outer join tmp_irefweb_interaction_types as IT
-        on T.refvalue = IT.psi_mi_code;
+        on T.refvalue = IT.psi_mi_code
+
+    -- Exclude previous source interactions.
+
+    left outer join tmp_old_interaction_sources as P
+        on N.refvalue = P.source_db_intrctn_id
+        and D.id = P.source_db_id
+        and IT.id = P.interaction_type_id
+
+    where P.source_db_intrctn_id is null
+
+    -- Combine with previous source interactions.
+
+    union
+    select id, version, interaction_id, source_db_intrctn_id, source_db_id, interaction_type_id
+    from tmp_old_interaction_sources;
+
+\copy tmp_irefweb_interaction_sources to '<directory>/irefweb_interaction_source_db'
+
+
+
+-- The scores table is a list of distinct assignment scores.
+-- NOTE: The description always seems to be an empty string.
+
+-- Get old scores.
+
+create temporary table tmp_previous_scores (
+    id integer not null,
+    version integer not null,
+    code varchar not null,
+    description varchar not null,
+    primary key(id)
+);
+
+\copy tmp_previous_scores from '<directory>/old_irefweb_score'
+
+-- Combine previously unknown scores with the previous table.
+
+create temporary sequence tmp_irefweb_scores_id;
+
+create temporary table tmp_irefweb_scores as
+    select distinct
+        nextval('tmp_irefweb_scores_id') as id,
+        setval('tmp_version', nextval('tmp_version'), false) as version,
+        score as code,
+        cast('' as varchar) as description
+    from irefindex_assignment_scores as S
+
+    -- Exclude previous scores.
+
+    left outer join tmp_previous scores as P
+        on S.score = P.code
+    where P.code is null
+
+    -- Combine with previous scores.
+
+    union
+    select id, version, code, description
+    from tmp_irefweb_scores;
+
+\copy tmp_irefweb_scores to '<directory>/irefweb_score'
+
+
+
+-- Collect scores for canonical interactors. Since scoring is related to
+-- specific interactors and not general interactors, the "best" score is chosen
+-- for each canonical interactor.
+
+create temporary table tmp_score_values as
+    select score,
+        case when score like '%P%' then 1 else 0 end +
+        case when score like '%S%' then 2 else 0 end +
+        case when score like '%U%' then 4 else 0 end +
+        case when score like '%V%' then 8 else 0 end +
+        case when score like '%T%' then 16 else 0 end +
+        case when score like '%G%' then 32 else 0 end +
+        case when score like '%D%' then 64 else 0 end +
+        case when score like '%M%' then 128 else 0 end +
+        case when score like '%+%' then 256 else 0 end +
+        case when score like '%O%' then 512 else 0 end +
+        case when score like '%X%' then 1024 else 0 end +
+        case when score like '%L%' then 4096 else 0 end +
+        case when score like '%I%' then 8192 else 0 end +
+        case when score like '%E%' then 16384 else 0 end +
+        case when score like '%Y%' then 32768 else 0 end +
+        case when score like '%N%' then 65536 else 0 end +
+        case when score like '%Q%' then 131072 else 0 end as value
+    from tmp_irefweb_scores;
+
+analyze tmp_irefweb_scores;
+
+create temporary table tmp_canonical_scores as
+    select rogid, score
+    from (
+        select C.crogid as rogid, min(value) as value
+        from irefindex_rogids_canonical as C
+        inner join irefindex_rogids as R
+            on C.crogid = R.rogid
+        inner join irefindex_assignment_scores as A
+            on (R.source, R.filename, R.entry, R.interactorid)
+             = (A.source, A.filename, A.entry, A.interactorid)
+        inner join tmp_score_values as S
+            on A.score = S.score
+        group by C.crogid
+        ) as X
+    inner join tmp_score_values as S
+        on X.value = S.value;
+
+analyze tmp_canonical_scores;
+
+
+
+-- NOTE: interaction_source_db_experiment is specific interaction+interactor of
+-- NOTE: bait, interaction detection type, PubMed reference.
+
+
+
+-- Create a record of assignments.
+
+create temporary sequence tmp_irefweb_assignments_id;
+
+create temporary table tmp_irefweb_assignments as
+    select
+        nextval('tmp_irefweb_assignments_id') as id,
+        setval('tmp_version', nextval('tmp_version'), false) as version,
+        II.id as interaction_interactor_id,
+        S.id as interaction_source_db_id,
+        IDT.id as interactor_detection_type_id,
+        primaryA.id as primary_alias_id,
+        usedA.id as used_alias_id,
+        finalA.id as final_alias_id,
+        canonicalA.id as canonical_alias_id,
+        primary_taxonomy_id,
+        used_taxonomy_id,
+        final_taxonomy_id,
+        "index" as position_as_found_in_source_db,
+        scores.id as score_id,
+        scoresC.id as canonical_score_id
+    from tmp_irefweb_interaction_interactors as II
+    inner join tmp_irefweb_interaction_sources as S
+        on II.interaction_id = S.interaction_id
+
+    -- Experimental details.
+
+    inner join irefindex_rig2rigid as RI
+        on II.interactionid = RI.rig
+    inner join irefindex_rigids as R
+        on RI.rigid = R.rigid
+    inner join xml_experiments as E
+        on (R.source, R.filename, R.entry, R.interactionid)
+         = (E.source, E.filename, E.entry, E.interactionid)
+    inner join xml_xref_experiment_methods as EM
+        on (E.source, E.filename, E.entry, E.experimentid)
+         = (EM.source, EM.filename, EM.entry, EM.experimentid)
+    inner join tmp_irefweb_interaction_detection_types as IDT
+        on EM.code = IDT.code
+
+    -- Interactor and assignment details.
+
+    inner join tmp_interactors as I
+        on (R.source, R.filename, R.entry, R.interactionid)
+         = (I.source, I.filename, I.entry, I.interactionid)
+
+    -- Alias details.
+
+    inner join tmp_irefweb_aliases as usedA
+        on I.alias = usedA.alias
+        and I.name_space_id = usedA.name_space_id
+    inner join tmp_irefweb_aliases as finalA
+        on I.final_alias = finalA.alias
+        and I.final_name_space_id = finalA.name_space_id
+    inner join tmp_irefweb_aliases as primaryA
+        on I.primary_alias = primaryA.alias
+        and I.primary_name_space_id = primaryA.name_space_id
+    inner join tmp_irefweb_aliases as canonicalA
+        on I.canonical_alias = canonicalA.alias
+        and I.canonical_name_space_id = canonicalA.name_space_id
+
+    -- Assignment score details.
+
+    inner join tmp_irefweb_scores as scores
+        on I.score = scores.score
+
+    -- Canonical score details.
+
+    inner join tmp_canonical_scores as CS
+        on I.rogid = CS.rogid
+    inner join tmp_irefweb_scores as scoresC
+        on CS.score = scoresC.score
+
+    -- Participant details.
+
+    inner join tmp_participant_positions as positions
+        on (R.source, R.filename, R.entry, R.interactionid, I.interactorid)
+         = (positions.source, positions.filename, positions.entry, positions.interactionid, positions.interactorid);
 
 
 
