@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -25,10 +25,12 @@ fi
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME <output data directory> <filename>
+Usage: $PROGNAME <filename>
 
 Using a list of identifiers provided via standard input, make a request to the
-Entrez utilities service, writing the response to standard output.
+Entrez utilities service, writing the response to standard output. The given
+filename is used to name the temporary query file used by wget to make the
+request, along with a temporary file containing the input.
 EOF
     exit 1
 fi
@@ -47,9 +49,11 @@ QUERYFILE="$FILENAME.query"
   echo -n "tool=$EUTILS_TOOL&email=$EUTILS_EMAIL&db=protein&rettype=gp&retmode=text&id=" \
 > "$QUERYFILE"
 
+# Hold the input in a temporary file in case of failure.
 # Convert the list of identifiers into form-encoded parameters.
 
-   tr '\n' ',' \
+   tee "$FILENAME.input" \
+|  tr '\n' ',' \
 |  sed -e 's/,$//' \
 >> "$QUERYFILE"
 
@@ -58,7 +62,29 @@ QUERYFILE="$FILENAME.query"
 echo "$PROGNAME: Waiting for $WGET_WAIT..." 1>&2
 sleep "$WGET_WAIT"
 
-if ! wget -O - "$EFETCH_URL" --post-file="$QUERYFILE" ; then
+# Perform the download, adding the input to the failed input file upon any
+# failure. Capture results in case the operation fails.
+
+if ! wget -O "$FILENAME.output" "$EFETCH_URL" --post-file="$QUERYFILE" ; then
     echo "$PROGNAME: Could not download the missing sequence records from RefSeq." 1>&2
+    cat "$FILENAME.input" >> "$FILENAME.failed"
     exit 1
+
+# Even though wget may be convinced of success, E-utils may have failed and
+# appended nonsense to the file, so this must be tested.
+
+else
+    ENDING=`tail -n 2 "$FILENAME.output"`
+
+    if [ "$ENDING" != '//' ]; then
+        echo "$PROGNAME: Output appeared to be ill-formed, perhaps due to a service error." 1>&2
+        cat "$FILENAME.input" >> "$FILENAME.failed"
+        mv "$FILENAME.output" "$FILENAME.output.`date +%Y%m%dT%H%M%S`"
+        exit 1
+
+    # On success, emit the results.
+
+    else
+        cat "$FILENAME.output"
+    fi
 fi

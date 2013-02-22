@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -40,14 +40,48 @@ if [ ! "$DATADIR" ] || [ ! "$FILENAME" ]; then
     exit 1
 fi
 
+# Make files containing returned results and failed inputs.
+
 RESULTFILE="$FILENAME.result"
 
-# Split the filename into manageable pieces and process each one in turn.
-# Note that this is done serially due to Entrez usage restrictions.
+if [ -e "$RESULTFILE" ]; then
+    rm "$RESULTFILE"
+fi
 
-  "$TOOLS/irdata_split.py" -1 10000 "$FILENAME" \
-| xargs $XARGS_I'{}' sh -c "echo {} | \"$SCRIPTS/irslice\" \"$FILENAME\" - | \"$TOOLS/irdata_fetch_eutils.sh\" \"$FILENAME\"" \
-> "$RESULTFILE"
+FAILEDFILE="$FILENAME.failed"
+
+if [ -e "$FAILEDFILE" ]; then
+    rm "$FAILEDFILE"
+fi
+
+# Copy the input file before starting to retrieve results.
+
+WORKFILE="$FILENAME.work"
+cp "$FILENAME" "$WORKFILE"
+
+for ATTEMPT in `seq 1 $WGET_ATTEMPTS` ; do
+
+    # Handle failures by making them the basis of subsequent attempts.
+
+    if [ -e "$FAILEDFILE" ]; then
+        mv "$FAILEDFILE" "$WORKFILE"
+    fi
+
+    # Split the input file into manageable pieces and process each one in turn.
+    # Note that this is done serially due to Entrez usage restrictions.
+
+      "$TOOLS/irdata_split.py" -1 10000 "$WORKFILE" \
+    | xargs $XARGS_I'{}' sh -c "echo {} | \"$SCRIPTS/irslice\" \"$WORKFILE\" - | \"$TOOLS/irdata_fetch_eutils.sh\" \"$FILENAME\"" \
+    >> "$RESULTFILE"
+
+    # Test for failures.
+
+    if [ ! -e "$FAILEDFILE" ]; then
+        echo "$PROGNAME: No failures remained after attempt number $ATTEMPT." 1>&2
+        break
+    fi
+
+done
 
 # Parse the feature table output, producing files similar to those normally
 # available for RefSeq.
