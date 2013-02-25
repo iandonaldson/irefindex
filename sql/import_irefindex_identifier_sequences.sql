@@ -4,7 +4,7 @@
 -- <sequences> may be given as 'irefindex_sequences' or 'irefindex_sequences_archived'
 -- <linkprefix> may be given as '' or 'archived/'
 
--- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -96,6 +96,21 @@ create temporary table tmp_uniprot_non_primary_isoform as
     inner join <sequences> as P
         on X.dblabel = P.dblabel
         and A2.accession = P.refvalue
+    where P.dblabel = 'uniprotkb';
+
+-- UniProt identifiers.
+
+create temporary table tmp_uniprot_identifier as
+    select distinct X.dblabel, X.refvalue,
+        P.dblabel as finaldblabel, P.refvalue as finalrefvalue,
+        '<linkprefix>' || 'uniprotkb/identifier' as sequencelink,
+        P.reftaxid, P.refsequence
+    from xml_xref_interactors as X
+    inner join uniprot_accessions as A
+        on X.refvalue = A.uniprotid
+    inner join <sequences> as P
+        on X.dblabel = P.dblabel
+        and A.accession = P.refvalue
     where P.dblabel = 'uniprotkb';
 
 -- UniProt matches for gene identifiers.
@@ -261,6 +276,8 @@ create temporary table tmp_xml_xref_sequences as
     select * from tmp_uniprot_isoform
     union all
     select * from tmp_uniprot_non_primary_isoform
+    union all
+    select * from tmp_uniprot_identifier
     union all
     select * from tmp_uniprot_gene
     union all
