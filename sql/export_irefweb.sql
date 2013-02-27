@@ -1,8 +1,11 @@
 begin;
 
--- iRefWeb employs a schema with ubiquitous surrogate keys, some of which are
--- preserved across releases in the following tables:
---
+-- Export iRefWeb tables to files in the data directory.
+
+-- iRefWeb employs a schema with ubiquitous surrogate keys, preserved across
+-- releases in the following tables:
+
+-- alias                            (iRefWeb-specific sequence number)
 -- interaction                      (integer RIG identifier)
 -- interaction_detection_type       (iRefWeb-specific sequence number)
 -- interaction_source_db            (iRefWeb-specific sequence number)
@@ -10,6 +13,7 @@ begin;
 -- interaction_type                 (iRefWeb-specific sequence number)
 -- interaction_interactor           (iRefWeb-specific sequence number)
 -- interactor                       (integer ROG identifier)
+-- interactor_alias                 (iRefWeb-specific sequence number)
 -- interactor_detection_type        (iRefWeb-specific sequence number)
 -- interactor_type                  (iRefWeb-specific sequence number)
 -- name_space                       (iRefWeb-specific sequence number)
@@ -17,15 +21,13 @@ begin;
 -- sequence                         (iRefWeb-specific sequence number)
 -- NOTE: To do: sequence_source_db
 -- source_db                        (iRefWeb-specific sequence number)
---
+
 -- Other tables do not attempt to preserve the keys from one release to the
 -- next (using iRefWeb-specific sequence numbers throughout):
---
--- alias
+
 -- NOTE: To do: geneid2rog
--- interactor_alias
 -- interactor_alias_display
--- NOTE: To do: interaction_interactor_assignment
+-- interaction_interactor_assignment
 -- NOTE: To do: statistics
 
 
@@ -86,11 +88,30 @@ create temporary table tmp_participant_positions as
 
 analyze tmp_participant_positions;
 
+-- Get interaction bait details.
+-- NOTE: A relatively small number of interactions may specify multiple bait
+-- NOTE: interactors, and in such cases, the first of these is chosen.
+
+create temporary table tmp_baits as
+    select source, filename, entry, interactionid, min(interactorid) as interactorid
+    from (
+        select I.source, I.filename, I.entry, I.interactionid, I.interactorid
+        from xml_interactors as I
+        inner join xml_xref_participants as roleP
+            on (I.source, I.filename, I.entry, I.participantid)
+             = (roleP.source, roleP.filename, roleP.entry, roleP.participantid)
+            and roleP.property = 'experimentalRole'
+            and roleP.refvalue = 'MI:0496' -- bait
+        ) as X
+    group by source, filename, entry, interactionid;
+
+analyze tmp_baits;
+
 
 
 -- Interactions are records mapping RIG identifiers to general interaction
 -- details including the confidence scores and a textual description (produced
--- above).
+-- above). The RIG identifiers are canonical.
 
 -- Get old interactions.
 
@@ -109,22 +130,19 @@ create temporary table tmp_previous_interactions (
 
 \copy tmp_previous_interactions from '<directory>/old_irefweb_interaction'
 
+update tmp_previous_interactions set description = null where description = 'NULL';
+update tmp_previous_interactions set name = null where name = '-';
+
 analyze tmp_previous_interactions;
-
--- Define the current version using a sequence.
-
-create temporary sequence tmp_version minvalue 0;
-
-select setval('tmp_version', (select coalesce(max(version), 0) from tmp_previous_interactions));
 
 -- Combine previously unknown interactions with the previous table.
 
 create temporary table tmp_irefweb_interactions as
     select
         I.rig as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interactions) as version,
         I.rig as rig,
-        R.rigid,
+        C.crigid,
         'Interaction involving ' || D.description as name,
         cast(null as varchar) as description,
         H.score as hpr,
@@ -133,22 +151,22 @@ create temporary table tmp_irefweb_interactions as
 
     -- Start with the active interactions.
 
-    from irefindex_rigids as R
+    from irefindex_rigids_canonical as C
     inner join irefindex_rig2rigid as I
-        on R.rigid = I.rigid
+        on C.crigid = I.rigid
     inner join tmp_interaction_descriptions as D
-        on R.rigid = D.rigid
+        on C.crigid = D.rigid
 
     -- Add interaction score information.
 
     left outer join irefindex_confidence as H
-        on R.rigid = H.rigid
+        on C.crigid = H.rigid
         and H.scoretype = 'hpr'
     left outer join irefindex_confidence as L
-        on R.rigid = L.rigid
+        on C.crigid = L.rigid
         and L.scoretype = 'lpr'
     left outer join irefindex_confidence as N
-        on R.rigid = N.rigid
+        on C.crigid = N.rigid
         and N.scoretype = 'np'
 
     -- Exclude previous interactions.
@@ -156,13 +174,16 @@ create temporary table tmp_irefweb_interactions as
     left outer join tmp_previous_interactions as P
         on I.rig = P.rig
     where P.rig is null
-    group by R.rigid, I.rig, D.description, H.score, L.score, N.score
+    group by C.crigid, I.rig, D.description, H.score, L.score, N.score
 
-    -- Combine with previous interactions.
+    -- Combine with previous interactions, but only those present in the current
+    -- release.
 
     union all
-    select id, version, rig, rigid, name, description, hpr, lpr, np
-    from tmp_previous_interactions;
+    select P.id, P.version, P.rig, P.rigid, P.name, P.description, P.hpr, P.lpr, P.np
+    from tmp_previous_interactions as P
+    inner join irefindex_rigids_canonical as C
+        on P.rigid = C.crigid;
 
 \copy tmp_irefweb_interactions to '<directory>/irefweb_interaction'
 
@@ -182,7 +203,7 @@ create temporary table tmp_previous_interactor_detection_types (
     primary key(id)
 );
 
-\copy tmp_previous_interactor_detection_types from '<directory>/irefweb_interactor_detection_type'
+\copy tmp_previous_interactor_detection_types from '<directory>/old_irefweb_interactor_detection_type'
 
 analyze tmp_previous_interactor_detection_types;
 
@@ -194,11 +215,12 @@ select setval('tmp_irefweb_interactor_detection_types_id', coalesce(max(id), 0))
 from tmp_previous_interactor_detection_types;
 
 -- NOTE: Feature detection methods are not present here.
+-- NOTE: iRefWeb 9 seems to have pipe-separated capitalised method names.
 
 create temporary table tmp_irefweb_interactor_detection_types as
     select
         nextval('tmp_irefweb_interactor_detection_types_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interactor_detection_types) as version,
         coalesce(min(S.name), T.name) as name,
         'interactor detection method - ' || T.name as description,
         T.code as psi_mi_code
@@ -243,7 +265,7 @@ create temporary table tmp_previous_interaction_detection_types (
     primary key(id)
 );
 
-\copy tmp_previous_interaction_detection_types from '<directory>/irefweb_interaction_detection_type'
+\copy tmp_previous_interaction_detection_types from '<directory>/old_irefweb_interaction_detection_type'
 
 analyze tmp_previous_interaction_detection_types;
 
@@ -259,7 +281,7 @@ from tmp_previous_interaction_detection_types;
 create temporary table tmp_irefweb_interaction_detection_types as
     select
         nextval('tmp_irefweb_interaction_detection_types_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interaction_detection_types) as version,
         coalesce(min(S.name), T.name) as name,
         'interaction detection method - ' || T.name as description,
         T.code as psi_mi_code
@@ -306,6 +328,8 @@ create temporary table tmp_previous_interaction_types (
 
 \copy tmp_previous_interaction_types from '<directory>/old_irefweb_interaction_type'
 
+update tmp_previous_interaction_types set description = null where description = 'NULL';
+
 analyze tmp_previous_interaction_types;
 
 -- Combine previously unknown interaction types with the previous table.
@@ -318,7 +342,7 @@ from tmp_previous_interaction_types;
 create temporary table tmp_irefweb_interaction_types as
     select
         nextval('tmp_irefweb_interaction_types_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interaction_types) as version,
         coalesce(min(S.name), T.name) as name,
         'interaction type - ' || T.name as description,
         T.code as psi_mi_code,
@@ -369,13 +393,16 @@ create temporary table tmp_previous_source_databases (
     id integer not null,
     version integer not null,
     name varchar not null,
-    release_date date not null,
+    release_date varchar,
     release_label varchar,
     comments varchar,
     primary key(id)
 );
 
 \copy tmp_previous_source_databases from '<directory>/old_irefweb_source_db'
+
+update tmp_previous_source_databases set release_date = null where release_date = '0000-00-00 00:00:00';
+update tmp_previous_source_databases set comments = null where comments = 'NULL';
 
 analyze tmp_previous_source_databases;
 
@@ -410,6 +437,8 @@ create temporary table tmp_current_source_databases as
 analyze tmp_current_source_databases;
 
 -- Combine previously unknown source databases with the previous table.
+-- NOTE: This process needs refining because of the different forms of various
+-- NOTE: names.
 
 create temporary sequence tmp_irefweb_source_databases_id minvalue 0;
 
@@ -419,9 +448,9 @@ from tmp_previous_source_databases;
 create temporary table tmp_irefweb_source_databases as
     select
         nextval('tmp_irefweb_source_databases_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_source_databases) as version,
         C.name,
-        C.release_date,
+        cast(C.release_date as varchar),
         C.release_label,
         C.comments
     from tmp_current_source_databases as C
@@ -429,7 +458,11 @@ create temporary table tmp_irefweb_source_databases as
     -- Exclude previous source databases.
 
     left outer join tmp_previous_source_databases as P
-        on C.name = P.name
+
+        -- Normalise the names in order to avoid 
+
+        on lower(C.name) = lower(P.name)
+
     where P.name is null
 
     -- Combine with previous source databases.
@@ -454,11 +487,13 @@ create temporary table tmp_previous_name_spaces (
     id integer not null,
     version integer not null,
     name varchar not null,
-    source_db_id integer not null,
+    source_db_id varchar,
     primary key(id)
 );
 
 \copy tmp_previous_name_spaces from '<directory>/old_irefweb_name_space'
+
+update tmp_previous_name_spaces set source_db_id = null where source_db_id = 'NULL';
 
 -- Combine previously unknown name spaces with the previous table.
 
@@ -470,9 +505,9 @@ from tmp_previous_name_spaces;
 create temporary table tmp_irefweb_name_spaces as
     select
         nextval('tmp_irefweb_name_spaces_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_name_spaces) as version,
         S.name,
-        S.id as source_db_id
+        cast(S.id as varchar) as source_db_id
     from tmp_irefweb_source_databases as S
 
     -- Exclude previous name spaces.
@@ -506,7 +541,7 @@ create temporary table tmp_interactors as
 
         I.rog as rog,
         C.crogid as rogid,
-        substring(C.rogid for 28) as seguid,
+        substring(C.rogid for 27) as seguid,
 
         -- Taxonomy information.
 
@@ -548,6 +583,7 @@ create temporary table tmp_interactors as
          = (T.source, T.filename, T.entry, T.interactorid)
     inner join psicv_terms as V
         on T.refvalue = V.code
+        and V.nametype = 'preferred'
 
     -- Alias information.
 
@@ -604,7 +640,7 @@ create temporary table tmp_previous_interactor_types (
     primary key(id)
 );
 
-\copy tmp_previous_interactor_types from '<directory>/old_irefweb_interactor_types'
+\copy tmp_previous_interactor_types from '<directory>/old_irefweb_interactor_type'
 
 analyze tmp_previous_interactor_types;
 
@@ -628,7 +664,7 @@ from tmp_previous_interactor_types;
 create temporary table tmp_irefweb_interactor_types as
     select
         nextval('tmp_irefweb_interactor_types_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interactor_types) as version,
         C.name as name
     from tmp_current_interactor_types as C
 
@@ -651,16 +687,35 @@ create temporary table tmp_irefweb_interactor_types as
 -- Aliases are an aggregation of different name information with an arbitrary
 -- sequence number assigned to each one.
 
-create temporary sequence tmp_irefweb_alias_id;
+-- Get old aliases.
+
+create temporary table tmp_previous_aliases (
+    id integer not null,
+    version integer not null,
+    alias varchar not null,
+    name_space_id integer not null,
+    primary key(id)
+);
+
+\copy tmp_previous_aliases from '<directory>/old_irefweb_alias'
+
+-- Use a sequence to number previously unknown aliases.
+
+create temporary sequence tmp_irefweb_aliases_id;
+
+select setval('tmp_irefweb_aliases_id', coalesce(max(id), 0))
+from tmp_previous_aliases;
+
+-- Combine previously unknown aliases with the previous table.
 
 create temporary table tmp_irefweb_aliases as
     select
-        nextval('tmp_irefweb_alias_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
-        alias,
-        name_space_id
+        nextval('tmp_irefweb_aliases_id') as id,
+        (select max(version) + 1 from tmp_previous_aliases) as version,
+        X.alias,
+        X.name_space_id
     from (
-        select distinct alias, name_space_id
+        select distinct used_alias as alias, used_name_space_id as name_space_id
         from tmp_interactors
         union
         select distinct final_alias as alias, final_name_space_id as name_space_id
@@ -669,7 +724,21 @@ create temporary table tmp_irefweb_aliases as
         select distinct primary_alias as alias, primary_name_space_id as name_space_id
         from tmp_interactors
         ) as X
-    group by alias, name_space_id;
+
+    -- Exclude previous aliases.
+
+    left outer join tmp_previous_aliases as P
+        on X.alias = P.alias
+        and X.name_space_id = P.name_space_id
+
+    where P.alias is null
+    group by X.alias, X.name_space_id
+
+    -- Combine with previous aliases
+
+    union all
+    select id, version, alias, name_space_id
+    from tmp_previous_aliases;
 
 create index tmp_irefweb_aliases_index on tmp_irefweb_aliases(alias, name_space_id);
 
@@ -682,17 +751,58 @@ analyze tmp_irefweb_aliases;
 -- Interactor aliases map interactors to aliases.
 -- The surrogate key needs to be obtained from the generated aliases table.
 
+-- Get old interactor aliases.
+
+create temporary table tmp_previous_interactor_aliases (
+    id integer not null,
+    version integer not null,
+    interactor_id integer not null,
+    alias_id integer not null,
+    primary key(id)
+);
+
+\copy tmp_previous_interactor_aliases from '<directory>/old_irefweb_interactor_alias'
+
+-- Use a sequence to number previously unknown interactor aliases.
+
 create temporary sequence tmp_irefweb_interactor_aliases_id;
+
+select setval('tmp_irefweb_interactor_aliases_id', coalesce(max(id), 0))
+from tmp_previous_interactor_aliases;
+
+-- Combine previously unknown interactor aliases with the previous table.
 
 create temporary table tmp_irefweb_interactor_aliases as
     select nextval('tmp_irefweb_interactor_aliases_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
-        I.rog as interactor_id,
+        (select max(version) + 1 from tmp_previous_interactor_aliases) as version,
+        X.interactor_id,
         A.id as alias_id
-    from tmp_interactors as I
+    from (
+        select rog as interactor_id, used_alias as alias, used_name_space_id as name_space_id
+        from tmp_interactors
+        union
+        select rog as interactor_id, final_alias as alias, final_name_space_id as name_space_id
+        from tmp_interactors
+        union
+        select rog as interactor_id, primary_alias as alias, primary_name_space_id as name_space_id
+        from tmp_interactors
+        ) as X
     inner join tmp_irefweb_aliases as A
-        on I.alias = A.alias
-        and I.name_space_id = A.name_space_id;
+        on X.alias = A.alias
+        and X.name_space_id = A.name_space_id
+
+    -- Exclude previous interactor aliases.
+
+    left outer join tmp_previous_interactor_aliases as P
+        on X.interactor_id = P.interactor_id
+        and A.id = P.alias_id
+    where P.interactor_id is null
+
+    -- Combine with previous interactor aliases.
+
+    union all
+    select id, version, interactor_id, alias_id
+    from tmp_previous_interactor_aliases;
 
 create index tmp_irefweb_interactor_aliases_index on tmp_irefweb_interactor_aliases(interactor_id);
 
@@ -734,7 +844,6 @@ create temporary table tmp_current_sequences as
     select "sequence", actualsequence
     from pdb_sequences;
 
-create index tmp_current_sequences_index on tmp_current_sequences(actualsequence);
 analyze tmp_current_sequences;
 
 -- Use a sequence to number previously unknown sequences.
@@ -746,8 +855,8 @@ from tmp_previous_sequences;
 
 create temporary table tmp_irefweb_sequences as
     select nextval('tmp_irefweb_sequences_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
-        "sequence" as seguid,
+        (select max(version) + 1 from tmp_previous_sequences) as version,
+        S.sequence as seguid,
         actualsequence as "sequence"
     from tmp_current_sequences as S
 
@@ -784,7 +893,7 @@ create temporary table tmp_previous_interactors (
     primary key(id)
 );
 
-\copy tmp_previous_interactors from '<directory>/old_irefweb_interactors'
+\copy tmp_previous_interactors from '<directory>/old_irefweb_interactor'
 
 analyze tmp_previous_interactors;
 
@@ -792,22 +901,39 @@ analyze tmp_previous_interactors;
 
 create temporary table tmp_irefweb_interactors as
     select
-        rog,
-        rogid,
-        seguid,
-        taxonomy_id,
-        T.id as interactor_type,
+        I.rog,
+        I.rogid,
+        I.seguid,
+        I.taxonomy_id,
+        T.id as interactor_type_id,
         A.id as display_interactor_alias_id,
         S.id as sequence_id,
-        rog as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version
+        I.rog as id,
+        (select max(version) + 1 from tmp_previous_interactors) as version
     from tmp_interactors as I
     inner join tmp_irefweb_interactor_types as T
         on I.name = T.name
+
+    -- NOTE: Need to choose only one alias, perhaps a UniProt identifier preferably.
+
     inner join tmp_irefweb_interactor_aliases as A
         on I.rog = A.interactor_id
     inner join tmp_irefweb_sequences as S
-        on substring(I.rogid for 28) = S.seguid;
+        on substring(I.rogid for 27) = S.seguid
+
+    -- Exclude previous interactors.
+
+    left outer join tmp_previous_interactors as P
+        on I.rog = P.rog
+
+    -- Combine with previous interactors, but only those present in the current
+    -- release.
+
+    union all
+    select P.rog, P.rogid, P.seguid, P.taxonomy_id, P.interactor_type_id, P.display_interactor_alias_id, P.sequence_id, P.id, P.version
+    from tmp_previous_interactors as P
+    inner join tmp_interactors as I
+        on P.rog = I.rog;
 
 analyze tmp_irefweb_interactors;
 
@@ -834,10 +960,13 @@ create temporary table tmp_previous_interaction_interactors (
 
 create temporary sequence tmp_irefweb_interaction_interactors_id;
 
+select setval('tmp_irefweb_interaction_interactors_id', coalesce(max(id), 0))
+from tmp_previous_interaction_interactors;
+
 create temporary table tmp_irefweb_interaction_interactors as
     select
         nextval('tmp_irefweb_interaction_interactors_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interaction_interactors) as version,
         CI.rig as interaction_id,
         CO.rog as interactor_id,
         count(CO.rogid) as cardinality
@@ -874,7 +1003,7 @@ create temporary table tmp_irefweb_interaction_interactors as
 
 -- Get old source interactions.
 
-create temporary table tmp_old_interaction_sources (
+create temporary table tmp_previous_interaction_sources (
     id integer not null,
     version integer not null,
     interaction_id integer not null,
@@ -884,16 +1013,19 @@ create temporary table tmp_old_interaction_sources (
     primary key(id)
 );
 
-\copy tmp_old_interaction_sources from '<directory>/old_irefweb_interaction_source_db'
+\copy tmp_previous_interaction_sources from '<directory>/old_irefweb_interaction_source_db'
 
 -- Combine previously unknown source interactions with the previous table.
 
 create temporary sequence tmp_irefweb_interaction_sources_id;
 
+select setval('tmp_irefweb_interaction_sources_id', coalesce(max(id), 0))
+from tmp_previous_interaction_sources;
+
 create temporary table tmp_irefweb_interaction_sources as
     select
         nextval('tmp_irefweb_interaction_sources_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_interaction_sources) as version,
         II.id as interaction_id,
         N.refvalue as source_db_intrctn_id,
         D.id as source_db_id,
@@ -916,7 +1048,7 @@ create temporary table tmp_irefweb_interaction_sources as
 
     -- Exclude previous source interactions.
 
-    left outer join tmp_old_interaction_sources as P
+    left outer join tmp_previous_interaction_sources as P
         on N.refvalue = P.source_db_intrctn_id
         and D.id = P.source_db_id
         and IT.id = P.interaction_type_id
@@ -927,7 +1059,7 @@ create temporary table tmp_irefweb_interaction_sources as
 
     union
     select id, version, interaction_id, source_db_intrctn_id, source_db_id, interaction_type_id
-    from tmp_old_interaction_sources;
+    from tmp_previous_interaction_sources;
 
 \copy tmp_irefweb_interaction_sources to '<directory>/irefweb_interaction_source_db'
 
@@ -952,10 +1084,13 @@ create temporary table tmp_previous_scores (
 
 create temporary sequence tmp_irefweb_scores_id;
 
+select setval('tmp_irefweb_scores_id', coalesce(max(id), 0))
+from tmp_previous_scores;
+
 create temporary table tmp_irefweb_scores as
     select distinct
         nextval('tmp_irefweb_scores_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_scores) as version,
         score as code,
         cast('' as varchar) as description
     from irefindex_assignment_scores as S
@@ -1024,10 +1159,62 @@ analyze tmp_canonical_scores;
 
 
 
--- NOTE: interaction_source_db_experiment is specific interaction+interactor of
--- NOTE: bait, interaction detection type, PubMed reference.
+-- Experiment details indicating the bait of a specific interaction along with
+-- the interaction detection type and PubMed reference.
+
+create temporary table tmp_previous_interaction_experiments (
+    id integer not null,
+    version integer not null,
+    interaction_source_db_id integer not null,
+    bait_interaction_interactor_id integer,
+    pubmed_id integer not null,
+    interaction_detection_type_id integer,
+    isSecondary integer,
+    primary key(id)
+);
+
+\copy tmp_previous_interaction_experiments from '<directory>/old_irefweb_interaction_source_db_experiment'
+
+-- Combine previously unknown interaction experiments with the previous table.
+
+create temporary table tmp_irefweb_interaction_experiments as
+    select
+        nextval('tmp_irefweb_assignments_id') as id,
+        (select max(version) + 1 from tmp_previous_interaction_experiments) as version,
+        as interaction_source_db_id,
+        as bait_interaction_interactor_id,
+        as pubmed_id,
+        as interaction_detection_type_id,
+        as isSecondary
+    from xml_xref_experiment_pubmed as P
+    left outer join xml_xref_experiment_methods as M
+        on (P.source, P.filename, P.entry, P.experimentid)
+         = (M.source, M.filename, M.entry, M.experimentid)
+    inner join xml_experiments as E
+        on (P.source, P.filename, P.entry, P.experimentid)
+         = (E.source, E.filename, E.entry, E.experimentid)
+    left outer join tmp_baits as B
+        on (E.source, E.filename, E.entry, E.interactionid)
+         = (B.source, B.filename, B.entry, B.interactionid)
+    inner join 
+
+    -- Exclude previous details.
+
+    left outer join tmp_previous_interaction_experiments as P
+
+    where P.interaction_source_db_id is null
+
+    -- Combine with previous details.
+
+    union
+    select id, version, interaction_source_db_id, bait_interaction_interactor_id, pubmed_id, interaction_detection_type_id, isSecondary
+    from tmp_previous_interaction_experiments;
+
+\copy tmp_irefweb_interaction_experiments to '<directory>/irefweb_interaction_source_db_experiment'
 
 
+
+-- NOTE: Get old assignments.
 
 -- Create a record of assignments.
 
@@ -1036,7 +1223,7 @@ create temporary sequence tmp_irefweb_assignments_id;
 create temporary table tmp_irefweb_assignments as
     select
         nextval('tmp_irefweb_assignments_id') as id,
-        setval('tmp_version', nextval('tmp_version'), false) as version,
+        (select max(version) + 1 from tmp_previous_assignments) as version,
         II.id as interaction_interactor_id,
         S.id as interaction_source_db_id,
         IDT.id as interactor_detection_type_id,
@@ -1107,6 +1294,8 @@ create temporary table tmp_irefweb_assignments as
     inner join tmp_participant_positions as positions
         on (R.source, R.filename, R.entry, R.interactionid, I.interactorid)
          = (positions.source, positions.filename, positions.entry, positions.interactionid, positions.interactorid);
+
+\copy tmp_irefweb_assignments to '<directory>/irefweb_interaction_interactor_assignment'
 
 
 
