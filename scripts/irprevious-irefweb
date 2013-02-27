@@ -1,0 +1,87 @@
+#!/bin/sh
+
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Original author: Paul Boddie <paul.boddie@biotek.uio.no>
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if [ -e "irdata-config" ]; then
+    . "$PWD/irdata-config"
+elif [ -e "scripts/irdata-config" ]; then
+    . 'scripts/irdata-config'
+else
+    . 'irdata-config'
+fi
+
+if [ "$1" = '--help' ] || [ ! "$1" ]; then
+    cat 1>&2 <<EOF
+Usage: $PROGNAME --pgsql <database> | --mysql <option>...
+
+Export data from a previous release of iRefWeb.
+EOF
+    exit 1
+fi
+
+if [ "$1" = '--pgsql' ]; then
+    PGSQL=$1
+    DATABASE=$2
+
+    if [ ! "$DATABASE" ]; then
+        echo "$PROGNAME: A specific database must be specified." 1>&2
+        exit 1
+    fi
+
+elif [ "$1" = '--mysql' ]; then
+    MYSQL=$1
+    shift 1
+    OPTIONS=$*
+
+else
+    echo "$PROGNAME: A database system option must be specified." 1>&2
+    exit 1
+fi
+
+if [ "$PGSQL" ]; then
+
+    # Export data from a PostgreSQL database.
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefweb.sql" "$DATA" $PSQL_OPTIONS ; then
+        echo "$PROGNAME: Could not export iRefWeb data from the previous database." 1>&2
+        exit 1
+    fi
+
+    # Rename the output files to be usable as the previous release inputs to the
+    # template when used in the current database.
+
+    for FILENAME in "$DATA/irefweb_"* ; do
+        LEAFNAME=`basename $FILENAME`
+        OLDNAME="$DATA/old_$LEAFNAME"
+        if [ -e "$OLDNAME" ]; then
+            mv "$OLDNAME" "$OLDNAME.backup"
+        fi
+        mv "$FILENAME" "$OLDNAME"
+    done
+
+elif [ "$MYSQL" ]; then
+
+    # Export data from a MySQL database.
+
+    TABLES="alias interaction interaction_detection_type interaction_source_db interaction_source_db_experiment interaction_type interaction_interactor interactor interactor_alias interactor_detection_type interactor_type name_space score sequence sequence_source_db source_db"
+
+    for TABLE in $TABLES ; do
+        if ! echo "select * from $TABLE" | mysql -N $OPTIONS > "$DATA/old_irefweb_$TABLE" ; then
+            echo "$PROGNAME: Could not export table $TABLE from the previous database." 1>&2
+            exit 1
+        fi
+    done
+fi
