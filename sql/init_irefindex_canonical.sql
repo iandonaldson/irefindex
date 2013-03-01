@@ -74,3 +74,12 @@ create table irefindex_rigids_canonical (
     crigid varchar not null,
     primary key(rigid)
 );
+
+-- A table providing a mapping from canonical RIG identifiers to the canonical ROG
+-- identifiers used in their construction, without referencing individual
+-- interaction records.
+
+create table irefindex_distinct_interactions_canonical (
+    rigid varchar not null,
+    rogid varchar not null
+);

@@ -7,3 +7,4 @@ drop table irefindex_rgg_rogids;
 drop table irefindex_rgg_rogids_canonical;
 drop table irefindex_sequence_rogids_canonical;
 drop table irefindex_rigids_canonical;
+drop table irefindex_distinct_interactions_canonical;
