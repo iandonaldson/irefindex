@@ -44,7 +44,8 @@ insert into xml_xref_all_interactions
              else refvalue
         end as refvalue,
 
-        reftype
+        reftype,
+        reftypelabel
 
     from xml_xref
 
@@ -63,7 +64,11 @@ insert into xml_xref_interactions
     from (
         select source, filename, entry, interactionid, max(array[reftype, dblabel, refvalue]) as identifier
         from xml_xref_all_interactions
-        where reftype = 'primaryRef' or source = 'INTACT' and reftype = 'secondaryRef' and dblabel = 'intact'
+        where reftype = 'primaryRef'
+            or reftype = 'secondaryRef' and (
+                source = 'INTACT' and dblabel = 'intact' and reftypelabel = 'identity'
+                or source = 'MATRIXDB' and dblabel = 'matrixdb' and reftypelabel = 'identity'
+                )
         group by source, filename, entry, interactionid
         ) as X;
 

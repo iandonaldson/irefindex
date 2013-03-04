@@ -8,7 +8,7 @@ create table xml_xref_all_interactions (
     dblabel varchar,
     refvalue varchar not null,
     reftype varchar not null,
-    primary key(source, filename, entry, interactionid, reftype, dblabel, refvalue)
+    reftypelabel varchar
 );
 
 create table xml_xref_interactions (
