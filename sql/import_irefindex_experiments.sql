@@ -51,12 +51,16 @@ insert into xml_xref_experiment_organisms
 
 analyze xml_xref_experiment_organisms;
 
+-- NOTE: A few records maintain primary and secondary references to the same
+-- NOTE: article and thus the primary reference type is chosen.
+
 insert into xml_xref_experiment_pubmed
-    select distinct source, filename, entry, experimentid, refvalue
+    select source, filename, entry, experimentid, min(reftype) as reftype, refvalue
     from xml_xref_all_experiments
     where property = 'bibref' and dblabel = 'pubmed'
         and refvalue ~ E'^[[:digit:]]\+$'
-        and refvalue <> '0';
+        and refvalue <> '0'
+    group by source, filename, entry, experimentid, refvalue;
 
 analyze xml_xref_experiment_pubmed;
 

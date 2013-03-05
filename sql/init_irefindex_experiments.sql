@@ -25,6 +25,7 @@ create table xml_xref_experiment_pubmed (
     filename varchar not null,
     entry integer not null,
     experimentid varchar not null,
+    reftype varchar not null,
     refvalue varchar not null,
     primary key(source, filename, entry, experimentid, refvalue)
 );
