@@ -76,7 +76,7 @@ elif [ "$MYSQL" ]; then
 
     # Export data from a MySQL database.
 
-    TABLES="interaction interaction_detection_type interaction_interactor interaction_source_db interaction_source_db_experiment interaction_type interactor interactor_detection_type interactor_type name_space score sequence sequence_source_db source_db"
+    TABLES="interaction interaction_detection_type interaction_interactor interaction_interactor_assignment interaction_source_db interaction_source_db_experiment interaction_type interactor interactor_detection_type interactor_type name_space score sequence sequence_source_db source_db"
 
     for TABLE in $TABLES ; do
         if ! echo "select * from $TABLE" | mysql -N $OPTIONS > "$DATA/old_irefweb_$TABLE" ; then
