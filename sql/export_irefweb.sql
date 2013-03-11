@@ -18,14 +18,14 @@ begin;
 -- name_space                        (iRefWeb-specific sequence number)
 -- score                             (iRefWeb-specific sequence number)
 -- sequence                          (iRefWeb-specific sequence number)
--- NOTE: To do: sequence_source_db
+-- sequence_source_db                (iRefWeb-specific sequence number)
 -- source_db                         (iRefWeb-specific sequence number)
 
 -- Other tables do not attempt to preserve the keys from one release to the
 -- next (using iRefWeb-specific sequence numbers throughout):
 
 -- alias
--- NOTE: To do: geneid2rog
+-- geneid2rog
 -- interactor_alias
 -- interactor_alias_display
 -- NOTE: To do: statistics
@@ -845,28 +845,33 @@ create temporary table tmp_previous_sequences (
 -- Get current sequences.
 
 create temporary table tmp_current_sequences as
-    select S.sequence, actualsequence
+    select S.sequence, actualsequence, 'uniprotkb' as sourcedb
     from uniprot_sequences as S
     inner join irefindex_assignments as R
         on S.sequence = R.sequence
-    union
-    select S.sequence, actualsequence
+    union all
+    select S.sequence, actualsequence, 'refseq' as sourcedb
     from refseq_sequences as S
     inner join irefindex_assignments as R
         on S.sequence = R.sequence
-    union
-    select S.sequence, actualsequence
+    union all
+    select S.sequence, actualsequence, 'ipi' as sourcedb
     from ipi_sequences as S
     inner join irefindex_assignments as R
         on S.sequence = R.sequence
-    union
-    select S.sequence, actualsequence
+    union all
+    select S.sequence, actualsequence, 'genpept' as sourcedb
     from genpept_sequences as S
     inner join irefindex_assignments as R
         on S.sequence = R.sequence
-    union
-    select S.sequence, actualsequence
+    union all
+    select S.sequence, actualsequence, 'pdb' as sourcedb
     from pdb_sequences as S
+    inner join irefindex_assignments as R
+        on S.sequence = R.sequence
+    union all
+    select S.sequence, actualsequence, source as sourcedb
+    from xml_sequences_original as S
     inner join irefindex_assignments as R
         on S.sequence = R.sequence;
 
@@ -891,6 +896,7 @@ create temporary table tmp_irefweb_sequences as
     left outer join tmp_previous_sequences as P
         on S.sequence = P.seguid
     where P.seguid is null
+    group by S.sequence, actualsequence
 
     -- Combine with previous sequences.
 
@@ -899,6 +905,72 @@ create temporary table tmp_irefweb_sequences as
     from tmp_previous_sequences;
 
 \copy tmp_irefweb_sequences to '<directory>/irefweb_sequence'
+
+
+
+-- Sequence source databases.
+
+create temporary table tmp_previous_sequence_databases (
+    id integer not null,
+    version integer not null,
+    source_db_sqnc_id integer not null,
+    sequence_id integer not null,
+    source_db_id integer not null,
+    primary key(id)
+);
+
+\copy tmp_previous_sequence_databases from '<directory>/old_irefweb_sequence_source_db'
+
+analyze tmp_previous_sequence_databases;
+
+-- Combine previously unknown sequence databases with the previous table.
+
+create temporary sequence tmp_irefweb_sequence_databases_id minvalue 0;
+
+select setval('tmp_irefweb_sequence_databases_id', coalesce(max(id), 0))
+from tmp_previous_sequence_databases;
+
+-- NOTE: source_db_sqnc_id and sequence_id are always identical in iRefWeb 9.
+-- NOTE: A preferred database identifier seems to be chosen in iRefWeb 9 so that
+-- NOTE: only one record exists per sequence.
+
+create temporary table tmp_current_sequence_databases as
+    select
+        S.id as source_db_sqnc_id,
+        S.id as sequence_id,
+        min(D.id) as source_db_id
+    from tmp_current_sequences as C
+    inner join tmp_irefweb_sequences as S
+        on C.actualsequence = S.sequence
+    inner join tmp_irefweb_source_databases as D
+        on lower(sourcedb) = lower(D.name)
+    group by S.id;
+
+analyze tmp_current_sequence_databases;
+
+create temporary table tmp_irefweb_sequence_databases as
+    select
+        nextval('tmp_irefweb_sequence_databases_id') as id,
+        (select max(version) + 1 from tmp_previous_sequence_databases) as version,
+        C.source_db_sqnc_id, C.sequence_id, C.source_db_id
+    from tmp_current_sequence_databases as C
+
+    -- Exclude previous sequence databases.
+
+    left outer join tmp_previous_sequence_databases as P
+        on C.sequence_id = P.sequence_id
+    where P.sequence_id is null
+
+    -- Combine with previous sequence databases, but only those present in the
+    -- current release.
+
+    union all
+    select P.id, P.version, P.source_db_sqnc_id, P.sequence_id, P.source_db_id
+    from tmp_previous_sequence_databases as P
+    inner join tmp_current_sequence_databases as C
+        on P.sequence_id = C.sequence_id;
+
+\copy tmp_irefweb_sequence_databases to '<directory>/irefweb_sequence_source_db'
 
 
 
@@ -1535,6 +1607,23 @@ create temporary table tmp_irefweb_assignments as
          = (positions.source, positions.filename, positions.entry, positions.interactionid, positions.interactorid, positions.participantid, positions.index);
 
 \copy tmp_irefweb_assignments to '<directory>/irefweb_interaction_interactor_assignment'
+
+
+
+-- A mapping from gene identifiers to ROG identifiers.
+-- NOTE: The interactor identifier is the same as the integer ROG identifier.
+
+create temporary table tmp_irefweb_gene2rog as
+    select R.rggid as rgg, geneid, CI.rog, R.rogid, CI.rog as interactor_id
+    from irefindex_rgg_rogids_canonical as R
+    inner join irefindex_rgg_genes as G
+        on R.rggid = G.rggid
+    inner join irefindex_rog2rogid as CI
+        on R.rogid = CI.rogid
+    inner join tmp_irefweb_interactors as I
+        on CI.rog = I.id;
+
+\copy tmp_irefweb_gene2rog to '<directory>/irefweb_geneid2rog'
 
 
 
