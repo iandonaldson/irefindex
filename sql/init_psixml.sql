@@ -60,3 +60,9 @@ create table xml_sequences (
     parentid varchar not null, -- integer for PSI MI XML 2.5
     sequence varchar not null
 );
+
+create table xml_sequences_original (
+    "sequence" varchar not null,        -- the digest representing the sequence
+    actualsequence varchar not null,    -- the original sequence
+    primary key("sequence")
+);

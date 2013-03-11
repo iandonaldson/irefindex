@@ -44,7 +44,7 @@ interaction. Participants are always implicitly referenced.
 
 --------
 
-Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -61,7 +61,7 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from irdata.data import *
-from irdata.signatures import make_signature
+from irdata.signatures import make_signature, normalise_sequence
 from irdata.xmldata import *
 import os
 
@@ -248,7 +248,7 @@ class PSIParser(EmptyElementParser):
         elif element == "sequence":
             if parent == "interactor":
                 implicit = self.is_implicit(parent, property) and "implicit" or "explicit"
-                self.writer.append((element, entry, parent, self.path_to_attrs["interactor"]["id"], implicit, make_signature(content, legacy=1)))
+                self.writer.append((element, entry, parent, self.path_to_attrs["interactor"]["id"], implicit, normalise_sequence(content), make_signature(content, legacy=1)))
 
         # Get other data. This is of the form...
         # section/property/parent/element

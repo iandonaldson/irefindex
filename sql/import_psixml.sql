@@ -1,6 +1,6 @@
 -- Import PSI-MI XML data.
 
--- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -84,6 +84,7 @@ create temporary table tmp_sequences (
     scope varchar not null,
     parentid varchar not null, -- integer for PSI MI XML 2.5
     refclass varchar not null, -- implicit or explicit reference
+    actualsequence varchar not null, -- the original sequence
     sequence varchar not null  -- actually a signature/digest
 );
 
@@ -150,5 +151,12 @@ where scope = 'interactor'
 insert into xml_sequences
     select source, filename, entry, scope, parentid, sequence
     from tmp_sequences;
+
+insert into xml_sequences_original
+    select distinct T.sequence, T.actualsequence
+    from tmp_sequences as T
+    left outer join xml_sequences_original as O
+        on T.sequence = O.sequence
+    where O.sequence is null;
 
 commit;

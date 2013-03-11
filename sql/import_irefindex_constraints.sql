@@ -39,4 +39,8 @@ analyze xml_xref;
 
 analyze xml_organisms;
 
+analyze xml_sequences;
+
+analyze xml_sequences_original;
+
 commit;

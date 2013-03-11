@@ -5,7 +5,7 @@ Signature/digest calculation support.
 
 --------
 
-Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -57,6 +57,15 @@ def combine_signatures(signatures, legacy=0):
     signatures.sort()
     return make_signature("".join(signatures), legacy)
 
+def normalise_sequence(sequence):
+
+    """
+    Normalise the given protein 'sequence' to be a continuous upper case string
+    with no spaces or other non-alphanumeric characters.
+    """
+
+    return strip_regexp.sub("", sequence.upper())
+
 def make_signature(sequence, legacy=0):
 
     """
@@ -67,7 +76,7 @@ def make_signature(sequence, legacy=0):
     """
 
     if legacy:
-        sequence = strip_regexp.sub("", sequence.upper())
+        sequence = normalise_sequence(sequence)
     return base64.b64encode(sha1(sequence).digest())[:-1]
 
 def process_file(f, out, column, separator=",", append=0, append_length=0, legacy=0):
