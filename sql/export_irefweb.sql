@@ -1637,7 +1637,7 @@ create temporary table tmp_interactions_available_by_source as
 analyze tmp_interactions_available_by_source;
 
 create temporary table tmp_interactions_having_assignments as
-    select I.source, count(distinct array[I.source, I.filename, cast(I.entry as varchar), interactionid]) as total
+    select I.source, count(*) as total
     from (
 
         -- Group interactors by interaction and make sure that only interactions
@@ -1645,14 +1645,11 @@ create temporary table tmp_interactions_having_assignments as
 
         select I.source, I.filename, I.entry, I.interactionid
         from xml_interactors as I
-        left outer join xml_xref_interactor_types as S
+        left outer join xml_xref_interactor_sequences as S
             on (I.source, I.filename, I.entry, I.interactorid) =
                (S.source, S.filename, S.entry, S.interactorid)
         group by I.source, I.filename, I.entry, I.interactionid
         having count(I.interactorid) = count(S.interactorid)
-            and count(distinct refvalue) = 1
-            and min(refvalue) = 'MI:0326'
-            or count(S.interactorid) = 0
         ) as I
     group by I.source;
 
