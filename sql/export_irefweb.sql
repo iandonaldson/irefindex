@@ -1627,4 +1627,172 @@ create temporary table tmp_irefweb_gene2rog as
 
 
 
+-- NOTE: Statistics are similar to those in reports/interactions_by_source.sql.
+
+create temporary table tmp_interactions_available_by_source as
+    select source, count(distinct array[filename, cast(entry as varchar), interactionid]) as total
+    from xml_interactors
+    group by source;
+
+analyze tmp_interactions_available_by_source;
+
+create temporary table tmp_interactions_having_assignments as
+    select I.source, count(distinct array[I.source, I.filename, cast(I.entry as varchar), interactionid]) as total
+    from (
+
+        -- Group interactors by interaction and make sure that only interactions
+        -- where all interactors provide sequences are considered.
+
+        select I.source, I.filename, I.entry, I.interactionid
+        from xml_interactors as I
+        left outer join xml_xref_interactor_types as S
+            on (I.source, I.filename, I.entry, I.interactorid) =
+               (S.source, S.filename, S.entry, S.interactorid)
+        group by I.source, I.filename, I.entry, I.interactionid
+        having count(I.interactorid) = count(S.interactorid)
+            and count(distinct refvalue) = 1
+            and min(refvalue) = 'MI:0326'
+            or count(S.interactorid) = 0
+        ) as I
+    group by I.source;
+
+analyze tmp_interactions_having_assignments;
+
+create temporary table tmp_interaction_completeness_by_source as
+    select source, complete, count(distinct array[filename, cast(entry as varchar), interactionid]) as total
+    from irefindex_interactions_complete
+    group by source, complete
+    order by source, complete;
+
+analyze tmp_interaction_completeness_by_source;
+
+create temporary table tmp_rigids_unique_by_source as
+    select source, count(distinct rigid) as total
+    from irefindex_rigids
+    group by source;
+
+analyze tmp_rigids_unique_by_source;
+
+create temporary table tmp_rigids_canonical_unique_by_source as
+    select source, count(distinct crigid) as total
+    from irefindex_rigids_canonical as C
+    inner join irefindex_rigids as R
+        on C.rigid = R.rigid
+    group by source;
+
+analyze tmp_rigids_canonical_unique_by_source;
+
+create temporary table tmp_interaction_coverage as
+    select available.source,
+
+        -- Available interactions.
+
+        available.total as available_total,
+
+        -- Suitable interactions.
+
+        coalesce(suitable.total, 0) as suitable_total,
+
+        -- Assigned/used RIGIDs for interactions.
+
+        coalesce(used.total, 0) as assigned_total,
+
+        -- Assigned/used RIGIDs as a percentage of suitable interactions.
+
+        case when suitable.total <> 0 then
+            round(
+                cast(
+                    cast(coalesce(used.total, 0) as real) / suitable.total * 100
+                    as numeric
+                    ), 2
+                )
+            else null
+        end as assigned_coverage,
+
+        -- Unique RIGIDs.
+
+        coalesce(unique_rigids.total, 0) as unique_total,
+
+        -- Unique coverage as a percentage of the number of assigned/used RIGIDs.
+
+        case when used.total <> 0 then
+            round(
+                cast(
+                    cast(coalesce(unique_rigids.total, 0) as real) / used.total * 100
+                    as numeric
+                    ), 2
+                )
+            else null
+        end as unique_coverage,
+
+        -- Unique canonical RIGIDs.
+
+        coalesce(unique_rigids_canonical.total, 0) as unique_total_canonical,
+
+        -- Unique coverage as a percentage of the number of assigned/used RIGIDs.
+
+        case when used.total <> 0 then
+            round(
+                cast(
+                    cast(coalesce(unique_rigids_canonical.total, 0) as real) / used.total * 100
+                    as numeric
+                    ), 2
+                )
+            else null
+        end as unique_coverage_canonical
+
+    from tmp_interactions_available_by_source as available
+    left outer join tmp_interactions_having_assignments as suitable
+        on available.source = suitable.source
+    left outer join tmp_interaction_completeness_by_source as used
+        on available.source = used.source
+        and used.complete
+    left outer join tmp_rigids_unique_by_source as unique_rigids
+        on available.source = unique_rigids.source
+    left outer join tmp_rigids_canonical_unique_by_source as unique_rigids_canonical
+        on available.source = unique_rigids_canonical.source
+    group by available.source, available.total, used.total, suitable.total, unique_rigids.total, unique_rigids_canonical.total
+    order by available.source;
+
+
+
+-- NOTE: Column names are taken from iRefWeb 9.
+-- NOTE: Unlike the other tables, actual source names are used and not arbitrary
+-- NOTE: identifiers.
+
+create temporary table tmp_irefweb_statistics as
+    select
+        source                           as sourcedb,
+        available_total                  as total,
+        suitable_total                   as PPI,
+        available_total - suitable_total as none_PPI,           -- total - PPI
+        assigned_total                   as with_RIGID,
+        available_total - assigned_total as no_RIGID,           -- total - with_RIGID
+        suitable_total - assigned_total  as PPI_without_RIGID,  -- PPI - with_RIGID
+        assigned_coverage                as percent_asign,
+        unique_total                     as uniq_RIGID,
+        unique_coverage                  as uniq_RIGID_perc,
+        unique_total_canonical           as uniq_canonical_RIGID,
+        unique_coverage_canonical        as uniq_canonical_RIGID_perc
+    from tmp_interaction_coverage
+    union all
+    select
+        'ALL'                                                                                            as sourcedb,
+        sum(available_total)                                                                             as total,
+        sum(suitable_total)                                                                              as PPI,
+        sum(available_total) - sum(suitable_total)                                                       as none_PPI,
+        sum(assigned_total)                                                                              as with_RIGID,
+        sum(available_total) - sum(assigned_total)                                                       as no_RIGID,
+        sum(suitable_total) - sum(assigned_total)                                                        as PPI_without_RIGID,
+        round(cast(cast(sum(assigned_total) as real) / sum(suitable_total) * 100 as numeric), 2)         as percent_asign,
+        sum(unique_total)                                                                                as uniq_RIGID,
+        round(cast(cast(sum(unique_total) as real) / sum(assigned_total) * 100 as numeric), 2)           as uniq_RIGID_perc,
+        sum(unique_total_canonical)                                                                      as uniq_canonical_RIGID,
+        round(cast(cast(sum(unique_total_canonical) as real) / sum(assigned_total) * 100 as numeric), 2) as uniq_canonical_RIGID_perc
+    from tmp_interaction_coverage;
+
+\copy tmp_irefweb_statistics to '<directory>/statistics'
+
+
+
 rollback;
