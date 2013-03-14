@@ -1109,7 +1109,7 @@ create temporary table tmp_irefweb_interaction_interactors as
     inner join irefindex_rogids_canonical as CO
         on IO.rogid = CO.crogid;
 
-\copy tmp_irefweb_interaction_interactors as '<directory>/irefweb_interaction_interactor'
+\copy tmp_irefweb_interaction_interactors to '<directory>/irefweb_interaction_interactor'
 
 create index tmp_irefweb_interaction_interactors_index on tmp_irefweb_interaction_interactors(interaction_id, interactor_id);
 analyze tmp_irefweb_interaction_interactors;
