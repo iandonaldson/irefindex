@@ -189,9 +189,7 @@ create temporary table tmp_named_interactions as
 
         -- confidence
 
-        case when confI.confidence is null then '-'
-             else array_to_string(confI.confidence, '|')
-        end as confidence
+        array_to_string(confI.confidence, '|') as confidence
 
     from tmp_interactions as I
 
@@ -531,7 +529,7 @@ create temporary table tmp_mitab_all as
 
         -- confidence
 
-        confidence,
+        case when confidence = '' then '-' else confidence end as confidence,
 
         -- expansion
 
