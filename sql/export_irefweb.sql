@@ -27,8 +27,7 @@ begin;
 -- alias
 -- geneid2rog
 -- interactor_alias
--- interactor_alias_display
--- NOTE: To do: statistics
+-- statistics
 
 
 
