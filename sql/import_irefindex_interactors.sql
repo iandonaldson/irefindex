@@ -62,7 +62,7 @@ insert into xml_xref_all_interactors
 
 -- Make some reports more efficient to generate.
 
-create index xml_xref_all_interactors_index on xml_xref_all_interactors (source);
+create index xml_xref_all_interactors_index on xml_xref_all_interactors(source, filename, entry, interactorid);
 analyze xml_xref_all_interactors;
 
 -- Narrow the cross-references to those actually describing each interactor
