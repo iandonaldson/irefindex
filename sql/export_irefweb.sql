@@ -276,7 +276,7 @@ create temporary table tmp_source_interactions as
 
         -- General interaction.
 
-        C.rigid, CI.rig,
+        C.crigid as rigid, CI.rig,
 
         -- Interaction identifier.
 
@@ -409,7 +409,7 @@ analyze tmp_num_source_interactions;
 
 
 -- -----------------------------------------------------------------------------
--- Create export tables.
+-- Export tables.
 
 create temporary sequence tmp_irefweb_interaction_type_id minvalue 0;
 
