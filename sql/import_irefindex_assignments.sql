@@ -1,6 +1,6 @@
 -- Definitively assign sequences to interactors.
 
--- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -380,6 +380,19 @@ insert into irefindex_rogids
 create index irefindex_rogids_rogid on irefindex_rogids(rogid);
 analyze irefindex_rogids;
 
+-- Make a mapping from ROG identifiers to canonical ROG identifiers.
+-- Since the mapping from RGGs to canonical ROGs may not provide a canonical
+-- UniProt or RefSeq representative, a ROG identifier is mapped to itself here
+-- in such cases in order to provide a complete mapping.
+
+insert into irefindex_rogids_canonical
+    select distinct I.rogid, coalesce(C.crogid, I.rogid) as crogid
+    from irefindex_rogids as I
+    left outer join irefindex_sequence_rogids_canonical as C
+        on I.rogid = C.rogid;
+
+analyze irefindex_rogids_canonical;
+
 -- Database identifiers corresponding to ROG identifiers.
 -- The identifier sequences table is used to get a wide selection of identifiers
 -- instead of only the identifiers actually used in the interaction data.
@@ -394,19 +407,50 @@ insert into irefindex_rogid_identifiers
 
 analyze irefindex_rogid_identifiers;
 
+-- Add extra records for canonical identifiers.
+
+insert into irefindex_rogid_identifiers
+    select distinct crogid, finaldblabel, finalrefvalue, 1 as priority
+    from irefindex_rogids_canonical as R
+    inner join xml_xref_sequences as I
+        on crogid = refsequence || reftaxid
+    left outer join irefindex_rogid_identifiers as P
+        on crogid = P.rogid
+    where refsequence is not null
+        and reftaxid is not null
+        and P.rogid is null;
+
+analyze irefindex_rogid_identifiers;
+
 -- Add things like original references (which may be have been gene identifiers
 -- that were mapped to protein identifiers).
 -- These should only be chosen to refer to an interactor if no better identifier
 -- exists.
 
 insert into irefindex_rogid_identifiers
-
     select distinct R.rogid, I.dblabel, I.refvalue, 2 as priority
     from irefindex_rogids as R
     inner join xml_xref_sequences as I
         on R.rogid = refsequence || reftaxid
     left outer join irefindex_rogid_identifiers as RI
         on R.rogid = RI.rogid
+        and I.dblabel = RI.dblabel
+        and I.refvalue = RI.refvalue
+    where refsequence is not null
+        and reftaxid is not null
+        and RI.rogid is null;
+
+analyze irefindex_rogid_identifiers;
+
+-- Add extra records for canonical identifiers.
+
+insert into irefindex_rogid_identifiers
+    select distinct R.crogid as rogid, I.dblabel, I.refvalue, 2 as priority
+    from irefindex_rogids_canonical as R
+    inner join xml_xref_sequences as I
+        on R.crogid = refsequence || reftaxid
+    left outer join irefindex_rogid_identifiers as RI
+        on R.crogid = RI.rogid
         and I.dblabel = RI.dblabel
         and I.refvalue = RI.refvalue
     where refsequence is not null
@@ -430,6 +474,21 @@ insert into irefindex_rogid_identifiers
 
 analyze irefindex_rogid_identifiers;
 
+-- Add extra records for canonical identifiers.
+
+insert into irefindex_rogid_identifiers
+    select distinct R.crogid as rogid, 'entrezgene/locuslink' as dblabel, cast(geneid as varchar) as refvalue, 3 as priority
+    from irefindex_rogids_canonical as R
+    inner join irefindex_gene2rog as G
+        on R.crogid = G.rogid
+    left outer join irefindex_rogid_identifiers as RI
+        on R.crogid = RI.rogid
+        and RI.dblabel = 'entrezgene/locuslink'
+        and cast(geneid as varchar) = RI.refvalue
+    where RI.rogid is null;
+
+analyze irefindex_rogid_identifiers;
+
 -- Define the preferred identifiers as those provided by UniProt or RefSeq, with
 -- ROG identifiers used otherwise. These identifiers are used in the uid columns
 -- of the MITAB output and can be any identifiers referring to a protein
@@ -443,7 +502,11 @@ insert into irefindex_rogid_identifiers_preferred
         select I.rogid,
             min(array[cast(U.priority as varchar), U.dblabel, U.refvalue]) as uniprotacc,
             min(array[cast(R.priority as varchar), R.dblabel, R.refvalue]) as refseqacc
-        from irefindex_rogids as I
+        from (
+            select rogid from irefindex_rogids
+            union
+            select crogid as rogid from irefindex_rogids_canonical
+            ) as I
         left outer join irefindex_rogid_identifiers as U
             on I.rogid = U.rogid
             and U.dblabel = 'uniprotkb'
@@ -469,18 +532,5 @@ insert into irefindex_interactions_complete
         group by I.source, I.filename, I.entry, I.interactionid;
 
 analyze irefindex_interactions_complete;
-
--- Make a mapping from ROG identifiers to canonical ROG identifiers.
--- Since the mapping from RGGs to canonical ROGs may not provide a canonical
--- UniProt or RefSeq representative, a ROG identifier is mapped to itself here
--- in such cases in order to provide a complete mapping.
-
-insert into irefindex_rogids_canonical
-    select distinct I.rogid, coalesce(C.crogid, I.rogid)
-    from irefindex_rogids as I
-    left outer join irefindex_sequence_rogids_canonical as C
-        on I.rogid = C.rogid;
-
-analyze irefindex_rogids_canonical;
 
 commit;
