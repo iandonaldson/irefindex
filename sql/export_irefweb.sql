@@ -200,6 +200,8 @@ create temporary table tmp_source_interactors as
     inner join irefindex_rogid_identifiers_preferred as CA
         on C.crogid = CA.rogid;
 
+analyze tmp_source_interactors;
+
 -- Source interaction participants.
 -- NOTE: Since interactor detection type codes can produce multiple type
 -- NOTE: records, the lowest identifier is chosen.
@@ -483,6 +485,8 @@ create temporary table tmp_irefweb_interactor_detection_type as
 
     group by T.code, T.name;
 
+analyze tmp_irefweb_interactor_detection_type;
+
 create temporary sequence tmp_irefweb_interactor_type_id minvalue 0;
 
 create temporary table tmp_irefweb_interactor_type as
@@ -722,6 +726,14 @@ create temporary table tmp_irefweb_interactor as
     inner join tmp_irefweb_sequence as S
         on I.seguid = S.seguid;
 
+create temporary table tmp_irefweb_interactor_alias_display as
+    select rog, alias, name_space_id, alias_id, rog as interactor_id, IA.id as interactor_alias_id
+    from tmp_irefweb_interactor_alias as IA
+    inner join tmp_display_aliases as D
+        on IA.interactor_id = D.rog
+    inner join tmp_irefweb_alias as A
+        on IA.alias_id = A.id;
+
 create temporary sequence tmp_irefweb_interaction_interactor_id minvalue 0;
 
 create temporary table tmp_irefweb_interaction_interactor as
@@ -737,6 +749,10 @@ create temporary table tmp_irefweb_interaction_interactor as
     inner join irefindex_rig2rigid as I2
         on C.rigid = I2.rigid
     group by rig, rog;
+
+create index tmp_irefweb_interaction_interactor_index on tmp_irefweb_interaction_interactor(interaction_id, interactor_id);
+
+analyze tmp_irefweb_interaction_interactor;
 
 create temporary table tmp_irefweb_interaction_source_db as
     select
@@ -915,13 +931,22 @@ create temporary table tmp_irefweb_interaction_interactor_assignment as
     inner join tmp_irefweb_score as S2
         on CS.code = S2.code;
 
-create temporary table tmp_irefweb_gene2rog as
-    select R.rggid as rgg, geneid, I.rog, R.rogid, I.rog as interactor_id
+-- Note that iRefIndex 9 employed an arbitrary sequence number for the RGG
+-- identifier whereas iRefIndex 10 and later use the smallest gene identifier in
+-- the related gene group.
+
+create temporary table tmp_irefweb_geneid2rog as
+    select distinct R.rggid as rgg, geneid, II.rog, R.rogid, II.rog as interactor_id
     from irefindex_rgg_rogids_canonical as R
     inner join irefindex_rgg_genes as G
         on R.rggid = G.rggid
-    inner join tmp_source_interactors as I
-        on R.rogid = I.rogid;
+
+    -- Restrict to interactors participating in interactions.
+
+    inner join irefindex_distinct_interactions_canonical as I
+        on R.rogid = I.rogid
+    inner join irefindex_rog2rogid as II
+        on I.rogid = II.rogid;
 
 -- -----------------------------------------------------------------------------
 -- Work tables.
@@ -1102,6 +1127,7 @@ create temporary table tmp_irefweb_statistics as
 \copy tmp_irefweb_interaction_type                  to '<directory>/tmp_irefweb_interaction_type'
 \copy tmp_irefweb_interactor                        to '<directory>/tmp_irefweb_interactor'
 \copy tmp_irefweb_interactor_alias                  to '<directory>/tmp_irefweb_interactor_alias'
+\copy tmp_irefweb_interactor_alias_display          to '<directory>/tmp_irefweb_interactor_alias_display'
 \copy tmp_irefweb_interactor_detection_type         to '<directory>/tmp_irefweb_interactor_detection_type'
 \copy tmp_irefweb_interactor_type                   to '<directory>/tmp_irefweb_interactor_type'
 \copy tmp_irefweb_name_space                        to '<directory>/tmp_irefweb_name_space'
