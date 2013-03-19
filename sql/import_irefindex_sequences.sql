@@ -6,7 +6,7 @@
 -- be made much quicker by constraining sequence retrieval to identifiers used
 -- by the current interaction database data.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -218,6 +218,8 @@ insert into irefindex_sequences
 
 create index irefindex_sequences_index on irefindex_sequences(dblabel, refvalue);
 analyze irefindex_sequences;
+
+-- ROG identifiers for all sequences having a taxonomy identifier.
 
 insert into irefindex_sequence_rogids
     select distinct refsequence || reftaxid as rogid
