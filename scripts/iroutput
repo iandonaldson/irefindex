@@ -29,7 +29,7 @@ MITAB_ORGANISM_OUTPUT="$DATA/{}.mitab.$DATESTAMP.txt"
 
 if [ "$1" = '--help' ]; then
     cat 1>&2 <<EOF
-Usage: $PROGNAME [ --mitab ] [ --irefscape ] [ --mapping ]
+Usage: $PROGNAME [ --mitab ] [ --irefscape ] [ --mapping ] [ --irefweb ]
 
 When --mitab is specified, generate the complete MITAB output file...
 
@@ -40,6 +40,8 @@ $MITAB_COMPLETE_OUTPUT
 When --irefscape is specified, generate the iRefScape output file.
 
 When --mapping is specified, generate the protein identifier mapping file.
+
+When --irefweb is specified, generate the iRefWeb output files.
 EOF
     exit 1
 fi
@@ -56,6 +58,11 @@ fi
 
 if [ "$1" = '--mapping' ]; then
     MAPPING=$1
+    shift 1
+fi
+
+if [ "$1" = '--irefweb' ]; then
+    IREFWEB=$1
     shift 1
 fi
 
@@ -125,6 +132,23 @@ if [ "$IREFSCAPE" ]; then
 
     if ! "$TOOLS/irdata_archive_irefscape.sh" "$DATA/iRefScape" "$DATA" ; then
         echo "$PROGNAME: Could not package iRefScape data in an archive." 1>&2
+        exit 1
+    fi
+
+fi
+
+# Generate the iRefWeb output.
+
+if [ "$IREFWEB" ]; then
+
+    if [ ! -e "$DATA/iRefWeb" ]; then
+        mkdir "$DATA/iRefWeb"
+    else
+        rm "$DATA/iRefWeb/"*
+    fi
+
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefweb.sql" "$DATA/iRefWeb" $PSQL_OPTIONS ; then
+        echo "$PROGNAME: Could not generate iRefWeb data." 1>&2
         exit 1
     fi
 
