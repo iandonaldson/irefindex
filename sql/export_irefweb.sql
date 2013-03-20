@@ -162,10 +162,10 @@ create temporary table tmp_source_interactors as
 
     -- Interactor type information.
 
-    inner join xml_xref_interactor_types as T
+    left outer join xml_xref_interactor_types as T
         on (R.source, R.filename, R.entry, R.interactorid)
          = (T.source, T.filename, T.entry, T.interactorid)
-    inner join psicv_terms as V
+    left outer join psicv_terms as V
         on T.refvalue = V.code
         and V.nametype = 'preferred'
 
@@ -183,7 +183,7 @@ create temporary table tmp_source_interactors as
 
     -- Primary alias information.
 
-    inner join xml_xref_all_interactors as PA
+    left outer join xml_xref_all_interactors as PA
         on (R.source, R.filename, R.entry, R.interactorid)
          = (PA.source, PA.filename, PA.entry, PA.interactorid)
         and PA.reftype = 'primaryRef'
