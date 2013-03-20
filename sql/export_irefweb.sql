@@ -887,7 +887,7 @@ create temporary table tmp_irefweb_interaction_interactor_assignment as
     inner join tmp_irefweb_interaction_interactor as II
         on I2.rig = II.interaction_id
         and I.rog = II.interactor_id
-    inner join tmp_irefweb_interactor_detection_type as T
+    left outer join tmp_irefweb_interactor_detection_type as T
         on X.interactordetectiontype = T.psi_mi_code
 
     -- Used alias.
