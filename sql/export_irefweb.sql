@@ -393,7 +393,7 @@ analyze tmp_source_databases;
 -- NOTE: We could label tmp_source_interactions directly, but there appear to be
 -- NOTE: some interactions providing multiple interaction types.
 
-create temporary sequence tmp_num_source_interactions_id minvalue 0;
+create temporary sequence tmp_num_source_interactions_id minvalue 1;
 
 create temporary table tmp_num_source_interactions as
     select
@@ -411,7 +411,7 @@ analyze tmp_num_source_interactions;
 -- -----------------------------------------------------------------------------
 -- Export tables.
 
-create temporary sequence tmp_irefweb_interaction_type_id minvalue 0;
+create temporary sequence tmp_irefweb_interaction_type_id minvalue 1;
 
 create temporary table tmp_irefweb_interaction_type as
     select
@@ -443,7 +443,7 @@ create temporary table tmp_irefweb_interaction_type as
 
     group by T.code, T.name, G.code;
 
-create temporary sequence tmp_irefweb_interaction_detection_type_id minvalue 0;
+create temporary sequence tmp_irefweb_interaction_detection_type_id minvalue 1;
 
 create temporary table tmp_irefweb_interaction_detection_type as
     select
@@ -464,7 +464,7 @@ create temporary table tmp_irefweb_interaction_detection_type as
 
     group by T.code, T.name;
 
-create temporary sequence tmp_irefweb_interactor_detection_type_id minvalue 0;
+create temporary sequence tmp_irefweb_interactor_detection_type_id minvalue 1;
 
 create temporary table tmp_irefweb_interactor_detection_type as
     select
@@ -487,7 +487,7 @@ create temporary table tmp_irefweb_interactor_detection_type as
 
 analyze tmp_irefweb_interactor_detection_type;
 
-create temporary sequence tmp_irefweb_interactor_type_id minvalue 0;
+create temporary sequence tmp_irefweb_interactor_type_id minvalue 1;
 
 create temporary table tmp_irefweb_interactor_type as
     select
@@ -497,7 +497,7 @@ create temporary table tmp_irefweb_interactor_type as
     from tmp_source_interactors as I
     group by interactortype;
 
-create temporary sequence tmp_irefweb_source_db_id minvalue 0;
+create temporary sequence tmp_irefweb_source_db_id minvalue 1;
 
 create temporary table tmp_irefweb_source_db as
     select
@@ -509,7 +509,7 @@ create temporary table tmp_irefweb_source_db as
         comments
     from tmp_source_databases;
 
-create temporary sequence tmp_irefweb_name_space_id minvalue 0;
+create temporary sequence tmp_irefweb_name_space_id minvalue 1;
 
 create temporary table tmp_irefweb_name_space as
     select
@@ -633,7 +633,7 @@ analyze tmp_current_sequences;
 -- -----------------------------------------------------------------------------
 -- Export tables.
 
-create temporary sequence tmp_irefweb_sequence_id minvalue 0;
+create temporary sequence tmp_irefweb_sequence_id minvalue 1;
 
 create temporary table tmp_irefweb_sequence as
     select nextval('tmp_irefweb_sequence_id') as id,
@@ -647,7 +647,7 @@ create index tmp_irefweb_sequence_index on tmp_irefweb_sequence(seguid);
 
 analyze tmp_irefweb_sequence;
 
-create temporary sequence tmp_irefweb_sequence_source_db_id minvalue 0;
+create temporary sequence tmp_irefweb_sequence_source_db_id minvalue 1;
 
 create temporary table tmp_irefweb_sequence_source_db as
     select
@@ -663,7 +663,7 @@ create temporary table tmp_irefweb_sequence_source_db as
         on lower(sourcedb) = lower(D.name)
     group by S.id;
 
-create temporary sequence tmp_irefweb_alias_id minvalue 0;
+create temporary sequence tmp_irefweb_alias_id minvalue 1;
 
 create temporary table tmp_irefweb_alias as
     select nextval('tmp_irefweb_alias_id') as id,
@@ -679,7 +679,7 @@ create index tmp_irefweb_alias_index on tmp_irefweb_alias(alias, name_space_id);
 
 analyze tmp_irefweb_alias;
 
-create temporary sequence tmp_irefweb_interactor_alias_id minvalue 0;
+create temporary sequence tmp_irefweb_interactor_alias_id minvalue 1;
 
 create temporary table tmp_irefweb_interactor_alias as
     select nextval('tmp_irefweb_interactor_alias_id') as id,
@@ -734,7 +734,7 @@ create temporary table tmp_irefweb_interactor_alias_display as
     inner join tmp_irefweb_alias as A
         on IA.alias_id = A.id;
 
-create temporary sequence tmp_irefweb_interaction_interactor_id minvalue 0;
+create temporary sequence tmp_irefweb_interaction_interactor_id minvalue 1;
 
 create temporary table tmp_irefweb_interaction_interactor as
     select
@@ -771,7 +771,7 @@ create temporary table tmp_irefweb_interaction_source_db as
     inner join tmp_irefweb_interaction_type as T
         on I.interactiontype = T.psi_mi_code;
 
-create temporary sequence tmp_irefweb_interaction_source_db_experiment_id minvalue 0;
+create temporary sequence tmp_irefweb_interaction_source_db_experiment_id minvalue 1;
 
 create temporary table tmp_irefweb_interaction_source_db_experiment as
     select
@@ -792,7 +792,7 @@ create temporary table tmp_irefweb_interaction_source_db_experiment as
     inner join tmp_irefweb_interaction_detection_type as IDT
         on E.interactiondetectiontype = IDT.psi_mi_code;
 
-create temporary sequence tmp_irefweb_score_id minvalue 0;
+create temporary sequence tmp_irefweb_score_id minvalue 1;
 
 create temporary table tmp_irefweb_score as
     select
@@ -854,7 +854,7 @@ analyze tmp_canonical_scores;
 -- -----------------------------------------------------------------------------
 -- Export tables.
 
-create temporary sequence tmp_irefweb_interaction_interactor_assignment_id minvalue 0;
+create temporary sequence tmp_irefweb_interaction_interactor_assignment_id minvalue 1;
 
 create temporary table tmp_irefweb_interaction_interactor_assignment as
     select
