@@ -361,27 +361,37 @@ analyze tmp_source_interaction_experiments;
 create temporary table tmp_source_databases as
 
     -- Get all databases represented by interactors.
+    -- Compatibility between identifiers and databases is maintained in the
+    -- import_irefindex_sequences.sql template.
 
     select distinct
-        I.dblabel as name,
+        lower(I.dblabel) as labelname,                             -- used to match labels in the data
+        coalesce(lower(M.source), lower(I.dblabel)) as sourcename, -- used as the final source name
         M.releasedate as release_date,
         M.version as release_label,
         M.downloadfiles as comments
     from xml_xref_all_interactors as I
     left outer join irefindex_manifest as M
-        on I.dblabel = lower(M.source)
+        on lower(I.dblabel) = lower(M.source)
+        or I.dblabel = 'uniprotkb' and M.source = 'UNIPROT'
+        or I.dblabel = 'flybase' and M.source = 'FLY'
+        or I.dblabel = 'cygd' and M.source = 'YEAST'
+        or I.dblabel = 'sgd' and M.source = 'YEAST'
+        or I.dblabel = 'ddbj/embl/genbank' and M.source = 'GENPEPT'
+        or I.dblabel = 'entrezgene/locuslink' and M.source = 'GENE'
 
     -- Get all other source databases.
 
     union all
     select distinct
-        lower(M.source) as name,
+        lower(M.source) as labelname,
+        lower(M.source) as sourcename,
         M.releasedate as release_date,
         M.version as release_label,
         M.downloadfiles as comments
     from irefindex_manifest as M
     left outer join xml_xref_all_interactors as I
-        on lower(M.source) = I.dblabel
+        on lower(M.source) = lower(I.dblabel)
     where I.dblabel is null;
 
 analyze tmp_source_databases;
@@ -405,6 +415,19 @@ create temporary table tmp_num_source_interactions as
 create index tmp_num_source_interactions_index on tmp_num_source_interactions(source, filename, entry, interactionid);
 
 analyze tmp_num_source_interactions;
+
+-- A numbered version of the sources.
+
+create temporary sequence tmp_num_source_databases_id minvalue 1;
+
+create temporary table tmp_num_source_databases as
+    select
+        nextval('tmp_num_source_databases_id') as id,
+        sourcename
+    from tmp_source_databases
+    group by sourcename;
+
+analyze tmp_num_source_databases;
 
 
 
@@ -497,17 +520,17 @@ create temporary table tmp_irefweb_interactor_type as
     from tmp_source_interactors as I
     group by interactortype;
 
-create temporary sequence tmp_irefweb_source_db_id minvalue 1;
-
 create temporary table tmp_irefweb_source_db as
-    select
-        nextval('tmp_irefweb_source_db_id') as id,
+    select distinct
+        id,
         0 as version,
-        name,
+        S.sourcename as name,
         release_date,
         release_label,
         comments
-    from tmp_source_databases;
+    from tmp_source_databases as S
+    inner join tmp_num_source_databases as N
+        on S.sourcename = N.sourcename;
 
 create temporary sequence tmp_irefweb_name_space_id minvalue 1;
 
@@ -655,12 +678,14 @@ create temporary table tmp_irefweb_sequence_source_db as
         0 as version,
         S.id as source_db_sqnc_id,
         S.id as sequence_id,
-        min(D.id) as source_db_id
+        min(N.id) as source_db_id
     from tmp_current_sequences as C
     inner join tmp_irefweb_sequence as S
         on C.sequence = S.seguid
-    inner join tmp_irefweb_source_db as D
-        on lower(sourcedb) = lower(D.name)
+    inner join tmp_source_databases as SD
+        on lower(sourcedb) = SD.labelname
+    inner join tmp_num_source_databases as N
+        on S.sourcename = N.sourcename
     group by S.id;
 
 create temporary sequence tmp_irefweb_alias_id minvalue 1;
@@ -760,14 +785,16 @@ create temporary table tmp_irefweb_interaction_source_db as
         0 as version,
         rig as interaction_id,
         refvalue as source_db_intrctn_id,
-        S.id as source_db_id,
+        SN.id as source_db_id,
         T.id as interaction_type_id
     from tmp_source_interactions as I
     inner join tmp_num_source_interactions as N
         on (I.source, I.filename, I.entry, I.interactionid)
          = (N.source, N.filename, N.entry, N.interactionid)
-    inner join tmp_irefweb_source_db as S
-        on lower(I.source) = lower(S.name)
+    inner join tmp_source_databases as S
+        on lower(I.source) = S.labelname
+    inner join tmp_num_source_databases as SN
+        on S.sourcename = SN.sourcename
     inner join tmp_irefweb_interaction_type as T
         on I.interactiontype = T.psi_mi_code;
 
