@@ -139,13 +139,13 @@ create temporary table tmp_source_interactors as
 
         -- Alias information.
 
-        X.originaldblabel,
+        lower(X.originaldblabel) as originaldblabel,
         X.originalrefvalue,
-        X.finaldblabel,
+        lower(X.finaldblabel) as finaldblabel,
         X.finalrefvalue,
-        PA.dblabel as primarydblabel,
+        lower(PA.dblabel) as primarydblabel,
         PA.refvalue as primaryrefvalue,
-        CA.dblabel as canonicaldblabel,
+        lower(CA.dblabel) as canonicaldblabel,
         CA.refvalue as canonicalrefvalue,
 
         -- Assignment score information.
@@ -280,7 +280,7 @@ create temporary table tmp_source_interactions as
 
         -- Interaction identifier.
 
-        N.dblabel, N.refvalue,
+        lower(N.dblabel), N.refvalue,
 
         -- Interaction type.
 
@@ -392,7 +392,17 @@ create temporary table tmp_source_databases as
     from irefindex_manifest as M
     left outer join xml_xref_all_interactors as I
         on lower(M.source) = lower(I.dblabel)
-    where I.dblabel is null;
+    where I.dblabel is null
+
+    -- Add the invented rogid label.
+
+    union all
+    select
+        'rogid' as labelname,
+        'rogid' as sourcename,
+        null as release_date,
+        null as release_label,
+        null as comments;
 
 analyze tmp_source_databases;
 
@@ -579,7 +589,7 @@ create temporary table tmp_irefweb_interaction as
 -- Work tables.
 
 create temporary table tmp_display_aliases as
-    select rog, rogid, details[1] as refvalue, details[2] as dblabel
+    select rog, rogid, details[1] as refvalue, lower(details[2]) as dblabel
     from (
         select rog, I.rogid, array[min(uniprotid), 'uniprotkb'] as details
         from tmp_source_interactors as I
