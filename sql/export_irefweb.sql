@@ -373,12 +373,13 @@ create temporary table tmp_source_databases as
     from xml_xref_all_interactors as I
     left outer join irefindex_manifest as M
         on lower(I.dblabel) = lower(M.source)
-        or I.dblabel = 'uniprotkb' and M.source = 'UNIPROT'
+        or (I.dblabel = 'uniprotkb' or I.dblabel in ('SP', 'Swiss-Prot', 'TREMBL')) and M.source = 'UNIPROT'
         or I.dblabel = 'flybase' and M.source = 'FLY'
         or I.dblabel = 'cygd' and M.source = 'YEAST'
         or I.dblabel = 'sgd' and M.source = 'YEAST'
         or I.dblabel = 'ddbj/embl/genbank' and M.source = 'GENPEPT'
-        or I.dblabel = 'entrezgene/locuslink' and M.source = 'GENE'
+        or I.dblabel like '%pdb' and M.source = 'PDB'
+        or (I.dblabel like 'entrezgene%' or I.dblabel like 'entrez gene%') and M.source = 'GENE'
 
     -- Get all other source databases.
 
@@ -695,7 +696,7 @@ create temporary table tmp_irefweb_sequence_source_db as
     inner join tmp_source_databases as SD
         on lower(sourcedb) = SD.labelname
     inner join tmp_num_source_databases as N
-        on S.sourcename = N.sourcename
+        on SD.sourcename = N.sourcename
     group by S.id;
 
 create temporary sequence tmp_irefweb_alias_id minvalue 1;
@@ -706,8 +707,10 @@ create temporary table tmp_irefweb_alias as
         refvalue as alias,
         NS.id as name_space_id
     from tmp_aliases as A
+    inner join tmp_source_databases as SD
+        on A.dblabel = SD.labelname
     inner join tmp_irefweb_name_space as NS
-        on A.dblabel = NS.name
+        on SD.sourcename = NS.name
     group by refvalue, NS.id;
 
 create index tmp_irefweb_alias_index on tmp_irefweb_alias(alias, name_space_id);
@@ -722,8 +725,10 @@ create temporary table tmp_irefweb_interactor_alias as
         X.rog as interactor_id,
         A.id as alias_id
     from tmp_aliases as X
+    inner join tmp_source_databases as SD
+        on X.dblabel = SD.labelname
     inner join tmp_irefweb_name_space as NS
-        on X.dblabel = NS.name
+        on SD.sourcename = NS.name
     inner join tmp_irefweb_alias as A
         on X.refvalue = A.alias
         and NS.id = A.name_space_id;
@@ -750,8 +755,10 @@ create temporary table tmp_irefweb_interactor as
 
     inner join tmp_display_aliases as D
         on I.rog = D.rog
+    inner join tmp_source_databases as SD
+        on D.dblabel = SD.labelname
     inner join tmp_irefweb_name_space as NS
-        on D.dblabel = NS.name
+        on SD.sourcename = NS.name
     inner join tmp_irefweb_alias as A
         on D.refvalue = A.alias
         and NS.id = A.name_space_id
@@ -929,32 +936,40 @@ create temporary table tmp_irefweb_interaction_interactor_assignment as
 
     -- Used alias.
 
+    inner join tmp_source_databases as USD
+        on I.originaldblabel = USD.labelname
     inner join tmp_irefweb_name_space as UNS
-        on I.originaldblabel = UNS.name
+        on USD.sourcename = UNS.name
     inner join tmp_irefweb_alias as UA
         on I.originalrefvalue = UA.alias
         and UNS.id = UA.name_space_id
 
     -- Final alias.
 
+    inner join tmp_source_databases as FSD
+        on I.finaldblabel = FSD.labelname
     inner join tmp_irefweb_name_space as FNS
-        on I.finaldblabel = FNS.name
+        on FSD.sourcename = FNS.name
     inner join tmp_irefweb_alias as FA
         on I.finalrefvalue = FA.alias
         and FNS.id = FA.name_space_id
 
     -- Primary alias.
 
+    inner join tmp_source_databases as PSD
+        on I.primarydblabel = PSD.labelname
     inner join tmp_irefweb_name_space as PNS
-        on I.primarydblabel = PNS.name
+        on PSD.sourcename = PNS.name
     inner join tmp_irefweb_alias as PA
         on I.primaryrefvalue = PA.alias
         and PNS.id = PA.name_space_id
 
     -- Canonical alias.
 
+    inner join tmp_source_databases as CSD
+        on I.canonicaldblabel = CSD.labelname
     inner join tmp_irefweb_name_space as CNS
-        on I.canonicaldblabel = CNS.name
+        on CSD.sourcename = CNS.name
     inner join tmp_irefweb_alias as CA
         on I.canonicalrefvalue = CA.alias
         and CNS.id = CA.name_space_id
