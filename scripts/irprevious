@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -72,6 +72,11 @@ if [ "$PGSQL" ]; then
         exit 1
     fi
 
+    if ! "$TOOLS/irdata_database_action.py" "$DATABASE" "$SQL/export_irefindex_archived_sequences.sql" "$DATA" $PSQL_OPTIONS ; then
+        echo "$PROGNAME: Could not export archived sequences from the previous database." 1>&2
+        exit 1
+    fi
+
 elif [ "$MYSQL" ]; then
 
     # Export identifiers from a MySQL database.
@@ -90,6 +95,11 @@ elif [ "$MYSQL" ]; then
 
     if ! mysql -N $OPTIONS < "$SQL/mysql/export_irefindex_archived.sql" > "$DATA/sequences_archived" ; then
         echo "$PROGNAME: Could not export archived identifiers from the previous database." 1>&2
+        exit 1
+    fi
+
+    if ! mysql -N $OPTIONS < "$SQL/mysql/export_irefindex_archived_sequences.sql" > "$DATA/sequences_archived_original" ; then
+        echo "$PROGNAME: Could not export archived sequences from the previous database." 1>&2
         exit 1
     fi
 fi

@@ -22,3 +22,12 @@ create table irefindex_sequence_rogids (
     rogid varchar not null,
     primary key(rogid)
 );
+
+-- Actual sequences together with their digests.
+
+create table irefindex_sequences_original (
+    "sequence" varchar not null,            -- the digest representing the sequence
+    actualsequence varchar not null,        -- the original sequence
+    dblabel varchar not null,               -- the origin of the sequence record
+    primary key("sequence", dblabel)
+);

@@ -228,4 +228,24 @@ insert into irefindex_sequence_rogids
 
 analyze irefindex_sequence_rogids;
 
+-- Actual sequences for all known sequences.
+
+insert into irefindex_sequences_original
+    select distinct "sequence", actualsequence, 'uniprotkb' as dblabel
+    from uniprot_sequences
+    union all
+    select distinct "sequence", actualsequence, 'refseq' as dblabel
+    from refseq_sequences
+    union all
+    select distinct "sequence", actualsequence, 'ipi' as dblabel
+    from ipi_sequences
+    union all
+    select distinct "sequence", actualsequence, 'genpept' as dblabel
+    from genpept_sequences
+    union all
+    select distinct "sequence", actualsequence, 'pdb' as dblabel
+    from pdb_sequences;
+
+analyze irefindex_sequences_original;
+
 commit;

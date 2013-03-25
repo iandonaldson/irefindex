@@ -1,6 +1,6 @@
 -- Import sequences from a previous release of iRefIndex.
 
--- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -21,5 +21,8 @@ begin;
 
 create index irefindex_sequences_archived_index on irefindex_sequences_archived(dblabel, refvalue);
 analyze irefindex_sequences_archived;
+
+\copy irefindex_sequences_archived_original from '<directory>/sequences_archived_original'
+analyze irefindex_sequences_archived_original;
 
 commit;

@@ -1,1 +1,2 @@
 drop table irefindex_sequences_archived;
+drop table irefindex_sequences_archived_original;
