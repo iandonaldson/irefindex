@@ -46,10 +46,19 @@ can be imported into MoinMoin Wiki instances and viewed as formatted text.
 This has been done with the intention of making the project documentation
 publicly available.
 
-To install the documentation in a Wiki, first make sure that the
-[[MoinMoin:moinsetup]] software has been installed. Then, with a suitable
-configuration file available, run the following command in the irdata source
-distribution directory:
+To make working with MoinMoin easier, first make sure that the
+[[MoinMoin:ScriptMarket/moinsetup]] software has been installed. Then, consult
+the documentation for moinsetup in order to make a suitable configuration file
+available. It will then be possible to create a Wiki instance if you do not
+already have one prepared and to configure it further.
+
+The generated documentation requires some additional functionality provided by
+[[MoinMoin:ParserMarket/ImprovedTableParser]] and
+[[MoinMoin:ParserMarket/graphviz]], and these extensions should be downloaded
+and installed according to the instructions provided with them.
+
+To install the documentation in a Wiki, run the following commands in the
+irdata source distribution directory:
 
 {{{
 python moinsetup.py -m make_page_package docs/pages irdata_pages.zip
@@ -172,7 +181,7 @@ available resources.
 
 The `sql` directory, in contrast to the `reports` directory, contains SQL
 templates that initialise a database, populate it with data, and process that
-data in order to produce the iRefIndex consolidated dataset. There are three
+data in order to produce the iRefIndex consolidated dataset. There are four
 principal types of template:
 
  * Initialisation templates, prefixed with `init` (typically used by the
@@ -180,6 +189,8 @@ principal types of template:
 
  * Import templates, prefixed with `import` (used by a variety of programs,
  mostly under the control of the `irimport` and `irbuild` programs)
+
+ * Export templates, prefixed with `export` (used by the `iroutput` program)
 
  * Deletion templates, prefixed with `drop` (not generally used except when
  troubleshooting)
