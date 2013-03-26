@@ -72,6 +72,9 @@ class PSIParser(EmptyElementParser):
     """
 
     # Attributes of supported elements.
+    # Values of these attributes are read for supported elements and written to
+    # output files. Some attributes are actually constructed internally but are
+    # listed here as part of the output specification (property and element).
 
     attribute_names = {
         # references    : property, reftype, id, dblabel, dbcode, reftypelabel, reftypecode
@@ -164,6 +167,10 @@ class PSIParser(EmptyElementParser):
         """
         Start an element, converting the element 'name' to a recognised scope if
         necessary, and adding an identifier to the 'attrs' if one is missing.
+
+        This effectively normalises the availability of identifiers on various
+        elements and makes sure that identifiers seen by handleElement are ones
+        that are usable for subsequent processing.
         """
 
         if self.scopes.has_key(name):
@@ -187,6 +194,10 @@ class PSIParser(EmptyElementParser):
                     attrs["id"] = str(self.identifiers[name])
                     self.identifiers[name] += 1
 
+        # Start the element using a scope as a logical name if appropriate.
+        # This normalises the element names so that they can be treated like
+        # PSI MI XML 2.5 elements.
+
         EmptyElementParser.startElement(self, name, attrs)
 
     def endElement(self, name):
@@ -202,10 +213,29 @@ class PSIParser(EmptyElementParser):
         if "entry" not in self.current_path:
             return
 
-        # Get the element names in order of decreasing locality, padding with None.
+        # Get the element names in order of decreasing locality, padding with
+        # None. Here, the current path of element names descending into the
+        # document is reversed and padded with None, so that the outermost
+        # elements can be missing in certain cases.
+
+        # Some examples:
+
+        # entry/interactionList/interaction/participant/interactor
+        # -> interactor (element), participant (parent), interaction (property),
+        #    interactionList (section)
+
+        # entry/experimentList/experimentDescription
+        # -> experimentDescription (element), experimentList (parent),
+        #    entry (property), None (section)
 
         element, parent, property, section = map(lambda x, y: x or y, self.current_path[-1:-5:-1], [None] * 4)
+
+        # Get the element's attributes.
+
         attrs = dict(self.current_attrs[-1])
+
+        # Remember the entry element's identifier value for subsequent use.
+
         entry = self.path_to_attrs["entry"]["id"]
 
         # Get mappings from experiments to interactions.
