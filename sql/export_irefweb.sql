@@ -110,6 +110,14 @@ create index tmp_bait_interactors_index on tmp_bait_interactors(source, filename
 
 analyze tmp_bait_interactors;
 
+-- Interactors belonging to active interactions.
+
+create temporary table tmp_active_interactors as
+    select distinct rogid
+    from irefindex_distinct_interactions_canonical;
+
+analyze tmp_active_interactors;
+
 
 
 -- Source interactors are the basis for the interaction_interactor_assignment
@@ -150,7 +158,9 @@ create temporary table tmp_source_interactors as
 
         -- Assignment score information.
 
-        case when XS.score like '%+%' then substring(XS.score for position('+' in XS.score) - 1) || substring(XS.score from position('+' in XS.score) + 1) || '+'
+        case when XS.score like '%+%' then
+                 substring(XS.score for position('+' in XS.score) - 1) ||
+                 substring(XS.score from position('+' in XS.score) + 1) || '+'
              else XS.score
         end as code
 
@@ -159,6 +169,11 @@ create temporary table tmp_source_interactors as
         on R.rogid = C.rogid
     inner join irefindex_rog2rogid as CI
         on C.crogid = CI.rogid
+
+    -- Restrict to active interactors.
+
+    inner join tmp_active_interactors as I
+        on C.crogid = I.rogid
 
     -- Interactor type information.
 
@@ -267,6 +282,9 @@ create temporary table tmp_source_participants as
 analyze tmp_source_participants;
 
 -- Source interactions are the basis for the interaction_source_db table.
+-- NOTE: There appear to be some interactions providing multiple interaction
+-- NOTE: types in MPIDB, so this has to discard such redundant types (MI:0407
+-- NOTE: is a form of MI:0915 and thus the latter is redundant).
 
 create temporary table tmp_source_interactions as
     select
@@ -283,8 +301,10 @@ create temporary table tmp_source_interactions as
         lower(N.dblabel), N.refvalue,
 
         -- Interaction type.
+        -- NOTE: min just happens to select the appropriate values but is not
+        -- NOTE: appropriate in general.
 
-        T.refvalue as interactiontype
+        min(T.refvalue) as interactiontype
 
     from irefindex_rigids as R
     inner join irefindex_rigids_canonical as C
@@ -296,7 +316,12 @@ create temporary table tmp_source_interactions as
          = (N.source, N.filename, N.entry, N.interactionid)
     left outer join xml_xref_interaction_types as T
         on (R.source, R.filename, R.entry, R.interactionid)
-         = (T.source, T.filename, T.entry, T.interactionid);
+         = (T.source, T.filename, T.entry, T.interactionid)
+
+    -- Grouping to eliminate redundant interaction types.
+
+    group by R.source, R.filename, R.entry, R.interactionid,
+        C.crigid, CI.rig, lower(N.dblabel), N.refvalue;
 
 create index tmp_source_interactions_index on tmp_source_interactions(source, filename, entry, interactionid);
 
@@ -350,7 +375,7 @@ create temporary table tmp_source_interaction_experiments as
     inner join tmp_source_experiments as ES
         on (E.source, E.filename, E.entry, E.experimentid)
          = (ES.source, ES.filename, ES.entry, ES.experimentid)
-    inner join tmp_bait_interactors as B
+    left outer join tmp_bait_interactors as B
         on (I.source, I.filename, I.entry, I.interactionid)
          = (B.source, B.filename, B.entry, B.interactionid);
 
@@ -395,6 +420,27 @@ create temporary table tmp_source_databases as
         on lower(M.source) = lower(I.dblabel)
     where I.dblabel is null
 
+    -- Add aliases for MPI-LIT and MPI-IMEX.
+
+    union all
+    select
+        'mpi-lit' as labelname,
+        lower(M.source) as sourcename,
+        M.releasedate as release_date,
+        M.version as release_label,
+        M.downloadfiles as comments
+    from irefindex_manifest as M
+    where M.source = 'MPIDB'
+    union all
+    select
+        'mpi-imex' as labelname,
+        lower(M.source) as sourcename,
+        M.releasedate as release_date,
+        M.version as release_label,
+        M.downloadfiles as comments
+    from irefindex_manifest as M
+    where M.source = 'MPIDB'
+
     -- Add the invented rogid label.
 
     union all
@@ -411,8 +457,6 @@ analyze tmp_source_databases;
 
 -- -----------------------------------------------------------------------------
 -- Enumeration tables.
--- NOTE: We could label tmp_source_interactions directly, but there appear to be
--- NOTE: some interactions providing multiple interaction types.
 
 create temporary sequence tmp_num_source_interactions_id minvalue 1;
 
@@ -423,7 +467,7 @@ create temporary table tmp_num_source_interactions as
     from tmp_source_interactions
     group by source, filename, entry, interactionid;
 
-create index tmp_num_source_interactions_index on tmp_num_source_interactions(source, filename, entry, interactionid);
+alter table tmp_num_source_interactions add primary key(source, filename, entry, interactionid);
 
 analyze tmp_num_source_interactions;
 
@@ -529,6 +573,7 @@ create temporary table tmp_irefweb_interactor_type as
         0 as version,
         interactortype as name
     from tmp_source_interactors as I
+    where interactortype is not null
     group by interactortype;
 
 create temporary table tmp_irefweb_source_db as
@@ -632,35 +677,31 @@ create index tmp_aliases_index on tmp_aliases(dblabel, refvalue);
 analyze tmp_aliases;
 
 create temporary table tmp_current_sequences as
-    select S.sequence, actualsequence, 'uniprotkb' as sourcedb
-    from uniprot_sequences as S
-    inner join irefindex_assignments as R
-        on S.sequence = R.sequence
-    union all
-    select S.sequence, actualsequence, 'refseq' as sourcedb
-    from refseq_sequences as S
-    inner join irefindex_assignments as R
-        on S.sequence = R.sequence
-    union all
-    select S.sequence, actualsequence, 'ipi' as sourcedb
-    from ipi_sequences as S
-    inner join irefindex_assignments as R
-        on S.sequence = R.sequence
-    union all
-    select S.sequence, actualsequence, 'genpept' as sourcedb
-    from genpept_sequences as S
-    inner join irefindex_assignments as R
-        on S.sequence = R.sequence
-    union all
-    select S.sequence, actualsequence, 'pdb' as sourcedb
-    from pdb_sequences as S
-    inner join irefindex_assignments as R
-        on S.sequence = R.sequence
-    union all
-    select S.sequence, actualsequence, source as sourcedb
+
+    -- Sequences from current databases.
+
+    select distinct "sequence", actualsequence, dblabel as sourcedb
+    from irefindex_sequences_original as S
+    inner join irefindex_distinct_interactions_canonical as C
+        on S.sequence = substring(C.rogid for 27)
+
+    -- Sequences from archived data.
+
+    union
+    select "sequence", actualsequence, dblabel as sourcedb
+    from irefindex_sequences_archived_original as S
+    inner join irefindex_distinct_interactions_canonical as C
+        on S.sequence = substring(C.rogid for 27)
+
+    -- Sequences from interaction records.
+
+    union
+    select distinct S.sequence, actualsequence, source as sourcedb
     from xml_sequences_original as S
-    inner join irefindex_assignments as R
-        on S.sequence = R.sequence;
+    inner join xml_sequences as X
+        on S.sequence = X.sequence
+    inner join irefindex_distinct_interactions_canonical as C
+        on S.sequence = substring(C.rogid for 27);
 
 analyze tmp_current_sequences;
 
@@ -731,7 +772,8 @@ create temporary table tmp_irefweb_interactor_alias as
         on SD.sourcename = NS.name
     inner join tmp_irefweb_alias as A
         on X.refvalue = A.alias
-        and NS.id = A.name_space_id;
+        and NS.id = A.name_space_id
+    group by X.rog, A.id;
 
 create index tmp_irefweb_interactor_alias_index on tmp_irefweb_interactor_alias(interactor_id);
 
@@ -765,7 +807,10 @@ create temporary table tmp_irefweb_interactor as
     inner join tmp_irefweb_interactor_alias as IA
         on A.id = IA.alias_id
         and D.rog = IA.interactor_id
-    inner join tmp_irefweb_sequence as S
+
+    -- Archived sequences can be missing.
+
+    left outer join tmp_irefweb_sequence as S
         on I.seguid = S.seguid;
 
 create temporary table tmp_irefweb_interactor_alias_display as
@@ -800,8 +845,8 @@ create temporary table tmp_irefweb_interaction_source_db as
     select
         N.id as id,
         0 as version,
-        rig as interaction_id,
-        refvalue as source_db_intrctn_id,
+        I.rig as interaction_id,
+        I.refvalue as source_db_intrctn_id,
         SN.id as source_db_id,
         T.id as interaction_type_id
     from tmp_source_interactions as I
@@ -812,7 +857,7 @@ create temporary table tmp_irefweb_interaction_source_db as
         on lower(I.source) = S.labelname
     inner join tmp_num_source_databases as SN
         on S.sourcename = SN.sourcename
-    inner join tmp_irefweb_interaction_type as T
+    left outer join tmp_irefweb_interaction_type as T
         on I.interactiontype = T.psi_mi_code;
 
 create temporary sequence tmp_irefweb_interaction_source_db_experiment_id minvalue 1;
@@ -830,10 +875,10 @@ create temporary table tmp_irefweb_interaction_source_db_experiment as
     inner join tmp_num_source_interactions as N
         on (E.source, E.filename, E.entry, E.interactionid)
          = (N.source, N.filename, N.entry, N.interactionid)
-    inner join tmp_irefweb_interaction_interactor as II
+    left outer join tmp_irefweb_interaction_interactor as II
         on E.rig = II.interaction_id
         and E.rog = II.interactor_id
-    inner join tmp_irefweb_interaction_detection_type as IDT
+    left outer join tmp_irefweb_interaction_detection_type as IDT
         on E.interactiondetectiontype = IDT.psi_mi_code;
 
 create temporary sequence tmp_irefweb_score_id minvalue 1;
