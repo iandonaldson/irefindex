@@ -11,7 +11,7 @@ setup(
     version="0.1",
     author="Paul Boddie",
     author_email="paul.boddie@biotek.uio.no",
-    url="http://irefindex.uio.no/",
+    url="http://irefindex.org/",
     description="The iRefIndex data processing distribution",
     packages=[
         "irdata",
