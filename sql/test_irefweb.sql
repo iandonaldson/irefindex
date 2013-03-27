@@ -62,7 +62,7 @@ create table irefweb_interaction_interactor_assignment (
     interaction_interactor_id integer not null,
     interaction_source_db_id integer not null,
     interactor_detection_type_id integer,
-    primary_alias_id integer not null,
+    primary_alias_id integer,
     used_alias_id integer not null,
     final_alias_id integer not null,
     canonical_alias_id integer not null,
@@ -149,7 +149,7 @@ create table irefweb_interactor_detection_type (
 create table irefweb_interactor_type (
     id integer not null,
     version integer not null,
-    name varchar,
+    name varchar not null,
     primary key(id)
 );
 

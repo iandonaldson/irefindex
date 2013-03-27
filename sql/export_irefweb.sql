@@ -118,6 +118,18 @@ create temporary table tmp_active_interactors as
 
 analyze tmp_active_interactors;
 
+-- A combined list of original and corrected references.
+
+create temporary table tmp_interactor_identifiers as
+    select source, filename, entry, interactorid, reftype, dblabel, refvalue
+    from xml_xref_all_interactors
+    union
+    select source, filename, entry, interactorid, reftype, originaldblabel as dblabel, originalrefvalue as refvalue
+    from xml_xref_all_interactors;
+
+create index tmp_interactor_identifiers_index on tmp_interactor_identifiers(source, filename, entry, interactorid);
+analyze tmp_interactor_identifiers;
+
 
 
 -- Source interactors are the basis for the interaction_interactor_assignment
@@ -198,7 +210,7 @@ create temporary table tmp_source_interactors as
 
     -- Primary alias information.
 
-    left outer join xml_xref_all_interactors as PA
+    left outer join tmp_interactor_identifiers as PA
         on (R.source, R.filename, R.entry, R.interactorid)
          = (PA.source, PA.filename, PA.entry, PA.interactorid)
         and PA.reftype = 'primaryRef'
@@ -380,7 +392,6 @@ create temporary table tmp_source_interaction_experiments as
          = (B.source, B.filename, B.entry, B.interactionid);
 
 create index tmp_source_interaction_experiments_index on tmp_source_interaction_experiments(source, filename, entry, interactionid);
-
 analyze tmp_source_interaction_experiments;
 
 create temporary table tmp_source_databases as
@@ -395,7 +406,7 @@ create temporary table tmp_source_databases as
         M.releasedate as release_date,
         M.version as release_label,
         M.downloadfiles as comments
-    from xml_xref_all_interactors as I
+    from tmp_interactor_identifiers as I
     left outer join irefindex_manifest as M
         on lower(I.dblabel) = lower(M.source)
         or (I.dblabel = 'uniprotkb' or I.dblabel in ('SP', 'Swiss-Prot', 'TREMBL')) and M.source = 'UNIPROT'
@@ -416,7 +427,7 @@ create temporary table tmp_source_databases as
         M.version as release_label,
         M.downloadfiles as comments
     from irefindex_manifest as M
-    left outer join xml_xref_all_interactors as I
+    left outer join tmp_interactor_identifiers as I
         on lower(M.source) = lower(I.dblabel)
     where I.dblabel is null
 
@@ -594,9 +605,9 @@ create temporary table tmp_irefweb_name_space as
     select
         nextval('tmp_irefweb_name_space_id') as id,
         0 as version,
-        S.name,
-        cast(S.id as varchar) as source_db_id
-    from tmp_irefweb_source_db as S;
+        name,
+        cast(id as varchar) as source_db_id
+    from tmp_irefweb_source_db;
 
 create index tmp_irefweb_name_space_index on tmp_irefweb_name_space(name, source_db_id);
 
@@ -664,6 +675,7 @@ create temporary table tmp_aliases as
         union
         select rog, rogid, primaryrefvalue as refvalue, primarydblabel as dblabel
         from tmp_source_interactors
+        where primaryrefvalue is not null
         union
         select rog, rogid, canonicalrefvalue as refvalue, canonicaldblabel as dblabel
         from tmp_source_interactors
@@ -1001,11 +1013,11 @@ create temporary table tmp_irefweb_interaction_interactor_assignment as
 
     -- Primary alias.
 
-    inner join tmp_source_databases as PSD
+    left outer join tmp_source_databases as PSD
         on I.primarydblabel = PSD.labelname
-    inner join tmp_irefweb_name_space as PNS
+    left outer join tmp_irefweb_name_space as PNS
         on PSD.sourcename = PNS.name
-    inner join tmp_irefweb_alias as PA
+    left outer join tmp_irefweb_alias as PA
         on I.primaryrefvalue = PA.alias
         and PNS.id = PA.name_space_id
 
