@@ -2,6 +2,7 @@
 -- This is useful for mapping interactors and for canonicalisation.
 
 -- Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -32,45 +33,20 @@ insert into irefindex_gene2uniprot
 
 analyze irefindex_gene2uniprot;
 
--- Add gene name mappings where no cross-reference is provided where only a
--- single identifier is found.
-
-insert into irefindex_gene2uniprot
-    select min(G.geneid), P.accession, P.sequencedate, P.taxid, P.sequence, P.length
-    from gene_info as G
-    inner join uniprot_gene_names as N
-        on G.symbol = N.genename
-    inner join uniprot_proteins as P
-        on N.uniprotid = P.uniprotid
-        and P.taxid = G.taxid
-
-    -- Filter out records covered by cross-references.
-
-    left outer join uniprot_identifiers as I
-        on N.uniprotid = I.uniprotid
-        and I.dblabel = 'GeneID'
-    where I.uniprotid is null
-
-    -- Select only unambiguous mappings.
-
-    group by P.accession, P.sequencedate, P.taxid, P.sequence, P.length
-    having count(G.geneid) = 1;
-
-analyze irefindex_gene2uniprot;
+-- NOTE: The uniprot_gene_names table was previously used to provide a
+-- NOTE: correspondence between proteins and genes, but this was found to make
+-- NOTE: canonical groups significantly different from previous releases.
 
 insert into irefindex_gene2refseq
     select geneid, P.accession, P.taxid, P.sequence, P.length
     from gene2refseq as G
     inner join refseq_proteins as P
-        on G.accession = P.version
-    union all
-    select oldgeneid, P.accession, P.taxid, P.sequence, P.length
-    from gene_history as H
-    inner join gene2refseq as G
-        on H.geneid = G.geneid
-    inner join refseq_proteins as P
         on G.accession = P.version;
 
 analyze irefindex_gene2refseq;
+
+-- NOTE: The gene_history table was previously used to provide a correspondence
+-- NOTE: between proteins and genes, but this is likely to introduce unhelpful
+-- NOTE: mappings to other parts of the processing pipeline and in output data.
 
 commit;
