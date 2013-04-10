@@ -1,10 +1,21 @@
--- Map identifiers/accessions to sequences for referenced interactors.
+-- Map identifiers/accessions to sequences for referenced interactors. The
+-- resulting mapping applies to such identifiers in general, wherever they may
+-- be used in the interaction data, and not to specific interaction records
+-- which are mapped to sequences in another template.
+
+-- (See import_irefindex_interactor_sequences.sql for the specific interaction
+-- record mapping of interactors to sequences.)
 
 -- In this template, the following parameters can be specified:
 -- <sequences> may be given as 'irefindex_sequences' or 'irefindex_sequences_archived'
 -- <linkprefix> may be given as '' or 'archived/'
 
+-- Thus, this template permits identifiers used in the interaction databases to
+-- be mapped to both current sequence database records and to archived sequence
+-- database records.
+
 -- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
