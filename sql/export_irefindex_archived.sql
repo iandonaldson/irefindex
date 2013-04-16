@@ -24,7 +24,7 @@ begin;
 create temporary table tmp_sequences_archived as
     select A.dblabel, A.refvalue, A.reftaxid, A.refsequence
     from irefindex_sequences_archived as A
-    left outer join irefindex_sequences_archived as S
+    left outer join irefindex_sequences as S
         on (A.dblabel, A.refvalue) = (S.dblabel, S.refvalue)
     where S.refvalue is null
     union all
