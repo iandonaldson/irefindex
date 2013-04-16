@@ -855,7 +855,8 @@ create temporary table tmp_irefweb_alias as
     from tmp_aliases as A
     inner join tmp_irefweb_name_space as NS
         on A.dblabel = NS.name
-    where A.dblabel in ('Display name', 'Short label', 'Full name', 'Alias');
+    where A.dblabel in ('Display name', 'Short label', 'Full name', 'Alias')
+    group by refvalue, NS.id;
 
 create index tmp_irefweb_alias_index on tmp_irefweb_alias(alias, name_space_id);
 
