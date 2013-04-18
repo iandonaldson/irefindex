@@ -35,9 +35,16 @@ analyze irefindex_rgg_rogids;
 -- Use the length and primary UniProt accession availability, selecting a RefSeq
 -- accession otherwise.
 
+-- Since there may be more than one sequence with the maximum length for a
+-- canonical group from a particular sequence database, the minimum ROG
+-- identifier is chosen in such situations.
+
 insert into irefindex_rgg_rogids_canonical
     select R.rggid, coalesce(min(G1.sequence || G1.taxid), min(G2.sequence || G2.taxid)) as rogid
     from irefindex_rgg_rogids as R
+
+    -- Find the longest UniProt sequence for the canonical group.
+
     left outer join (
         select rggid, max(length) as length
         from irefindex_rgg_rogids as R
@@ -49,6 +56,9 @@ insert into irefindex_rgg_rogids_canonical
     left outer join irefindex_gene2uniprot as G1
         on X1.length = G1.length
         and R.rogid = G1.sequence || G1.taxid
+
+    -- Find the longest RefSeq sequence for the canonical group.
+
     left outer join (
         select rggid, max(length) as length
         from irefindex_rgg_rogids as R
