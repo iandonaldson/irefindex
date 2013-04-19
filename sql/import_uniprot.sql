@@ -1,6 +1,7 @@
 -- Import data into the schema.
 
 -- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -96,6 +97,12 @@ create index uniprot_proteins_uniprotid on uniprot_proteins(uniprotid);
 analyze uniprot_proteins;
 
 analyze uniprot_sequences;
+
+-- Fix isoform identifiers.
+
+update uniprot_proteins
+    set uniprotid = substring(uniprotid for position(' ' in uniprotid) - 1)
+    where position(' ' in uniprotid) <> 0;
 
 -- Add missing taxid information.
 
