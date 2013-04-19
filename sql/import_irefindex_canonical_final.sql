@@ -1,6 +1,7 @@
 -- Generate the final gene groups for canonicalisation.
 
 -- Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -43,19 +44,21 @@ insert into irefindex_rgg_rogids_canonical
     select R.rggid, coalesce(min(G1.sequence || G1.taxid), min(G2.sequence || G2.taxid)) as rogid
     from irefindex_rgg_rogids as R
 
-    -- Find the longest UniProt sequence for the canonical group.
+    -- Find the longest non-isoform UniProt sequence for the canonical group.
 
     left outer join (
         select rggid, max(length) as length
         from irefindex_rgg_rogids as R
         inner join irefindex_gene2uniprot as G
             on R.rogid = G.sequence || G.taxid
+        where not G.accession like '%-%'
         group by rggid
         ) as X1
         on R.rggid = X1.rggid
     left outer join irefindex_gene2uniprot as G1
         on X1.length = G1.length
         and R.rogid = G1.sequence || G1.taxid
+        and not G1.accession like '%-%'
 
     -- Find the longest RefSeq sequence for the canonical group.
 
