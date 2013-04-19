@@ -1,11 +1,12 @@
 Format: http://dep.debian.net/deps/dep5/
 Upstream-Name: irdata
-Upstream-Contact: Paul Boddie <paul.boddie@biotek.uio.no>
+Upstream-Contact: Paul Boddie <paul@boddie.org.uk>
 Source: http://irefindex.org/
-Comment: This package was debianized by Paul Boddie <paul.boddie@biotek.uio.no>.
+Comment: This package was debianized by Paul Boddie <paul@boddie.org.uk>.
 
 Files: *
 Copyright: 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+           2013 Paul Boddie <paul@boddie.org.uk>
 License: GPL-3+
  This program is free software; you can redistribute it and/or modify it under
  the terms of the GNU General Public License as published by the Free Software
