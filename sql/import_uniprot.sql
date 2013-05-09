@@ -33,21 +33,52 @@ create temporary table tmp_uniprot_proteins (
     primary key(accession)
 );
 
+-- Import Swiss-Prot proteins.
+
 \copy tmp_uniprot_proteins from '<directory>/uniprot_sprot_proteins.txt.seq'
-\copy tmp_uniprot_proteins from '<directory>/uniprot_trembl_proteins.txt.seq'
 
 create index tmp_uniprot_proteins_sequence on tmp_uniprot_proteins(sequence);
 analyze tmp_uniprot_proteins;
 
 insert into uniprot_proteins
-    select uniprotid, accession, sequencedate, taxid, mw, "sequence", length
+    select uniprotid, accession, sequencedate, taxid, mw, "sequence", length,
+        'Swiss-Prot'
     from tmp_uniprot_proteins;
 
 insert into uniprot_sequences
     select distinct "sequence", actualsequence
     from tmp_uniprot_proteins;
 
+analyze uniprot_sequences;
+
+drop index tmp_uniprot_proteins_sequence;
 truncate tmp_uniprot_proteins;
+
+-- Import TrEMBL proteins.
+
+\copy tmp_uniprot_proteins from '<directory>/uniprot_trembl_proteins.txt.seq'
+
+create index tmp_uniprot_proteins_sequence on tmp_uniprot_proteins(sequence);
+analyze tmp_uniprot_proteins;
+
+insert into uniprot_proteins
+    select uniprotid, accession, sequencedate, taxid, mw, "sequence", length,
+        'TrEMBL'
+    from tmp_uniprot_proteins;
+
+insert into uniprot_sequences
+    select distinct A.sequence, A.actualsequence
+    from tmp_uniprot_proteins as A
+    left outer join uniprot_sequences as B
+        on A.sequence = B.sequence
+    where B.sequence is null;
+
+analyze uniprot_sequences;
+
+drop index tmp_uniprot_proteins_sequence;
+truncate tmp_uniprot_proteins;
+
+-- Import related data.
 
 \copy uniprot_accessions from '<directory>/uniprot_sprot_accessions.txt'
 \copy uniprot_accessions from '<directory>/uniprot_trembl_accessions.txt'
@@ -75,12 +106,14 @@ analyze uniprot_gene_names;
 
 \copy tmp_uniprot_proteins from '<directory>/uniprot_sprot_varsplic_proteins.txt.seq'
 
+create index tmp_uniprot_proteins_sequence on tmp_uniprot_proteins(sequence);
 analyze tmp_uniprot_proteins;
 
 -- Merge with the imported proteins.
 
 insert into uniprot_proteins
-    select A.uniprotid, A.accession, A.sequencedate, A.taxid, A.mw, A.sequence, A.length
+    select A.uniprotid, A.accession, A.sequencedate, A.taxid, A.mw, A.sequence, A.length,
+        'Swiss-Prot'
     from tmp_uniprot_proteins as A
     left outer join uniprot_proteins as B
         on A.accession = B.accession

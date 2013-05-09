@@ -33,18 +33,22 @@ insert into irefindex_rgg_rogids
 
 analyze irefindex_rgg_rogids;
 
--- Use the length and primary UniProt accession availability, selecting a RefSeq
--- accession otherwise.
+-- Use the length and primary Swiss-Prot accession availability, selecting a
+-- RefSeq accession or a TrEMBL accession otherwise.
 
 -- Since there may be more than one sequence with the maximum length for a
 -- canonical group from a particular sequence database, the minimum ROG
 -- identifier is chosen in such situations.
 
 insert into irefindex_rgg_rogids_canonical
-    select R.rggid, coalesce(min(G1.sequence || G1.taxid), min(G2.sequence || G2.taxid)) as rogid
+    select R.rggid, coalesce(
+        min(G1.sequence || G1.taxid),
+        min(G2.sequence || G2.taxid),
+        min(G3.sequence || G3.taxid)
+        ) as rogid
     from irefindex_rgg_rogids as R
 
-    -- Find the longest non-isoform UniProt sequence for the canonical group.
+    -- Find the longest non-isoform Swiss-Prot sequence for the canonical group.
 
     left outer join (
         select rggid, max(length) as length
@@ -52,6 +56,7 @@ insert into irefindex_rgg_rogids_canonical
         inner join irefindex_gene2uniprot as G
             on R.rogid = G.sequence || G.taxid
         where not G.accession like '%-%'
+            and G.source = 'Swiss-Prot'
         group by rggid
         ) as X1
         on R.rggid = X1.rggid
@@ -59,6 +64,7 @@ insert into irefindex_rgg_rogids_canonical
         on X1.length = G1.length
         and R.rogid = G1.sequence || G1.taxid
         and not G1.accession like '%-%'
+        and G1.source = 'Swiss-Prot'
 
     -- Find the longest RefSeq sequence for the canonical group.
 
@@ -73,6 +79,25 @@ insert into irefindex_rgg_rogids_canonical
     left outer join irefindex_gene2refseq as G2
         on X2.length = G2.length
         and R.rogid = G2.sequence || G2.taxid
+
+    -- Find the longest non-isoform TrEMBL sequence for the canonical group.
+
+    left outer join (
+        select rggid, max(length) as length
+        from irefindex_rgg_rogids as R
+        inner join irefindex_gene2uniprot as G
+            on R.rogid = G.sequence || G.taxid
+        where not G.accession like '%-%'
+            and G.source = 'TrEMBL'
+        group by rggid
+        ) as X3
+        on R.rggid = X3.rggid
+    left outer join irefindex_gene2uniprot as G3
+        on X3.length = G3.length
+        and R.rogid = G3.sequence || G3.taxid
+        and not G3.accession like '%-%'
+        and G3.source = 'TrEMBL'
+
     group by R.rggid;
 
 analyze irefindex_rgg_rogids_canonical;

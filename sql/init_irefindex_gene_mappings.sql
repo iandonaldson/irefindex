@@ -13,6 +13,7 @@ create table irefindex_gene2uniprot (
     taxid integer,
     "sequence" varchar not null,
     length integer not null,
+    source varchar not null,     -- indicates Swiss-Prot or TrEMBL origin
 
     primary key(geneid, accession)
 );

@@ -22,7 +22,8 @@ begin;
 -- Find gene identifier cross-references.
 
 insert into irefindex_gene2uniprot
-    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length
+    select geneid, P.accession, P.sequencedate, P.taxid, P.sequence, P.length,
+        P.source
     from gene_info as G
     inner join uniprot_identifiers as I
         on G.geneid = cast(I.refvalue as integer)
