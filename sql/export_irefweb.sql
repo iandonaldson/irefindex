@@ -49,11 +49,21 @@ begin;
 -- -----------------------------------------------------------------------------
 -- Work tables.
 
+-- Interactors belonging to active interactions.
+
+create temporary table tmp_active_interactors as
+    select distinct rogid
+    from irefindex_distinct_interactions_canonical;
+
+analyze tmp_active_interactors;
+
 -- Interactor names are defined here.
 
 create temporary table tmp_uniprot_rogids as
-    select sequence || taxid as rogid, uniprotid
-    from uniprot_proteins
+    select rogid, uniprotid, source
+    from uniprot_proteins as P
+    inner join tmp_active_interactors as I
+        on P.sequence || P.taxid = I.rogid
     where taxid is not null;
 
 analyze tmp_uniprot_rogids;
@@ -125,14 +135,6 @@ create temporary table tmp_bait_interactors as
 create index tmp_bait_interactors_index on tmp_bait_interactors(source, filename, entry, interactionid, interactorid);
 
 analyze tmp_bait_interactors;
-
--- Interactors belonging to active interactions.
-
-create temporary table tmp_active_interactors as
-    select distinct rogid
-    from irefindex_distinct_interactions_canonical;
-
-analyze tmp_active_interactors;
 
 
 
@@ -668,27 +670,42 @@ create temporary table tmp_irefweb_interaction as
 -- Work tables.
 
 create temporary table tmp_display_aliases as
-    select rog, rogid, refvalue, cast('Display name' as varchar) as dblabel
-    from (
-        select rog, I.rogid, min(uniprotid) as refvalue
-        from tmp_source_interactors as I
-        inner join tmp_uniprot_rogids as U
-            on I.rogid = U.rogid
-        group by rog, I.rogid
 
-        -- Obtain another identifier as the display alias if no suitable UniProt
-        -- identifier exists.
+    -- Prefer Swiss-Prot identifiers to gene symbols to other identifiers.
+    -- Without any of these, the integer identifier is used.
 
-        union all
-        select rog, I.rogid, min(refvalue) as refvalue
-        from tmp_source_interactors as I
-        inner join irefindex_rogid_identifiers_preferred as P
-            on I.rogid = P.rogid
-        left outer join tmp_uniprot_rogids as U
-            on I.rogid = U.rogid
-        where U.rogid is null
-        group by rog, I.rogid
-        ) as X;
+    select I.rog, I.rogid, coalesce(
+        min(uniprotid), min(symbol), P.refvalue, cast(I.rog as varchar)
+        ) as refvalue,
+        cast('Display name' as varchar) as dblabel
+    from tmp_source_interactors as I
+
+    -- UniProt identifiers originating from Swiss-Prot.
+
+    left outer join tmp_uniprot_rogids as U
+        on I.rogid = U.rogid
+        and U.source = 'Swiss-Prot'
+
+    -- Obtain another identifier as the display alias if no suitable UniProt
+    -- identifier can be found.
+
+    left outer join irefindex_rogid_identifiers_preferred as P
+        on I.rogid = P.rogid
+        and P.dblabel <> 'rogid'
+
+        -- Exclude GenBank-related RefSeq entries.
+
+        and not (P.dblabel in ('genbank_protein_gi', 'refseq') and not P.refvalue ~ '^[A-Z][A-Z]_[0-9]+$')
+
+    -- Gene symbols are chosen where RefSeq protein identifiers are suggested.
+
+    left outer join irefindex_gene2rog as G
+        on I.rogid = G.rogid
+        and P.dblabel = 'refseq'
+    left outer join gene_info as GI
+        on G.geneid = GI.geneid
+
+    group by I.rog, I.rogid, P.refvalue;
 
 analyze tmp_display_aliases;
 
