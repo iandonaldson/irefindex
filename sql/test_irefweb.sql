@@ -21,7 +21,7 @@ create table irefweb_name_space (
     id integer not null,
     version integer not null,
     name varchar not null,
-    source_db_id integer not null,
+    source_db_id integer, -- allows for null "special" name spaces
     primary key(id)
 );
 
@@ -79,7 +79,7 @@ create table irefweb_interaction_source_db (
     id integer not null,
     version integer not null,
     interaction_id integer not null,
-    source_db_intrctn_id varchar,
+    source_db_intrctn_id varchar not null,
     source_db_id integer not null,
     interaction_type_id integer,
     primary key(id)

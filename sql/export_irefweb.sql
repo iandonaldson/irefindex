@@ -1,6 +1,22 @@
-begin;
-
 -- Export iRefWeb tables to files in the data directory.
+
+-- Copyright (C) 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
+-- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
+--
+-- This program is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU General Public License as published by the Free Software
+-- Foundation; either version 3 of the License, or (at your option) any later
+-- version.
+--
+-- This program is distributed in the hope that it will be useful, but WITHOUT ANY
+-- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+-- PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License along
+-- with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+begin;
 
 -- iRefWeb employs a schema with ubiquitous surrogate keys, preserved across
 -- releases in the following tables:
@@ -118,18 +134,6 @@ create temporary table tmp_active_interactors as
 
 analyze tmp_active_interactors;
 
--- A combined list of original and corrected references.
-
-create temporary table tmp_interactor_identifiers as
-    select source, filename, entry, interactorid, reftype, dblabel, refvalue
-    from xml_xref_all_interactors
-    union
-    select source, filename, entry, interactorid, reftype, originaldblabel as dblabel, originalrefvalue as refvalue
-    from xml_xref_all_interactors;
-
-create index tmp_interactor_identifiers_index on tmp_interactor_identifiers(source, filename, entry, interactorid);
-analyze tmp_interactor_identifiers;
-
 
 
 -- Source interactors are the basis for the interaction_interactor_assignment
@@ -210,7 +214,7 @@ create temporary table tmp_source_interactors as
 
     -- Primary alias information.
 
-    left outer join tmp_interactor_identifiers as PA
+    left outer join xml_xref_all_interactors as PA
         on (R.source, R.filename, R.entry, R.interactorid)
          = (PA.source, PA.filename, PA.entry, PA.interactorid)
         and PA.reftype = 'primaryRef'
@@ -310,7 +314,7 @@ create temporary table tmp_source_interactions as
 
         -- Interaction identifier.
 
-        lower(N.dblabel), N.refvalue,
+        lower(N.dblabel) as dblabel, N.refvalue,
 
         -- Interaction type.
         -- NOTE: min just happens to select the appropriate values but is not
@@ -406,7 +410,7 @@ create temporary table tmp_source_databases as
         M.releasedate as release_date,
         M.version as release_label,
         M.downloadfiles as comments
-    from tmp_interactor_identifiers as I
+    from xml_xref_all_interactors as I
     left outer join irefindex_manifest as M
         on lower(I.dblabel) = lower(M.source)
         or (I.dblabel = 'uniprotkb' or I.dblabel in ('SP', 'Swiss-Prot', 'TREMBL')) and M.source = 'UNIPROT'
@@ -427,7 +431,7 @@ create temporary table tmp_source_databases as
         M.version as release_label,
         M.downloadfiles as comments
     from irefindex_manifest as M
-    left outer join tmp_interactor_identifiers as I
+    left outer join xml_xref_all_interactors as I
         on lower(M.source) = lower(I.dblabel)
     where I.dblabel is null
 
@@ -609,6 +613,24 @@ create temporary table tmp_irefweb_name_space as
         cast(id as varchar) as source_db_id
     from tmp_irefweb_source_db;
 
+-- NOTE: Need to complement this with xml_name information.
+
+insert into tmp_irefweb_name_space
+    (id, version, name, source_db_id)
+    values (nextval('tmp_irefweb_name_space_id'), 0, 'Short label', null);
+insert into tmp_irefweb_name_space
+    (id, version, name, source_db_id)
+    values (nextval('tmp_irefweb_name_space_id'), 0, 'Full name', null);
+insert into tmp_irefweb_name_space
+    (id, version, name, source_db_id)
+    values (nextval('tmp_irefweb_name_space_id'), 0, 'Alias', null);
+insert into tmp_irefweb_name_space
+    (id, version, name, source_db_id)
+    values (nextval('tmp_irefweb_name_space_id'), 0, 'Display name', null);
+insert into tmp_irefweb_name_space
+    (id, version, name, source_db_id)
+    values (nextval('tmp_irefweb_name_space_id'), 0, 'Annotations', null);
+
 create index tmp_irefweb_name_space_index on tmp_irefweb_name_space(name, source_db_id);
 
 analyze tmp_irefweb_name_space;
@@ -646,15 +668,19 @@ create temporary table tmp_irefweb_interaction as
 -- Work tables.
 
 create temporary table tmp_display_aliases as
-    select rog, rogid, details[1] as refvalue, lower(details[2]) as dblabel
+    select rog, rogid, refvalue, cast('Display name' as varchar) as dblabel
     from (
-        select rog, I.rogid, array[min(uniprotid), 'uniprotkb'] as details
+        select rog, I.rogid, min(uniprotid) as refvalue
         from tmp_source_interactors as I
         inner join tmp_uniprot_rogids as U
             on I.rogid = U.rogid
         group by rog, I.rogid
+
+        -- Obtain another identifier as the display alias if no suitable UniProt
+        -- identifier exists.
+
         union all
-        select rog, I.rogid, min(array[refvalue, dblabel]) as details
+        select rog, I.rogid, min(refvalue) as refvalue
         from tmp_source_interactors as I
         inner join irefindex_rogid_identifiers_preferred as P
             on I.rogid = P.rogid
@@ -663,6 +689,52 @@ create temporary table tmp_display_aliases as
         where U.rogid is null
         group by rog, I.rogid
         ) as X;
+
+analyze tmp_display_aliases;
+
+-- Related aliases aggregate aliases for specific (non-canonical) interactors.
+
+create temporary table tmp_related_aliases as
+    select rog, I.rogid, uniprotid as refvalue, dblabel
+    from tmp_source_interactors as I
+    inner join irefindex_rogids_canonical as C
+        on I.rogid = C.crogid
+    inner join irefindex_rogid_identifiers as R
+        on C.rogid = R.rogid
+    inner join uniprot_accessions
+        on dblabel = 'uniprotkb'
+        and refvalue = accession
+    union all
+    select rog, I.rogid, symbol as refvalue, dblabel
+    from tmp_source_interactors as I
+    inner join irefindex_rogids_canonical as C
+        on I.rogid = C.crogid
+    inner join irefindex_rogid_identifiers as R
+        on C.rogid = R.rogid
+    inner join gene_info
+        on dblabel = 'entrezgene/locuslink'
+        and cast(refvalue as integer) = geneid;
+
+analyze tmp_related_aliases;
+
+-- Other aliases are generated from name information.
+
+create temporary table tmp_name_aliases as
+    select distinct rog, rogid, name as refvalue,
+        cast(case nametype
+            when 'shortLabel' then 'Short label'
+            when 'fullName'   then 'Full name'
+            when 'alias'      then 'Alias'
+            else nametype
+        end as varchar) as dblabel
+    from tmp_source_interactors as I
+    inner join xml_names_interactor_names as N
+        on (I.source, I.filename, I.entry, I.interactorid)
+         = (N.source, N.filename, N.entry, N.interactorid);
+
+analyze tmp_name_aliases;
+
+-- The combined aliases.
 
 create temporary table tmp_aliases as
     select distinct rog, rogid, refvalue, dblabel
@@ -681,7 +753,16 @@ create temporary table tmp_aliases as
         from tmp_source_interactors
         union
         select rog, rogid, refvalue, dblabel
+        from tmp_related_aliases
+
+        -- Add special aliases.
+
+        union all
+        select rog, rogid, refvalue, dblabel
         from tmp_display_aliases
+        union all
+        select rog, rogid, refvalue, dblabel
+        from tmp_name_aliases
         ) as X;
 
 create index tmp_aliases_index on tmp_aliases(dblabel, refvalue);
@@ -764,6 +845,17 @@ create temporary table tmp_irefweb_alias as
         on A.dblabel = SD.labelname
     inner join tmp_irefweb_name_space as NS
         on SD.sourcename = NS.name
+    where A.dblabel not in ('Display name', 'Short label', 'Full name', 'Alias')
+    group by refvalue, NS.id
+    union all
+    select nextval('tmp_irefweb_alias_id') as id,
+        0 as version,
+        refvalue as alias,
+        NS.id as name_space_id
+    from tmp_aliases as A
+    inner join tmp_irefweb_name_space as NS
+        on A.dblabel = NS.name
+    where A.dblabel in ('Display name', 'Short label', 'Full name', 'Alias')
     group by refvalue, NS.id;
 
 create index tmp_irefweb_alias_index on tmp_irefweb_alias(alias, name_space_id);
@@ -785,7 +877,20 @@ create temporary table tmp_irefweb_interactor_alias as
     inner join tmp_irefweb_alias as A
         on X.refvalue = A.alias
         and NS.id = A.name_space_id
-    group by X.rog, A.id;
+    where X.dblabel not in ('Display name', 'Short label', 'Full name', 'Alias')
+    group by X.rog, A.id
+    union all
+    select nextval('tmp_irefweb_interactor_alias_id') as id,
+        0 as version,
+        X.rog as interactor_id,
+        A.id as alias_id
+    from tmp_aliases as X
+    inner join tmp_irefweb_name_space as NS
+        on X.dblabel = NS.name
+    inner join tmp_irefweb_alias as A
+        on X.refvalue = A.alias
+        and NS.id = A.name_space_id
+    where X.dblabel in ('Display name', 'Short label', 'Full name', 'Alias');
 
 create index tmp_irefweb_interactor_alias_index on tmp_irefweb_interactor_alias(interactor_id);
 
@@ -809,13 +914,9 @@ create temporary table tmp_irefweb_interactor as
 
     inner join tmp_display_aliases as D
         on I.rog = D.rog
-    inner join tmp_source_databases as SD
-        on D.dblabel = SD.labelname
-    inner join tmp_irefweb_name_space as NS
-        on SD.sourcename = NS.name
     inner join tmp_irefweb_alias as A
         on D.refvalue = A.alias
-        and NS.id = A.name_space_id
+        and A.name_space_id = (select id from tmp_irefweb_name_space where name = 'Display name')
     inner join tmp_irefweb_interactor_alias as IA
         on A.id = IA.alias_id
         and D.rog = IA.interactor_id
@@ -853,12 +954,20 @@ create index tmp_irefweb_interaction_interactor_index on tmp_irefweb_interaction
 
 analyze tmp_irefweb_interaction_interactor;
 
+-- Note that multiple source records can appear to refer to the same source
+-- interaction information. Arbitrary identifiers are also created where no
+-- usable source interaction identifiers are provided.
+
+-- NOTE: Here, interaction types are null if not known. iRefWeb 9 data employs
+-- NOTE: a separate, special interaction type record to denote an "unknown"
+-- NOTE: type.
+
 create temporary table tmp_irefweb_interaction_source_db as
-    select
+    select distinct
         N.id as id,
         0 as version,
         I.rig as interaction_id,
-        I.refvalue as source_db_intrctn_id,
+        coalesce(I.refvalue, I.filename || '/' || I.entry || '/' || I.interactionid) as source_db_intrctn_id,
         SN.id as source_db_id,
         T.id as interaction_type_id
     from tmp_source_interactions as I

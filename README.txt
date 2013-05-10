@@ -593,7 +593,7 @@ http://irefindex.uio.no/wiki/irdata
 
 The current maintainer can be contacted at the following e-mail address:
 
-paul.boddie@biotek.uio.no
+paul@boddie.org.uk
 
 Copyright and licence information can be found in the docs directory - see
 docs/COPYING.txt and docs/gpl-3.0.txt for more information.

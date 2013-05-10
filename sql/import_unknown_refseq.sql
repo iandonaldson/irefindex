@@ -129,30 +129,21 @@ analyze refseq_nucleotide_accessions;
 
 
 -- Augment the gene mapping with new protein information.
+-- See: import_irefindex_gene_mappings.sql
 
 create temporary table tmp_irefindex_gene2refseq as
-    select X.geneid, X.accession, X.taxid, X.sequence, X.length, true as missing
-    from (
-        select geneid, P.accession, P.taxid, P.sequence, P.length
-        from gene2refseq as G
-        inner join tmp_refseq_proteins as P
-            on G.accession = P.version
-        union all
-        select oldgeneid, P.accession, P.taxid, P.sequence, P.length
-        from gene_history as H
-        inner join gene2refseq as G
-            on H.geneid = G.geneid
-        inner join tmp_refseq_proteins as P
-            on G.accession = P.version
-        ) as X
+    select X.geneid, P.accession, P.taxid, P.sequence, P.length, true as missing
+    from gene2refseq as X
+    inner join tmp_refseq_proteins as P
+        on X.accession = P.version
 
     -- Exclude existing records.
 
     left outer join irefindex_gene2refseq as G
         on X.geneid = G.geneid
-        and X.accession = G.accession
-        and X.taxid = G.taxid
-        and X.sequence = G.sequence
+        and P.accession = G.accession
+        and P.taxid = G.taxid
+        and P.sequence = G.sequence
     where G.geneid is null;
 
 analyze tmp_irefindex_gene2refseq;

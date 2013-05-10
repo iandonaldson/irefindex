@@ -33,6 +33,10 @@ create table irefindex_gene2related_known (
     primary key(geneid, related)
 );
 
+
+
+-- Final canonicalisation products.
+
 -- A mapping from redundant gene group (RGG) identifiers to genes.
 
 create table irefindex_rgg_genes (
