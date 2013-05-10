@@ -39,7 +39,7 @@ def parse(infile, outfile):
     line = infile.readline()
 
     while line:
-        line = line.rstrip("\n")
+        line = line.rstrip('\r\n')
 
         if line.startswith("[Term]"):
             state = "TERM"
