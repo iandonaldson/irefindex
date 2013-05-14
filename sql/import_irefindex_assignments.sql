@@ -398,7 +398,7 @@ analyze irefindex_rogids_canonical;
 -- instead of only the identifiers actually used in the interaction data.
 
 insert into irefindex_rogid_identifiers
-    select distinct rogid, finaldblabel, finalrefvalue, 1 as priority
+    select distinct rogid, finaldblabel, finalrefvalue, 'A' as priority
     from irefindex_rogids as R
     inner join xml_xref_sequences as I
         on rogid = refsequence || reftaxid
@@ -410,7 +410,7 @@ analyze irefindex_rogid_identifiers;
 -- Add extra records for canonical identifiers.
 
 insert into irefindex_rogid_identifiers
-    select distinct crogid, finaldblabel, finalrefvalue, 1 as priority
+    select distinct crogid, finaldblabel, finalrefvalue, 'A' as priority
     from irefindex_rogids_canonical as R
     inner join xml_xref_sequences as I
         on crogid = refsequence || reftaxid
@@ -428,7 +428,7 @@ analyze irefindex_rogid_identifiers;
 -- exists.
 
 insert into irefindex_rogid_identifiers
-    select distinct R.rogid, I.dblabel, I.refvalue, 2 as priority
+    select distinct R.rogid, I.dblabel, I.refvalue, 'B' as priority
     from irefindex_rogids as R
     inner join xml_xref_sequences as I
         on R.rogid = refsequence || reftaxid
@@ -445,7 +445,7 @@ analyze irefindex_rogid_identifiers;
 -- Add extra records for canonical identifiers.
 
 insert into irefindex_rogid_identifiers
-    select distinct R.crogid as rogid, I.dblabel, I.refvalue, 2 as priority
+    select distinct R.crogid as rogid, I.dblabel, I.refvalue, 'B' as priority
     from irefindex_rogids_canonical as R
     inner join xml_xref_sequences as I
         on R.crogid = refsequence || reftaxid
@@ -462,7 +462,7 @@ analyze irefindex_rogid_identifiers;
 -- Add gene identifiers based on the known mappings from proteins to genes.
 
 insert into irefindex_rogid_identifiers
-    select distinct R.rogid, 'entrezgene/locuslink' as dblabel, cast(geneid as varchar) as refvalue, 3 as priority
+    select distinct R.rogid, 'entrezgene/locuslink' as dblabel, cast(geneid as varchar) as refvalue, 'C' as priority
     from irefindex_rogids as R
     inner join irefindex_gene2rog as G
         on R.rogid = G.rogid
@@ -477,7 +477,7 @@ analyze irefindex_rogid_identifiers;
 -- Add extra records for canonical identifiers.
 
 insert into irefindex_rogid_identifiers
-    select distinct R.crogid as rogid, 'entrezgene/locuslink' as dblabel, cast(geneid as varchar) as refvalue, 3 as priority
+    select distinct R.crogid as rogid, 'entrezgene/locuslink' as dblabel, cast(geneid as varchar) as refvalue, 'C' as priority
     from irefindex_rogids_canonical as R
     inner join irefindex_gene2rog as G
         on R.crogid = G.rogid
@@ -500,8 +500,8 @@ insert into irefindex_rogid_identifiers_preferred
         coalesce(uniprotacc[3], refseqacc[3], rogid) as refvalue
     from (
         select I.rogid,
-            min(array[cast(U.priority as varchar), U.dblabel, U.refvalue]) as uniprotacc,
-            min(array[cast(R.priority as varchar), R.dblabel, R.refvalue]) as refseqacc
+            min(array[U.priority, U.dblabel, U.refvalue]) as uniprotacc,
+            min(array[R.priority, R.dblabel, R.refvalue]) as refseqacc
         from (
             select rogid from irefindex_rogids
             union
