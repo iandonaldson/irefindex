@@ -669,6 +669,38 @@ create temporary table tmp_irefweb_interaction as
 -- -----------------------------------------------------------------------------
 -- Work tables.
 
+create temporary table tmp_rogid_identifiers as
+    select rogid, acc[2] as dblabel, acc[3] as refvalue
+    from (
+
+        -- Choose the highest priority identifiers.
+
+        select rogid,
+            min(array[priority, dblabel, refvalue]) as acc
+        from (
+
+            -- Obtain "mapped" identifiers for proteins (with priority "A")
+            -- and gene identifiers (with priority "C"), ignoring original
+            -- identifiers. Identifiers are then reclassified.
+
+            select rogid, dblabel, refvalue,
+                case when dblabel = 'uniprotkb' then 'AA'
+                     when dblabel = 'entrezgene/locuslink' then 'AB'
+                     when dblabel = 'refseq' then 'AC'
+                     when dblabel = 'pdb' then 'AD'
+                     else 'AE'
+                end as priority
+            from irefindex_rogid_identifiers
+            where priority in ('A', 'C')
+
+            ) as X
+
+        group by rogid
+
+        ) as X;
+
+analyze tmp_rogid_identifiers;
+
 create temporary table tmp_display_aliases as
 
     -- Prefer Swiss-Prot identifiers to gene symbols to other identifiers.
@@ -689,7 +721,7 @@ create temporary table tmp_display_aliases as
     -- Obtain another identifier as the display alias if no suitable UniProt
     -- identifier can be found.
 
-    left outer join irefindex_rogid_identifiers_preferred as P
+    left outer join tmp_rogid_identifiers as P
         on I.rogid = P.rogid
         and P.dblabel <> 'rogid'
 
