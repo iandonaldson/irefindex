@@ -961,27 +961,26 @@ create temporary table tmp_irefweb_interactor as
 
     -- Need to choose only one alias, preferably a UniProt identifier.
 
-    inner join tmp_display_aliases as D
-        on I.rog = D.rog
-    inner join tmp_irefweb_alias as A
-        on D.refvalue = A.alias
-        and A.name_space_id = (select id from tmp_irefweb_name_space where name = 'Display name')
     inner join tmp_irefweb_interactor_alias as IA
+        on I.rog = IA.interactor_id
+    inner join tmp_irefweb_alias as A
         on A.id = IA.alias_id
-        and D.rog = IA.interactor_id
+        and A.name_space_id = (select id from tmp_irefweb_name_space where name = 'Display name')
 
     -- Archived sequences can be missing.
 
     left outer join tmp_irefweb_sequence as S
         on I.seguid = S.seguid;
 
+-- NOTE: This appears to be a summary table presenting aliases alongside related
+-- NOTE: information.
+
 create temporary table tmp_irefweb_interactor_alias_display as
-    select rog, alias, name_space_id, alias_id, rog as interactor_id, IA.id as interactor_alias_id
+    select interactor_id as rog, alias, name_space_id, alias_id, interactor_id, IA.id as interactor_alias_id
     from tmp_irefweb_interactor_alias as IA
-    inner join tmp_display_aliases as D
-        on IA.interactor_id = D.rog
     inner join tmp_irefweb_alias as A
-        on IA.alias_id = A.id;
+        on IA.alias_id = A.id
+    where A.name_space_id = (select id from tmp_irefweb_name_space where name = 'Display name');
 
 create temporary sequence tmp_irefweb_interaction_interactor_id minvalue 1;
 
