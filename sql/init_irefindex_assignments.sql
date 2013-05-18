@@ -133,7 +133,7 @@ create table irefindex_rogid_identifiers (
     rogid varchar not null, -- collate "C" would require PostgreSQL 9.1
     dblabel varchar not null,
     refvalue varchar not null,
-    priority integer not null,
+    priority varchar not null,
     primary key(rogid, dblabel, refvalue)
 );
 
