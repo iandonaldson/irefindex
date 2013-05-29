@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Copyright (C) 2011, 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -57,7 +58,6 @@ fi
 
 cat "$DATADIR"/*_proteins > "$DATADIR/refseq_proteins.txt"
 cat "$DATADIR"/*_identifiers > "$DATADIR/refseq_identifiers.txt"
-cat "$DATADIR"/*_nucleotides > "$DATADIR/refseq_nucleotides.txt"
 
 # Process the sequence data.
 

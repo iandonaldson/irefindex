@@ -1,6 +1,7 @@
 -- Import data into the schema.
 
 -- Copyright (C) 2011, 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -34,18 +35,12 @@ create temporary table tmp_refseq_identifiers (
     position integer not null
 );
 
-create temporary table tmp_refseq_nucleotides (
-    nucleotide varchar not null,
-    protein varchar not null
-);
-
 \copy tmp_refseq_proteins from '<directory>/refseq_proteins.txt.seq'
 
 create index tmp_refseq_proteins_sequence on tmp_refseq_proteins(sequence);
 analyze tmp_refseq_proteins;
 
 \copy tmp_refseq_identifiers from '<directory>/refseq_identifiers.txt'
-\copy tmp_refseq_nucleotides from '<directory>/refseq_nucleotides.txt'
 
 insert into refseq_proteins
     select accession, version,
@@ -63,10 +58,6 @@ insert into refseq_identifiers
     select accession, dblabel, refvalue, position, false as missing
     from tmp_refseq_identifiers;
 
-insert into refseq_nucleotides
-    select nucleotide, protein, false as missing
-    from tmp_refseq_nucleotides;
-
 create index refseq_proteins_accession on refseq_proteins(accession);
 create index refseq_proteins_version on refseq_proteins(version);
 create index refseq_proteins_sequence on refseq_proteins(sequence);
@@ -75,13 +66,5 @@ create index refseq_sequences_sequence on refseq_sequences(sequence);
 analyze refseq_proteins;
 analyze refseq_sequences;
 analyze refseq_identifiers;
-analyze refseq_nucleotides;
-
-insert into refseq_nucleotide_accessions
-    select distinct nucleotide, substring(nucleotide from '[^.]*') as shortform, false as missing
-    from refseq_nucleotides;
-
-create index refseq_nucleotide_accessions_shortform on refseq_nucleotide_accessions(shortform);
-analyze refseq_nucleotide_accessions;
 
 commit;

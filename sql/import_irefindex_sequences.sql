@@ -7,6 +7,7 @@
 -- by the current interaction database data.
 
 -- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -48,26 +49,6 @@ insert into irefindex_sequences
         taxid as reftaxid, sequence as refsequence, null as refdate
     from refseq_proteins as P
     where accession is not null;
-
--- RefSeq nucleotides mapping directly and indirectly to proteins.
-
-insert into irefindex_sequences
-
-    -- Nucleotides can be mapped to a number of different proteins.
-
-    select distinct 'refseq' as dblabel, nucleotide as refvalue,
-        taxid as reftaxid, sequence as refsequence, null as refdate
-    from refseq_nucleotides as N
-    inner join refseq_proteins as P
-        on N.protein = P.accession
-    union all
-    select distinct 'refseq' as dblabel, shortform as refvalue,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
-    from refseq_nucleotide_accessions as A
-    inner join refseq_nucleotides as N
-        on A.nucleotide = N.nucleotide
-    inner join refseq_proteins as P
-        on N.protein = P.accession;
 
 -- FlyBase accessions mapping directly and indirectly to proteins.
 

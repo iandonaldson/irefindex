@@ -277,7 +277,6 @@ digraph identifier_mapping {
     uniprot_isoforms [label="UniProt isoforms"];
     uniprot_gene_names [label="UniProt gene names"];
     gene2refseq [label="Entrez Gene to RefSeq mapping"];
-    refseq_nucleotides [label="RefSeq nucleotide-related accessions"];
     pdb_accessions [label="PDB accessions"];
     ipi_accessions [label="IPI accessions"];
     ipi_shortforms [label="IPI shortforms"];
@@ -335,8 +334,6 @@ digraph identifier_mapping {
 
   refseq_xref -> refseq_accessions;
   refseq_xref -> refseq_versions;
-  refseq_xref -> refseq_nucleotides;
-  refseq_nucleotides -> refseq_accessions;
   refseq_accessions -> refseq_versions;
   refseq_versions -> refseq;
 

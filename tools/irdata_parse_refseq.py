@@ -10,6 +10,7 @@ ftp://ftp.ncbi.nlm.nih.gov/genbank/docs/FTv9_0.html
 --------
 
 Copyright (C) 2012 Ian Donaldson <ian.donaldson@biotek.uio.no>
+Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -61,11 +62,10 @@ class Parser:
 
     optional = "ACCESSION", "VERSION", "TAXID"
 
-    def __init__(self, f, f_main, f_identifiers, f_nucleotides):
+    def __init__(self, f, f_main, f_identifiers):
         self.f = f
         self.f_main = f_main
         self.f_identifiers = f_identifiers
-        self.f_nucleotides = f_nucleotides
         self.line = None
         self.return_last = 0
 
@@ -79,9 +79,6 @@ class Parser:
         if self.f_identifiers is not None:
             self.f_identifiers.close()
             self.f_identifiers = None
-        if self.f_nucleotides is not None:
-            self.f_nucleotides.close()
-            self.f_nucleotides = None
 
     def next_line(self):
         if not self.return_last:
@@ -199,8 +196,6 @@ class Parser:
             if record.has_key("PUBMED"):
                 for pos, pmid in enumerate(record["PUBMED"]):
                     self.f_identifiers.write("%s\tPubMed\t%s\t%s\n" % (record["ACCESSION"], pmid, pos))
-            if record.has_key("REFSEQ"):
-                self.f_nucleotides.write("%(REFSEQ)s\t%(ACCESSION)s\n" % record)
 
 if __name__ == "__main__":
     from irdata.cmd import get_progname
@@ -232,8 +227,7 @@ if __name__ == "__main__":
 
             f_main = open(join(data_directory, basename + "_proteins"), "w")
             f_identifiers = open(join(data_directory, basename + "_identifiers"), "w")
-            f_nucleotides = open(join(data_directory, basename + "_nucleotides"), "w")
-            parser = Parser(opener(filename), f_main, f_identifiers, f_nucleotides)
+            parser = Parser(opener(filename), f_main, f_identifiers)
             try:
                 parser.parse()
             finally:

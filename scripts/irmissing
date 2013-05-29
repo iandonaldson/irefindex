@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+# Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 # Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -94,7 +95,7 @@ if [ "$DOWNLOAD" ] ; then
 fi
 
 if [ "$IMPORT" ] ; then
-    if [ ! -e "$DATADIR/refseq_proteins.txt.seq" ] || [ ! -e "$DATADIR/refseq_identifiers.txt" ] || [ ! -e "$DATADIR/refseq_nucleotides.txt" ]; then
+    if [ ! -e "$DATADIR/refseq_proteins.txt.seq" ] || [ ! -e "$DATADIR/refseq_identifiers.txt" ]; then
         echo "$PROGNAME: The required RefSeq downloads are not available. Try running this program with the --download option." 1>&2
         exit 1
     fi

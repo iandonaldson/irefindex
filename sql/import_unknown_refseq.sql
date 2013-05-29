@@ -1,6 +1,7 @@
 -- Import data into the schema for previously unknown or missing sequences.
 
 -- Copyright (C) 2012, 2013 Ian Donaldson <ian.donaldson@biotek.uio.no>
+-- Copyright (C) 2013 Paul Boddie <paul@boddie.org.uk>
 -- Original author: Paul Boddie <paul.boddie@biotek.uio.no>
 --
 -- This program is free software; you can redistribute it and/or modify it under
@@ -36,39 +37,18 @@ create temporary table tmp_refseq_identifiers (
     position integer not null
 );
 
--- A mapping from protein records to nucleotide records.
-
-create temporary table tmp_refseq_nucleotides (
-    nucleotide varchar not null,
-    protein varchar not null
-);
-
-create temporary table tmp_refseq_nucleotide_accessions (
-    nucleotide varchar not null,
-    shortform varchar not null,
-    primary key(nucleotide)
-);
-
 \copy tmp_refseq_proteins from '<directory>/refseq_proteins.txt.seq'
 
 create index tmp_refseq_proteins_sequence on tmp_refseq_proteins(sequence);
 analyze tmp_refseq_proteins;
 
 \copy tmp_refseq_identifiers from '<directory>/refseq_identifiers.txt'
-\copy tmp_refseq_nucleotides from '<directory>/refseq_nucleotides.txt'
-
-insert into tmp_refseq_nucleotide_accessions
-    select distinct T.nucleotide, substring(T.nucleotide from '[^.]*') as shortform
-    from tmp_refseq_nucleotides as T;
 
 create index tmp_refseq_proteins_gi on tmp_refseq_proteins(gi);
 create index tmp_refseq_identifiers_accession on tmp_refseq_identifiers(accession);
-create index tmp_refseq_nucleotides_nucleotide on tmp_refseq_nucleotides(nucleotide);
 
 analyze tmp_refseq_proteins;
 analyze tmp_refseq_identifiers;
-analyze tmp_refseq_nucleotides;
-analyze tmp_refseq_nucleotide_accessions;
 
 
 
@@ -107,25 +87,6 @@ insert into refseq_identifiers
 
 analyze refseq_identifiers;
 
-insert into refseq_nucleotides
-    select distinct T.nucleotide, T.protein, true as missing
-    from tmp_refseq_nucleotides as T
-    left outer join refseq_nucleotides as N
-        on T.nucleotide = N.nucleotide
-        and T.protein = N.protein
-    where N.nucleotide is null;
-
-analyze refseq_nucleotides;
-
-insert into refseq_nucleotide_accessions
-    select T.nucleotide, T.shortform, true as missing
-    from tmp_refseq_nucleotide_accessions as T
-    left outer join refseq_nucleotide_accessions as A
-        on T.nucleotide = A.nucleotide
-    where A.nucleotide is null;
-
-analyze refseq_nucleotide_accessions;
-
 
 
 -- Augment the gene mapping with new protein information.
@@ -158,7 +119,6 @@ insert into irefindex_gene2refseq
 -- See import_irefindex_sequences.sql for similar code.
 
 -- RefSeq versions and accessions mapping directly to proteins.
--- RefSeq nucleotides mapping directly and indirectly to proteins.
 
 create temporary table tmp_irefindex_sequences_updated as
 
@@ -173,68 +133,6 @@ create temporary table tmp_irefindex_sequences_updated as
         taxid as reftaxid, sequence as refsequence, null as refdate
     from tmp_refseq_proteins as P
     where accession is not null
-    union all
-
-    -- Nucleotides can be mapped to a number of different proteins.
-
-    -- Completely new nucleotide and protein records.
-
-    select distinct 'refseq' as dblabel, nucleotide as refvalue,
-        taxid as reftaxid, sequence as refsequence, null as refdate
-    from tmp_refseq_nucleotides as N
-    inner join tmp_refseq_proteins as P
-        on N.protein = P.accession
-    union
-
-    -- Completely new nucleotide records.
-
-    select distinct 'refseq' as dblabel, nucleotide as refvalue,
-        taxid as reftaxid, sequence as refsequence, null as refdate
-    from tmp_refseq_nucleotides as N
-    inner join refseq_proteins as P
-        on N.protein = P.accession
-    union
-
-    -- Completely new protein records.
-
-    select distinct 'refseq' as dblabel, nucleotide as refvalue,
-        taxid as reftaxid, sequence as refsequence, null as refdate
-    from refseq_nucleotides as N
-    inner join tmp_refseq_proteins as P
-        on N.protein = P.accession
-    union all
-
-    -- Completely new nucleotide and protein records.
-
-    select distinct 'refseq' as dblabel, shortform as refvalue,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
-    from tmp_refseq_nucleotide_accessions as A
-    inner join tmp_refseq_nucleotides as N
-        on A.nucleotide = N.nucleotide
-    inner join refseq_proteins as P
-        on N.protein = P.accession
-    union
-
-    -- Completely new nucleotide records.
-
-    select distinct 'refseq' as dblabel, shortform as refvalue,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
-    from tmp_refseq_nucleotide_accessions as A
-    inner join tmp_refseq_nucleotides as N
-        on A.nucleotide = N.nucleotide
-    inner join refseq_proteins as P
-        on N.protein = P.accession
-    union
-
-    -- Completely new protein records.
-
-    select distinct 'refseq' as dblabel, shortform as refvalue,
-        P.taxid as reftaxid, P.sequence as refsequence, null as refdate
-    from refseq_nucleotide_accessions as A
-    inner join refseq_nucleotides as N
-        on A.nucleotide = N.nucleotide
-    inner join tmp_refseq_proteins as P
-        on N.protein = P.accession
     union all
 
     -- Completely new protein records referenced using GenBank identifiers.
