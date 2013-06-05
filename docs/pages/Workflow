@@ -14,7 +14,7 @@ The general top-level iRefIndex workflow is as follows:
 {{{{#!table
 <rowspan=9 style="border: 0" tablestyle="border-collapse: separate; border-spacing: 5px">
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph workflow {
   node [shape="box",fontsize="15"];
@@ -155,7 +155,7 @@ For interactors, a process of sequence assignment must take place:
 {{{{#!table
 <rowspan=7 style="border: 0">
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph workflow {
   node [shape="box",fontsize="15"];
@@ -216,7 +216,7 @@ interactors in context, thus identifying them.
 
 Interaction records use identifiers to describe interactors:
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph identifier_usage {
   rankdir=LR;
@@ -245,7 +245,7 @@ a particular identifier should always correspond to the same protein sequence
 
 To find sequences for identifiers, the following procedure is employed:
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph identifier_mapping {
   node [shape="box",fontsize="15"];
@@ -387,7 +387,7 @@ Even where the mapping of identifiers to sequences is largely unambiguous,
 there is still a possibility of ambiguity when associating interactors with
 sequences since each interactor may be described by a number of references:
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph interactor_mapping {
   rankdir=LR;
@@ -480,7 +480,7 @@ eliminate this ambiguity and make a definitive statement about the preferred or
 {{{{#!table
 <rowspan=3 style="border: 0">
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph assignment_workflow {
   node [shape="box",fontsize="15"];
@@ -578,7 +578,7 @@ proteins and thus "share" proteins, and thus deducing genes which can be said
 to be related to each other via these "shared" proteins. This is illustrated
 using the following example:
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph canonicalisation_example {
   node [fontsize="15"];
@@ -647,7 +647,7 @@ identifier types.
 {{{{#!table
 <rowspan=3 style="border: 0">
 
-{{{#!dot
+{{{#!graphviz
 //format=svg
 digraph output {
   node [shape="box",fontsize="15"];

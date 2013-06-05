@@ -1,0 +1,154 @@
+Building the Documentation for MoinMoin
+---------------------------------------
+
+The pages directory contains documents ready for deployment in a MoinMoin wiki
+instance. Such an instance can be set up as follows.
+
+Obtain MoinMoin and moinsetup
+-----------------------------
+
+The MoinMoin downloads page provides source archives for the software:
+
+http://moinmo.in/MoinMoinDownload
+
+The source archives are easier to use than a repository version, but both can
+be used with moinsetup.
+
+To more easily install MoinMoin and extensions, the moinsetup program can be
+used:
+
+http://moinmo.in/ScriptMarket/moinsetup
+
+Unpack MoinMoin
+---------------
+
+The source archive for MoinMoin can be unpacked as follows (using the 1.9.7
+release as an example):
+
+tar zxf moin-1.9.7.tar.gz
+
+Configure the Wiki
+------------------
+
+The moinsetup distribution provides example configuration files. However, the
+following would be suitable for the given MoinMoin version:
+
+[installation]
+moin_distribution = moin-1.9.7
+prefix            = moin
+web_app_dir       = webapps
+web_site_dir      = sites-available
+
+[site]
+common_dir        = irwiki
+url_path          = /irwiki
+superuser         = AdminUser
+site_name         = iRefIndex Wiki
+front_page_name   = FrontPage
+theme_default     = modernized
+
+Here, the MoinMoin libraries will be installed under 'moin' with the CGI
+script placed inside 'webapps' and Apache site definitions placed inside
+'sites-available'. The wiki itself will reside inside the 'irwiki' directory.
+This configuration can be saved as moinsetup.cfg so that moinsetup will find
+it by default.
+
+Set Up the Wiki
+---------------
+
+To install MoinMoin and the wiki resources in the specified locations, use the
+following command:
+
+python moinsetup.py -m setup
+
+There are also ways of performing specific tasks: run moinsetup.py without any
+options to see the help text.
+
+Various questions will be asked by moinsetup, and the program will describe
+various additional measures needed to make the wiki available to the Web
+server:
+
+  * Since the 'sites-available' directory is probably not one used by any
+    installed Web server (you can specify such a directory instead), it will
+    be necessary to copy the site definition from there to a suitable location
+    and then tell the Web server to enable the wiki site.
+
+  * The permissions of the wiki resources will need changing to be accessible
+    to the Web server. One of the scripts whose names are shown on the display
+    by moinsetup may be run to achieve this.
+
+See the moinsetup documentation for more information about this process.
+
+Install Additional Extensions
+-----------------------------
+
+The documentation pages need the ImprovedTableParser extension for MoinMoin:
+
+http://moinmo.in/ParserMarket/ImprovedTableParser
+
+A repository version can be obtained or a source archive can be downloaded and
+unpacked.
+
+The extension may then be installed as follows:
+
+python moinsetup.py -m install_extension_package ImprovedTableParser
+python moinsetup.py -m install_parsers ImprovedTableParser/parsers
+python moinsetup.py -m install_theme_resources ImprovedTableParser
+python moinsetup.py -m edit_theme_stylesheet screen.css improvedtableparser.css
+python moinsetup.py -m edit_theme_stylesheet print.css improvedtableparser.css
+
+For graphs, the GraphvizParser extension is also required:
+
+http://moinmo.in/ParserMarket/graphviz
+
+This may be installed as follows:
+
+python moinsetup.py -m install_parsers GraphvizParser/parsers
+
+A general requirement is the MoinSupport extension:
+
+http://hgweb.boddie.org.uk/MoinSupport
+
+This extension may then be installed as follows:
+
+python moinsetup.py -m install_extension_package MoinSupport
+
+Make and Install a Package of the Documentation Pages
+-----------------------------------------------------
+
+In the 'irdata' directory, a page package can be built from the documentation
+pages as follows:
+
+python moinsetup.py -m make_page_package docs/pages page_package.zip
+
+This package can be installed in the wiki as follows:
+
+python moinsetup.py -m install_page_package page_package.zip
+
+It may be the case that the above command needs elevated privileges, typically
+because the Web server may have created files that need to be edited in the
+installation process. If in doubt, use sudo or su to run the above command.
+
+Viewing the Installed Pages
+---------------------------
+
+Assuming that the wiki is being served by the Web server, visiting the site
+will probably yield a plain-looking front page and none of the usual pages
+being available. This can be resolved as follows:
+
+  * Log in as the superuser (whose name was given above).
+
+  * Visit the LanguageSetup page (which you will do by entering it in the
+    browser location bar as part of the URL); for example:
+
+    http://localhost/irwiki/LanguageSetup
+
+  * Under "Installing page packages", select the link "install help and system
+    page packages".
+
+  * Choose to "install" the "all_pages" package (for simplicity).
+
+It should now be possible to inspect the RecentChanges page of the wiki and
+see the iRefIndex documentation pages. If the list shows pages that are
+missing or inaccessible, you may need to run the command given above to reset
+the file permissions of wiki resources.
