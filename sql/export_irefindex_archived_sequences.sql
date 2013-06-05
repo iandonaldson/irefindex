@@ -2,7 +2,7 @@ begin;
 
 create temporary table tmp_sequences_archived_original as
     select sequence, actualsequence, dblabel
-    from irefindex_sequences_original;
+    from irefindex_sequences_original
 
     -- Add archived sequences from the previous release that do not conflict with
     -- those from active data. See also export_irefindex_archived.sql for similar
