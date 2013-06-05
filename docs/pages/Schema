@@ -192,7 +192,7 @@ sources providing explicit references:
 {{{#!table
 '''Source'''   || '''Explicit'''
 ==
-!BioGRID       || experiment, interactor
+BioGRID        || experiment, interactor
 ==
 HPRD           || experiment, interactor
 ==
