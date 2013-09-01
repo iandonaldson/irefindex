@@ -91,19 +91,33 @@ Example: %s 10000 uniprot_sprot.dat '//'
 
                 f_in.seek(start)
 
+                # At the end of the file, indicate the start of the fragment but
+                # no length.
+
                 if f_in.readline():
                     print one_based and (start + 1) or start
 
                 break
 
+            # Find the record terminator and skip over it.
+
             while record_terminator and line.rstrip("\n") != record_terminator:
                 line = f_in.readline()
                 pos += len(line)
+
+                # At the end of the file, indicate the start of the fragment but
+                # no length.
+
                 if not line:
                     print one_based and (start + 1) or start
                     break
 
-            print one_based and (start + 1) or start, pos - start
+            # With a record terminator found, indicate the start of the fragment
+            # and the length of the fragment.
+
+            else:
+                print one_based and (start + 1) or start, pos - start
+
             start = pos
             pos += interval
 
