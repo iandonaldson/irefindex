@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/bin/python
 
 """
 Convert MPIDB MITAB files to standard MITAB format or to iRefIndex-compatible
@@ -23,6 +23,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along
 with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
+#default settings
 
 from os.path import extsep, join, split, splitext
 import os
@@ -65,7 +67,6 @@ mpidb_term_regexp       = re.compile(r'(?P<prefix>.*?)"(?P<term>.*?)"\((?P<descr
 standard_term_regexp    = re.compile(r'(?P<term>.*?)\((?P<description>.*?)\)')
 taxid_regexp            = re.compile(r'taxid:(?P<taxid>[^(]+)(\((?P<description>.*?)\))?')
 
-term_regexps = mpidb_term_regexp, standard_term_regexp
 
 class Parser:
 
@@ -75,6 +76,7 @@ class Parser:
         self.writer = writer
         self.line_position = 0
         self.last_interaction = None
+        self.last_line_position = {}
 
     def close(self):
         if self.writer is not None:
@@ -123,6 +125,12 @@ class Parser:
         for key in list_fields:
             data[key] = get_list(data[key], key in corresponding_fields)
 
+        # Check that line is suitable for parsing
+        # Omit non protein-protein interactions from MINT and other records where A or B are ill-defined
+
+        if data["uidA"] == "-" or data["uidB"] == "-":
+            return
+
         # Fix aliases.
 
         for key in ("aliasA", "aliasB"):
@@ -134,16 +142,20 @@ class Parser:
             data[key] = map(fix_vocabulary_term, data[key])
 
         # Detect multi-line interactions.
+        # Keep the "last line position" in a dictionary for each interaction
+        # This will allow multiple lines for the same interaction (complex) record
+        # to occur non-contiguously in the MITAB file
+        # "last_line_position" counts the number of times that an interaction identifier
+        # has been seen so far during the parse of this MITAB file.
 
         interaction = get_interaction(data)
 
-        if interaction == self.last_interaction:
-            self.line_position += 1
+        if interaction not in self.last_line_position:
+            self.last_line_position[interaction] = 0
         else:
-            self.line_position = 0
-            self.last_interaction = interaction
+            self.last_line_position[interaction] += 1
 
-        data["line_position"] = self.line_position
+        data["line_position"] = self.last_line_position[interaction]
 
         self.writer.append(data)
 
@@ -176,7 +188,8 @@ class Writer:
 
         A|1 B|2 C|3
         """
-
+        
+        
         # Where no correspondences are being recorded, return the data as the
         # only experiment entry, and with only a single additional entry
         # indicating a unique output line number.
@@ -234,6 +247,7 @@ class MITABWriter(Writer):
             self.out = None
 
     def get_filename(self):
+        #imd - inspect this later - hard-coded 
         return join(self.directory, "mpidb_mitab.txt")
 
     def start(self, filename):
@@ -305,6 +319,7 @@ class iRefIndexWriter(Writer):
 
     def append(self, data):
 
+
         "Write iRefIndex-compatible output from the 'data'."
 
         # Interactor-specific records.
@@ -352,7 +367,8 @@ class iRefIndexWriter(Writer):
             for key in ("pmids",):
                 for entry, s in enumerate(data[key]):
                     prefix, value = split_value(s)
-                    self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), value, entry))
+                    if prefix == "pubmed":
+                        self.write_line(self.files[key], (self.source, self.filename, data["line"], get_interaction(data), value, entry))
 
             for key in ("interactionIdentifiers",):
                 for entry, s in enumerate(data[key]):
@@ -365,6 +381,7 @@ def get_interaction(data):
 # Value processing.
 
 def get_list(s, preserve_length):
+    '''for a string "a|b|-|d" return the list [a,b,"",d] or [a,b,d]''' 
     l = s.split("|")
     if preserve_length:
         return [(i != "-" and i or "") for i in l]
@@ -372,26 +389,30 @@ def get_list(s, preserve_length):
         return [i for i in l if i != "-"]
 
 def get_string(l):
+    '''for the list [a,b,c] return the string "a|b|c" or "-" for empty list'''
     if not l:
         return "-"
     else:
         return "|".join(l)
 
 def fix_vocabulary_term(s):
-    for regexp in term_regexps:
+    for regexp in term_regexps: #term_regexps is not iterable
         match = regexp.match(s)
         if match:
             return "%s(%s)" % (match.group("term"), match.group("description"))
     raise ValueError, "Term %r is not well-formed." % s
 
 def fix_alias(s):
-    if s.startswith("uniprotkb:"):
+    #this is a hack for MPI sources that incorrectly label aliases as from
+    #uniprotkb when they are in fact entrezgene/locuslink gene names
+    if source.startswith("MPI") and s.startswith("uniprotkb:"):
         prefix, symbol = s.split(":")[:2]
         return "entrezgene/locuslink:" + symbol
     else:
         return s
 
 def split_value(s):
+    '''for the string "a:b" return the tuple (a,b)'''
     parts = s.split(":", 1)
     return tuple(parts)
 
@@ -403,8 +424,15 @@ def split_vocabulary_term(s):
     raise ValueError, "Term %r is not well-formed." % s
 
 def split_uid(s):
+    '''given the string "a:b|c:d" return the tuple (c,d) or (-,-) for the string "-"'''
     uids = get_list(s, False)
-    return split_value(uids[-1]) # NOTE: Hack for InnateDB MITAB.
+    if uids:
+        if source.startswith("INNATE"): # NOTE: Hack for InnateDB MITAB.
+            return split_value(uids[-1])
+        else:
+            return split_value(uids[0]) 
+    else:
+        return ('-','-')
 
 def split_taxid(s):
     match = taxid_regexp.match(s)
@@ -433,6 +461,9 @@ if __name__ == "__main__":
         if not source.startswith("MPI"):
             corresponding_fields = ()
             all_fields = standard_fields
+            term_regexps = [standard_term_regexp]
+        else:
+            term_regexps = [mpidb_term_regexp, standard_term_regexp]
 
         writer = iRefIndexWriter(source, directory)
 
