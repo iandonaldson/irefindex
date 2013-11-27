@@ -14,11 +14,18 @@ create temporary table tmp_sources as
     from mitab_uid
     where source in ('MPI-LIT', 'MPI-IMEX')
     union all
+
     select 'INNATEDB'
     from mitab_uid
     where source = 'INNATEDB'
     union all
 
+    (select 'MINT'
+    from mitab_uid
+    where source = 'MINT'
+    limit 1)
+    union all
+  
     -- Special sources.
 
     (select 'BIND' as source
