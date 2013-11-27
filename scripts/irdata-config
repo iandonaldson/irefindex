@@ -4,11 +4,11 @@
 # General configuration settings for irdata.
 # (SYSPREFIX and EMAIL are most likely to need changing.)
 
-SYSPREFIX=                                  # system-wide installation root
-EMAIL=                                      # e-mail address for anonymous FTP logins
-DATABASE=irdata                             # database name
-DATA=                                       # user defined data directory location
-WIKIFORMAT=MoinMoin                         # format for generated Wiki pages
+SYSPREFIX=/home/irefindex                   # system-wide installation root
+EMAIL= #your  email address                 # e-mail address for anonymous FTP logins
+DATABASE=# e.g. irdata13                    # database name
+DATA=# e.g. /storage/data                   # user defined data directory location
+WIKIFORMAT=MediaWiki                        # format for generated Wiki pages
 WGET_WAIT=5                                 # time to wait between wget requests
 WGET_ATTEMPTS=5                             # number of attempts to make using wget
 PSQL_OPTIONS=                               # "--psql-options <psql connection options>"
@@ -19,14 +19,14 @@ PSQL_OPTIONS=                               # "--psql-options <psql connection o
 # Output and publication options.
 # (RELEASE is most likely to need changing.)
 
-RELEASE=10.0                                # iRefIndex release identifier
+RELEASE=13.0                              # iRefIndex release identifier
 
 # Information provided with the iRefScape data.
 # This features the FTP download site for iRefIndex data
 # (once uploaded), the path within the site to the data
 # files, and the credentials involved in accessing the site.
 
-IREFINDEX_RELEASE_SITE='ftp.no.embnet.org'
+IREFINDEX_RELEASE_SITE='irefindex.org/download'
 IREFINDEX_RELEASE_PATH="/irefindex/Cytoscape/plugin/archive/release_$RELEASE"
 IREFINDEX_RELEASE_USER=anonymous
 IREFINDEX_RELEASE_PASSWORD=
@@ -38,8 +38,10 @@ IREFINDEX_PROPRIETARY_DATA=FALSE
 # Authentication information for certain data sources.
 # (These settings must be changed if DIP is used.)
 
-DIP_USERNAME=                               # DIP download credentials
-DIP_PASSWORD=
+DIP_USERNAME=#some username             # DIP download credentials
+DIP_PASSWORD=#some password
+#this username pass only seems to work with http version of gz file
+#ftp did not work as of build 12
 
 
 
@@ -58,8 +60,8 @@ DIP_PASSWORD=
 # If available, review the BIND_MIRROR, BIND_RELEASE_URL,
 # OPHID_MIRROR and OPHID_RELEASE_URL settings below.
 
-XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INTACT MATRIXDB MINT MPACT MPPI OPHID"
-TABSOURCES="INNATEDB MPIDB"
+XMLSOURCES="BIND_TRANSLATION BIOGRID CORUM DIP HPRD INTACT MATRIXDB MPACT MPPI OPHID"
+TABSOURCES="MINT MPIDB INNATEDB"
 OTHERSOURCES="PSI_MI TAXONOMY BIND DIG FLY GENE GENPEPT IPI MMDB PDB REFSEQ UNIPROT YEAST"
 # NOTE: To be completed and added below for parsing: SEGUID
 
@@ -104,7 +106,7 @@ EXCLUDEDSOURCES="GENPEPT"
 BIND_DOWNLOAD_FILES='20060525*.txt'
 BIND_MIRROR='file://'
 
-BIND_RELEASE_URL="$BIND_MIRROR/biotek/cnkeeper/donaldson3/DATA/BIND/02_08_2010/"
+BIND_RELEASE_URL="$BIND_MIRROR/storage/localdata/BIND/"
 BIND_DIR_NAME="BIND"
 BIND_OTHER_FILE_PATTERN='*.txt'
 BIND_PARSER='irdata_parse_bind.sh'
@@ -115,19 +117,22 @@ BIND_SCHEMA='bind'
 
 BIND_TRANSLATION_VERSION='v1'
 BIND_TRANSLATION_DOWNLOAD_FILES="BINDTranslation_${BIND_TRANSLATION_VERSION}_xml_AllSpecies.tar.gz"
-BIND_TRANSLATION_MIRROR='http://download.baderlab.org'
+#BIND_TRANSLATION_MIRROR='http://download.baderlab.org'
+BIND_TRANSLATION_MIRROR='file://'
 
-BIND_TRANSLATION_RELEASE_URL="$BIND_TRANSLATION_MIRROR/BINDTranslation/release1_0/"
+#BIND_TRANSLATION_RELEASE_URL="$BIND_TRANSLATION_MIRROR/BINDTranslation/release1_0/"
+BIND_TRANSLATION_RELEASE_URL="$BIND_TRANSLATION_MIRROR/storage/localdata/BIND_Translation/"
 BIND_TRANSLATION_DIR_NAME="BIND_Translation"
 BIND_TRANSLATION_XML_FILE_PATTERN='*.xml'
 
 ############################################################
 # BioGRID
 
-BIOGRID_VERSION='3.1.92'
+BIOGRID_VERSION='3.2.101'
 BIOGRID_DOWNLOAD_FILES="BIOGRID-ALL-$BIOGRID_VERSION.psi25.zip"
 BIOGRID_MIRROR='http://thebiogrid.org'
 
+#http://thebiogrid.org/downloads/archives/Release%20Archive/BIOGRID-3.2.98/BIOGRID-ALL-3.2.98.psi25.zip
 BIOGRID_RELEASE_URL="$BIOGRID_MIRROR/downloads/archives/Release%20Archive/BIOGRID-$BIOGRID_VERSION/"
 BIOGRID_DIR_NAME="BioGRID"
 BIOGRID_XML_FILE_PATTERN='*.xml'
@@ -149,7 +154,7 @@ DIG_DOWNLOAD_FILES='morbidmap14062010.txt'
 #DIG_DOWNLOAD_FILES='22112010morbidmap.txt'
 DIG_MIRROR='file://'
 
-DIG_RELEASE_URL="$DIG_MIRROR/biotek/cnkeeper/donaldson3/data92/DIG/2011-10-03/"
+DIG_RELEASE_URL="$DIG_MIRROR/storage/localdata/DIG/"
 DIG_DIR_NAME="DIG"
 DIG_OTHER_FILE_PATTERN='morbidmap*.txt'
 DIG_PARSER='irdata_parse_dig.sh'
@@ -160,7 +165,7 @@ DIG_SCHEMA='dig'
 
 DIP_DOWNLOAD_SCRIPT='irdata_fetch_dip.sh'
 DIP_HOST='dip.doe-mbi.ucla.edu'
-#DIP_DOWNLOAD_FILES="dip20111027.mif25.gz"
+#DIP_DOWNLOAD_FILES="dip20130113.mif25.gz"
 DIP_MIRROR="http://$DIP_HOST"
 
 # NOTE: This resource uses obstructive technical measures to make automation
@@ -204,9 +209,11 @@ GENPEPT_SCHEMA='genpept'
 # HPRD
 
 HPRD_DOWNLOAD_FILES="HPRD_PSIMI_041310.tar.gz"
-HPRD_MIRROR='http://www.hprd.org'
+#HPRD_MIRROR='http://www.hprd.org'
+HPRD_MIRROR='file://'
 
-HPRD_RELEASE_URL="$HPRD_MIRROR/RELEASE9/"
+#HPRD_RELEASE_URL="$HPRD_MIRROR/RELEASE9/"
+HPRD_RELEASE_URL="$HPRD_MIRROR/storage/localdata/HPRD/"
 HPRD_DIR_NAME="HPRD"
 HPRD_XML_FILE_PATTERN='PSIMI_XML/*.xml'
 
@@ -239,9 +246,11 @@ INNATEDB_IMPORT_TEMPLATE='import_mitab.sql'
 # IPI
 
 IPI_DOWNLOAD_FILES='*.fasta.gz'
-IPI_MIRROR='ftp://ftp.ebi.ac.uk'
+#IPI_MIRROR='ftp://ftp.ebi.ac.uk'
+IPI_MIRROR='file://'
 
-IPI_RELEASE_URL="$IPI_MIRROR/pub/databases/IPI/current/"
+IPI_RELEASE_URL="$IPI_MIRROR/pub/databases/IPI/last_release/current/"
+IPI_RELEASE_URL="$IPI_MIRROR/storage/localdata/IPI/"
 IPI_DIR_NAME="IPI"
 IPI_OTHER_FILE_PATTERN='*.fasta *.fasta.gz'
 IPI_PARSER='irdata_parse_ipi.sh'
@@ -261,11 +270,17 @@ MATRIXDB_XML_FILE_PATTERN='*.xml'
 # MINT
 
 MINT_DOWNLOAD_FILES='*.psi25.zip'
-MINT_MIRROR='ftp://mint.bio.uniroma2.it'
+#MINT_MIRROR='ftp://mint.bio.uniroma2.it'
+MINT_MIRROR='file://'
+#using a static xml version - change this when parser for MITAB is written
 
-MINT_RELEASE_URL="$MINT_MIRROR/pub/release/psi/current/psi25/pmids/"
+#MINT_RELEASE_URL="$MINT_MIRROR/pub/release/psi/current/psi25/pmids/"
+MINT_RELEASE_URL="$MINT_MIRROR/storage/localdata/MINT/"
 MINT_DIR_NAME="MINT"
-MINT_XML_FILE_PATTERN='*.xml'
+MINT_OTHER_FILE_PATTERN='*.txt'
+#MINT_XML_FILE_PATTERN='*.xml'
+MINT_PARSER='irdata_parse_mint.sh'
+MINT_IMPORT_TEMPLATE='import_mitab.sql'
 
 ############################################################
 # MMDB/PDB (for PDB taxonomy information)
@@ -283,9 +298,11 @@ MMDB_SCHEMA='mmdb'
 # MPACT
 
 MPACT_DOWNLOAD_FILES="mpact-complete.psi25.xml.gz"
-MPACT_MIRROR='ftp://ftpmips.gsf.de'
+#MPACT_MIRROR='ftp://ftpmips.gsf.de'
+MPACT_MIRROR='file://'
 
-MPACT_RELEASE_URL="$MPACT_MIRROR/yeast/PPI/"
+#MPACT_RELEASE_URL="$MPACT_MIRROR/yeast/PPI/"
+MPACT_RELEASE_URL="$MPACT_MIRROR/storage/localdata/MPACT/"
 MPACT_DIR_NAME="MPACT"
 MPACT_XML_FILE_PATTERN='*.xml *.xml.gz'
 
@@ -305,9 +322,11 @@ MPIDB_IMPORT_TEMPLATE='import_mitab.sql'
 # MPPI (also known as MIPS)
 
 MPPI_DOWNLOAD_FILES="mppi.gz"
-MPPI_MIRROR='http://mips.gsf.de'
+#MPPI_MIRROR='http://mips.gsf.de'
+MPPI_MIRROR='file://'
 
-MPPI_RELEASE_URL="$MPPI_MIRROR/proj/ppi/data/"
+#MPPI_RELEASE_URL="$MPPI_MIRROR/proj/ppi/data/"
+MPPI_RELEASE_URL="$MPPI_MIRROR/storage/localdata/MPPI/"
 MPPI_DIR_NAME="MPPI"
 MPPI_XML_FILE_PATTERN='mppi mppi.gz'
 
@@ -317,7 +336,7 @@ MPPI_XML_FILE_PATTERN='mppi mppi.gz'
 OPHID_DOWNLOAD_FILES='ophid*.xml'
 OPHID_MIRROR='file://'
 
-OPHID_RELEASE_URL="$OPHID_MIRROR/biotek/cnkeeper/donaldson3/DATA/OPHID/02_08_2010/"
+OPHID_RELEASE_URL="$OPHID_MIRROR/storage/localdata/OPHID/"
 OPHID_DIR_NAME="OPHID"
 OPHID_XML_FILE_PATTERN='*.xml'
 
@@ -454,27 +473,6 @@ EUTILS_EMAIL="$EMAIL"
 PROCESSES=4                                 # number of process groups to use
 XARGS_I='-I'                                # get round annoying GNU xargs incompatibility
 XARGS_L='-L'                                # get round annoying GNU xargs incompatibility
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
