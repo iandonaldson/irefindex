@@ -113,6 +113,8 @@ create temporary table tmp_interaction_coverage as
 
 -- Add headers and totals.
 
+--select count(distinct rigid) from irefindex_rigids into distinctRigids;
+
 create temporary table tmp_interaction_coverage_by_source as
     select 'Source' as source, 'Total records' as available_total, 'Protein-related interactions' as suitable_total,
         'PPI assigned to RIGID' as assigned_total, '%' as assigned_coverage,
@@ -123,10 +125,32 @@ create temporary table tmp_interaction_coverage_by_source as
         cast(unique_total as varchar), cast(unique_coverage as varchar)
     from tmp_interaction_coverage
     union all
-    select '(All)' as source, cast(sum(available_total) as varchar), cast(sum(suitable_total) as varchar),
-        cast(sum(assigned_total) as varchar), cast(round(cast(cast(sum(assigned_total) as real) / sum(suitable_total) * 100 as numeric), 2) as varchar),
-        cast(sum(unique_total) as varchar), cast(round(cast(cast(sum(unique_total) as real) / sum(assigned_total) * 100 as numeric), 2) as varchar)
+    select 
+       '(All)' as source, 
+        cast(sum(available_total) as varchar), 
+        cast(sum(suitable_total) as varchar),
+        cast(sum(assigned_total) as varchar), 
+        cast(round(cast(cast(sum(assigned_total) as real) / sum(suitable_total) * 100 as numeric), 2) as varchar),
+        -- the next two values are set in the update step below
+        '-',
+        '-'
     from tmp_interaction_coverage;
+
+update tmp_interaction_coverage_by_source
+    set
+    --distinct number of rigids in All 
+    unique_total = (select count(distinct rigid) from irefindex_rigids),
+    --distinct rigids as a percentage of all records assigned to rigids
+    unique_coverage =
+      cast(
+        round( 
+          cast(
+            cast((select count(distinct rigid) from irefindex_rigids) as real) / 
+            cast((select assigned_total from tmp_interaction_coverage_by_source where source = '(All)') as real) * 100
+          as numeric)
+        ,2)
+       as varchar)
+    where source = '(All)';
 
 \copy tmp_interaction_coverage_by_source to '<directory>/interaction_coverage_by_source'
 
