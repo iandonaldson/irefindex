@@ -12,6 +12,8 @@ To create a group of resources, `cd` into the appropriate directory and execute
 
 == boostrap
 
+NOTE: Check the common configuration file first and change the file locations and region/zone and project name, too. 
+
 IMPORTANT: the `bootstrap` part needs to be executed *first*, all other parts depend on it.
 
 The `bootstrap` directory creates the Google Cloud project, creates the required service account and
@@ -22,6 +24,8 @@ This part needs to be runs as a _real_ user, with a Google account. Install the 
 (https://cloud.google.com/sdk/docs/install) and generate the application default credentials (ADC):
 
   $ gcloud auth application-default login
+
+20230817 minor changes to project.tf to enable Google API
 
 == gce-vms
 
